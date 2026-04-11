@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PfP Admin — Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080b0f;
+      --surface: #0e1318;
+      --border:  #1e2d3d;
+      --accent:  #00e5ff;
+      --accent2: #ff6b00;
+      --green:   #00ff88;
+      --red:     #ff3355;
+      --yellow:  #ffd700;
+      --text:    #c8d8e8;
+      --dim:     #445566;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      width: min(680px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ── Header ── */
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    .header-tag { font-size: 10px; letter-spacing: 4px; color: var(--accent); opacity: 0.6; margin-bottom: 6px; }
+
+    .header-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 38px;
+      letter-spacing: 6px;
+      color: var(--accent);
+      text-shadow: 0 0 30px rgba(0,229,255,0.3);
+      line-height: 1;
+    }
+
+    .header-sub { font-size: 11px; color: var(--dim); letter-spacing: 2px; margin-top: 8px; }
+
+    /* ── Auth ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .panel-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      flex-shrink: 0;
+    }
+
+    .field-label { font-size: 10px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; margin-bottom: 6px; }
+
+    input[type="password"],
+    input[type="number"],
+    input[type="text"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--accent);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      padding: 10px 14px;
+      width: 100%;
+      outline: none;
+      letter-spacing: 2px;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--dim); opacity: 0.4; }
+
+    .btn {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 3px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary { background: var(--accent); color: var(--bg); width: 100%; }
+    .btn-primary:hover { background: #33eeff; box-shadow: 0 0 20px rgba(0,229,255,0.3); }
+
+    .btn-save {
+      background: var(--green);
+      color: var(--bg);
+      font-size: 12px;
+      letter-spacing: 2px;
+      padding: 8px 16px;
+      border-radius: 3px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Bebas Neue', sans-serif;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-save:hover { box-shadow: 0 0 12px rgba(0,255,136,0.4); }
+    .btn-save:disabled { opacity: 0.4; cursor: default; }
+    .btn-save.saving { background: var(--yellow); color: var(--bg); }
+    .btn-save.saved  { background: var(--green); }
+    .btn-save.error  { background: var(--red); color: #fff; }
+
+    .status-line {
+      font-size: 11px; letter-spacing: 2px;
+      padding: 10px 14px; border-radius: 3px; display: none;
+    }
+    .status-line.error   { background: rgba(255,51,85,0.1);  border: 1px solid var(--red);   color: var(--red);   display: block; }
+    .status-line.success { background: rgba(0,255,136,0.07); border: 1px solid var(--green); color: var(--green); display: block; }
+
+    /* ── Settings grid ── */
+    .settings-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .setting-row {
+      display: grid;
+      grid-template-columns: 1fr 140px 80px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      transition: border-color 0.2s;
+    }
+
+    .setting-row:hover { border-color: var(--accent)44; }
+
+    .setting-row.modified { border-color: var(--yellow)88; }
+    .setting-row.saved-ok  { border-color: var(--green)88; }
+    .setting-row.saved-err { border-color: var(--red)88; }
+
+    .setting-name {
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .setting-desc {
+      font-size: 10px;
+      color: var(--dim);
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+    }
+
+    .setting-row input[type="number"] {
+      text-align: right;
+      padding: 8px 10px;
+      font-size: 15px;
+    }
+
+    /* ── Save all bar ── */
+    .save-bar {
+      position: sticky;
+      bottom: 20px;
+      background: var(--surface);
+      border: 1px solid var(--accent)44;
+      border-radius: 4px;
+      padding: 16px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 0 30px rgba(0,229,255,0.1);
+    }
+
+    .save-bar-text { font-size: 11px; letter-spacing: 2px; color: var(--dim); }
+    .save-bar-text span { color: var(--yellow); }
+
+    .btn-save-all {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 3px;
+      padding: 12px 28px;
+      background: var(--accent2);
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-save-all:hover { box-shadow: 0 0 20px rgba(255,107,0,0.4); }
+
+    .hidden { display: none !important; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: var(--green);
+      color: var(--bg);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 3px;
+      padding: 12px 22px;
+      border-radius: 3px;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.err  { background: var(--red); color: #fff; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-tag">// PFP SYSTEM — ADMIN</div>
+    <div class="header-title">ENGINE SETTINGS</div>
+    <div class="header-sub">XP VALUES · STAGE THRESHOLDS · DECAY RULES — LIVE SYSTEM CONTROL</div>
+  </div>
+
+  <!-- Auth -->
+  <div class="panel" id="auth-panel">
+    <div class="panel-title"><span class="dot"></span>Authentication Required</div>
+    <div>
+      <div class="field-label">Admin Password</div>
+      <input type="password" id="admin-pass" placeholder="Enter admin password" />
+    </div>
+    <div class="status-line" id="auth-status"></div>
+    <button class="btn btn-primary" onclick="authenticate()">ACCESS SYSTEM</button>
+  </div>
+
+  <!-- Main -->
+  <div id="main" class="hidden">
+
+    <!-- XP Values -->
+    <div class="panel">
+      <div class="panel-title"><span class="dot"></span>XP Values</div>
+      <div class="settings-grid" id="grid-xp"></div>
+    </div>
+
+    <!-- Stage Thresholds -->
+    <div class="panel">
+      <div class="panel-title"><span class="dot"></span>Stage XP Thresholds</div>
+      <div class="settings-grid" id="grid-stages"></div>
+    </div>
+
+    <!-- Decay Rules -->
+    <div class="panel">
+      <div class="panel-title"><span class="dot"></span>Decay Rules</div>
+      <div class="settings-grid" id="grid-decay"></div>
+    </div>
+
+    <!-- Save bar -->
+    <div class="save-bar">
+      <div class="save-bar-text">Unsaved changes: <span id="change-count">0</span></div>
+      <button class="btn-save-all" onclick="saveAll()">SAVE ALL CHANGES</button>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const ADMIN_PASSWORD = 'pfpadmin2024'; // Change to match your QR generator password
+  const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+
+  const FIELD_DEFS = {
+    xp: [
+      { key: 'xp_daily_scan',        label: 'Daily Scan',            desc: 'XP awarded for scanning the card once per day' },
+      { key: 'xp_streak_7',          label: '7-Day Streak Bonus',    desc: 'XP bonus for 7 consecutive days of interaction' },
+      { key: 'xp_streak_30',         label: '30-Day Streak Bonus',   desc: 'XP bonus for 30 consecutive days of interaction' },
+      { key: 'xp_public_showcase',   label: 'Public Showcase',       desc: 'XP awarded when owner posts card publicly' },
+      { key: 'xp_page_view_per_100', label: 'Page Views (per 100)',  desc: 'XP awarded for every 100 public page views' },
+      { key: 'xp_event_checkin',     label: 'Event Check-In',        desc: 'XP awarded when card is verified at an event' },
+      { key: 'xp_notable_collector', label: 'Notable Collector',     desc: 'Bonus XP when a notable collector claims or interacts' },
+      { key: 'xp_endorsement',       label: 'Endorsement',           desc: 'XP awarded when another collector endorses this card' },
+      { key: 'xp_new_owner_claim',   label: 'New Owner Claim',       desc: 'XP awarded when a new owner claims the card' },
+      { key: 'xp_milestone_1_year',  label: 'Milestone — 1 Year',    desc: 'XP bonus awarded on 1 year anniversary' },
+      { key: 'xp_milestone_5_year',  label: 'Milestone — 5 Years',   desc: 'XP bonus awarded on 5 year anniversary' },
+    ],
+    stages: [
+      { key: 'stage_dormant_xp',     label: 'DORMANT Threshold',     desc: 'Minimum XP to be at Dormant stage' },
+      { key: 'stage_awakened_xp',    label: 'AWAKENED Threshold',    desc: 'Minimum XP to reach Awakened' },
+      { key: 'stage_growing_xp',     label: 'GROWING Threshold',     desc: 'Minimum XP to reach Growing' },
+      { key: 'stage_established_xp', label: 'ESTABLISHED Threshold', desc: 'Minimum XP to reach Established' },
+      { key: 'stage_renowned_xp',    label: 'RENOWNED Threshold',    desc: 'Minimum XP to reach Renowned' },
+      { key: 'stage_legendary_xp',   label: 'LEGENDARY Threshold',   desc: 'Minimum XP to reach Legendary' },
+      { key: 'stage_mythic_xp',      label: 'MYTHIC Threshold',      desc: 'Minimum XP to reach Mythic' },
+    ],
+    decay: [
+      { key: 'decay_1day',            label: '1 Day Inactive',        desc: 'XP lost after 1 day without interaction' },
+      { key: 'decay_3day',            label: '3 Days Inactive',       desc: 'XP lost after 3 days without interaction' },
+      { key: 'decay_7day',            label: '7 Days Inactive',       desc: 'XP lost after 7 days without interaction' },
+      { key: 'decay_30day_stage_drop',label: '30 Days — Stage Drop',  desc: 'Number of stages dropped after 30 days inactive (usually 1)' },
+    ],
+  };
+
+  let currentSettings = {};
+  let pendingChanges  = {};
+
+  // ── Auth ──────────────────────────────────────────────────
+  function authenticate() {
+    const pass   = document.getElementById('admin-pass').value;
+    const status = document.getElementById('auth-status');
+    if (pass === ADMIN_PASSWORD) {
+      document.getElementById('auth-panel').classList.add('hidden');
+      document.getElementById('main').classList.remove('hidden');
+      loadSettings();
+    } else {
+      status.textContent = '// ACCESS DENIED — INVALID PASSWORD';
+      status.className   = 'status-line error';
+    }
+  }
+
+  document.getElementById('admin-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') authenticate();
+  });
+
+  // ── Load settings from API ────────────────────────────────
+  async function loadSettings() {
+    try {
+      const res  = await fetch(`${API}?action=get_settings`);
+      const data = await res.json();
+      if (!data.success) return showToast('Failed to load settings', true);
+      currentSettings = data.settings;
+      renderGrid('grid-xp',     FIELD_DEFS.xp);
+      renderGrid('grid-stages', FIELD_DEFS.stages);
+      renderGrid('grid-decay',  FIELD_DEFS.decay);
+    } catch (err) {
+      showToast('Could not reach API', true);
+    }
+  }
+
+  // ── Render a settings grid ────────────────────────────────
+  function renderGrid(gridId, defs) {
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = '';
+    defs.forEach(def => {
+      const val  = currentSettings[def.key] !== undefined ? currentSettings[def.key] : '';
+      const row  = document.createElement('div');
+      row.className   = 'setting-row';
+      row.id          = 'row-' + def.key;
+      row.innerHTML   = `
+        <div class="setting-name">
+          ${def.label}
+          <div class="setting-desc">${def.desc}</div>
+        </div>
+        <input type="number" id="input-${def.key}" value="${val}" min="0" step="1"
+          onchange="markChanged('${def.key}', this.value)"
+          oninput="markChanged('${def.key}', this.value)" />
+        <button class="btn-save" id="btn-${def.key}" onclick="saveSingle('${def.key}')">SAVE</button>
+      `;
+      grid.appendChild(row);
+    });
+  }
+
+  // ── Track changes ─────────────────────────────────────────
+  function markChanged(key, value) {
+    const original = Number(currentSettings[key]);
+    const newVal   = Number(value);
+    const row      = document.getElementById('row-' + key);
+
+    if (newVal !== original) {
+      pendingChanges[key] = newVal;
+      row.classList.add('modified');
+    } else {
+      delete pendingChanges[key];
+      row.classList.remove('modified');
+    }
+    document.getElementById('change-count').textContent = Object.keys(pendingChanges).length;
+  }
+
+  // ── Save single setting ───────────────────────────────────
+  async function saveSingle(key) {
+    const input = document.getElementById('input-' + key);
+    const btn   = document.getElementById('btn-' + key);
+    const row   = document.getElementById('row-' + key);
+    const value = Number(input.value);
+
+    btn.textContent = 'SAVING';
+    btn.classList.add('saving');
+    btn.disabled = true;
+
+    try {
+      const res  = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_settings', key, value })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        currentSettings[key] = value;
+        delete pendingChanges[key];
+        btn.textContent = 'SAVED';
+        btn.classList.remove('saving');
+        btn.classList.add('saved');
+        row.classList.remove('modified');
+        row.classList.add('saved-ok');
+        document.getElementById('change-count').textContent = Object.keys(pendingChanges).length;
+        setTimeout(() => {
+          btn.textContent = 'SAVE';
+          btn.classList.remove('saved');
+          row.classList.remove('saved-ok');
+          btn.disabled = false;
+        }, 2000);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      btn.textContent = 'ERROR';
+      btn.classList.remove('saving');
+      btn.classList.add('error');
+      row.classList.add('saved-err');
+      setTimeout(() => {
+        btn.textContent = 'SAVE';
+        btn.classList.remove('error');
+        row.classList.remove('saved-err');
+        btn.disabled = false;
+      }, 2500);
+      showToast('Save failed: ' + err.message, true);
+    }
+  }
+
+  // ── Save all pending ──────────────────────────────────────
+  async function saveAll() {
+    const keys = Object.keys(pendingChanges);
+    if (keys.length === 0) { showToast('No changes to save'); return; }
+
+    for (const key of keys) {
+      await saveSingle(key);
+      await new Promise(r => setTimeout(r, 300));
+    }
+    showToast(`${keys.length} setting${keys.length > 1 ? 's' : ''} saved`);
+  }
+
+  // ── Toast ─────────────────────────────────────────────────
+  function showToast(msg, isErr = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = 'toast show' + (isErr ? ' err' : '');
+    setTimeout(() => { t.className = 'toast' + (isErr ? ' err' : ''); }, 2800);
+  }
+</script>
+</body>
+</html>
