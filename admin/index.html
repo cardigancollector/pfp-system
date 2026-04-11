@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PfP Admin Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080b0f;
+      --surface: #0e1318;
+      --border:  #1e2d3d;
+      --accent:  #00e5ff;
+      --accent2: #ff6b00;
+      --green:   #00ff88;
+      --red:     #ff3355;
+      --yellow:  #ffd700;
+      --purple:  #bf80ff;
+      --text:    #c8d8e8;
+      --dim:     #445566;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 80px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      width: min(640px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* ── Header ── */
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .header-tag { font-size: 10px; letter-spacing: 4px; color: var(--accent); opacity: 0.6; }
+
+    .header-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px;
+      letter-spacing: 8px;
+      color: var(--accent);
+      text-shadow: 0 0 40px rgba(0,229,255,0.3);
+      line-height: 1;
+    }
+
+    .header-sub { font-size: 11px; color: var(--dim); letter-spacing: 2px; }
+
+    /* ── Auth ── */
+    .auth-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field-label { font-size: 10px; letter-spacing: 2px; color: var(--dim); margin-bottom: 6px; }
+
+    input[type="password"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--accent);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      padding: 12px 14px;
+      width: 100%;
+      outline: none;
+      letter-spacing: 2px;
+      transition: border-color 0.2s;
+    }
+
+    input[type="password"]:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--dim); opacity: 0.4; }
+
+    .btn-access {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 4px;
+      padding: 14px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.15s;
+    }
+
+    .btn-access:hover { background: #33eeff; box-shadow: 0 0 20px rgba(0,229,255,0.3); }
+
+    .status-err {
+      font-size: 11px; letter-spacing: 2px;
+      padding: 10px 14px; border-radius: 3px;
+      background: rgba(255,51,85,0.1);
+      border: 1px solid var(--red);
+      color: var(--red);
+      display: none;
+    }
+
+    /* ── Tool grid ── */
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--dim);
+      text-transform: uppercase;
+      margin-bottom: -16px;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 480px) { .tool-grid { grid-template-columns: 1fr; } }
+
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--card-color, var(--accent));
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .tool-card:hover {
+      border-color: var(--card-color, var(--accent));
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .tool-card:hover::before { opacity: 1; }
+
+    .tool-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .tool-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 4px;
+      color: var(--card-color, var(--accent));
+    }
+
+    .tool-desc {
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: var(--dim);
+      line-height: 1.6;
+    }
+
+    .tool-tag {
+      font-size: 9px;
+      letter-spacing: 2px;
+      padding: 3px 8px;
+      border-radius: 2px;
+      background: var(--card-color, var(--accent));
+      color: var(--bg);
+      align-self: flex-start;
+      opacity: 0.8;
+    }
+
+    .tool-card.coming-soon {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ── System status ── */
+    .status-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 18px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--dim);
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-dot.offline { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+    /* ── Footer ── */
+    .footer {
+      font-size: 10px; letter-spacing: 2px;
+      color: var(--dim); opacity: 0.3;
+      text-align: center;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-tag">// PFP SYSTEM</div>
+    <div class="header-title">ADMIN HUB</div>
+    <div class="header-sub">AUTHORISED ACCESS ONLY — PFP LIVING CARD SYSTEM</div>
+  </div>
+
+  <!-- Auth -->
+  <div class="auth-panel" id="auth-panel">
+    <div>
+      <div class="field-label">Admin Password</div>
+      <input type="password" id="admin-pass" placeholder="Enter admin password" />
+    </div>
+    <div class="status-err" id="auth-err">// ACCESS DENIED — INVALID PASSWORD</div>
+    <button class="btn-access" onclick="authenticate()">ACCESS SYSTEM</button>
+  </div>
+
+  <!-- Main hub (hidden until auth) -->
+  <div id="main" class="hidden" style="display:flex; flex-direction:column; gap:32px;">
+
+    <!-- System status -->
+    <div class="status-bar">
+      <div class="status-item">
+        <div class="status-dot" id="api-dot"></div>
+        <span id="api-status">CHECKING API...</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot"></div>
+        <span>GITHUB PAGES LIVE</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot"></div>
+        <span>GOOGLE SHEETS CONNECTED</span>
+      </div>
+    </div>
+
+    <!-- Admin tools -->
+    <div class="section-label">// Admin Tools</div>
+    <div class="tool-grid">
+
+      <div class="tool-card" style="--card-color: #00e5ff;" onclick="go('../qr/')">
+        <div class="tool-icon">⬛</div>
+        <div class="tool-name">QR Generator</div>
+        <div class="tool-desc">Generate and download QR codes for new cards. Single or batch generation.</div>
+        <div class="tool-tag">CARD CREATION</div>
+      </div>
+
+      <div class="tool-card" style="--card-color: #ff6b00;" onclick="go('../Settings/')">
+        <div class="tool-icon">⚙️</div>
+        <div class="tool-name">Engine Settings</div>
+        <div class="tool-desc">Adjust XP values, stage thresholds, and decay rules. Changes apply instantly.</div>
+        <div class="tool-tag">SYSTEM CONTROL</div>
+      </div>
+
+      <div class="tool-card coming-soon" style="--card-color: #00ff88;">
+        <div class="tool-icon">🃏</div>
+        <div class="tool-name">Card Creator</div>
+        <div class="tool-desc">Create and register new cards in the system database.</div>
+        <div class="tool-tag">COMING SOON</div>
+      </div>
+
+      <div class="tool-card coming-soon" style="--card-color: #ffd700;">
+        <div class="tool-icon">📊</div>
+        <div class="tool-name">System Stats</div>
+        <div class="tool-desc">View card activity, top owners, XP leaderboards, and decay reports.</div>
+        <div class="tool-tag">COMING SOON</div>
+      </div>
+
+    </div>
+
+    <!-- Public tools -->
+    <div class="section-label">// Public Pages</div>
+    <div class="tool-grid">
+
+      <div class="tool-card" style="--card-color: #bf80ff;" onclick="go('../living-card/?id=CARD-001')">
+        <div class="tool-icon">✨</div>
+        <div class="tool-name">Card Profile</div>
+        <div class="tool-desc">View a card's living profile page. Replace CARD-001 with any card ID.</div>
+        <div class="tool-tag">PUBLIC</div>
+      </div>
+
+      <div class="tool-card coming-soon" style="--card-color: #ff6b00;">
+        <div class="tool-icon">👤</div>
+        <div class="tool-name">Owner Dashboard</div>
+        <div class="tool-desc">Owner portal for viewing cards, XP, streaks and interactions.</div>
+        <div class="tool-tag">COMING SOON</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="footer">PFP SYSTEM — ADMIN HUB — NOT FOR PUBLIC ACCESS</div>
+</div>
+
+<script>
+  const ADMIN_PASSWORD = 'EvoLveA2!'; // Change to match your other admin tools
+  const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+
+  function authenticate() {
+    const pass = document.getElementById('admin-pass').value;
+    const err  = document.getElementById('auth-err');
+    if (pass === ADMIN_PASSWORD) {
+      document.getElementById('auth-panel').classList.add('hidden');
+      const main = document.getElementById('main');
+      main.classList.remove('hidden');
+      main.style.display = 'flex';
+      checkAPI();
+    } else {
+      err.style.display = 'block';
+    }
+  }
+
+  document.getElementById('admin-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') authenticate();
+  });
+
+  async function checkAPI() {
+    const dot    = document.getElementById('api-dot');
+    const status = document.getElementById('api-status');
+    try {
+      const res  = await fetch(`${API}?action=get_settings`);
+      const data = await res.json();
+      if (data.success) {
+        status.textContent = 'API ONLINE';
+      } else {
+        throw new Error();
+      }
+    } catch {
+      dot.classList.add('offline');
+      status.textContent = 'API OFFLINE';
+    }
+  }
+
+  function go(url) {
+    window.location.href = url;
+  }
+</script>
+</body>
+</html>
