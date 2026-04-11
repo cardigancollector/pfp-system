@@ -1,1 +1,587 @@
-<!-- coming soon -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PfP Admin — QR Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080b0f;
+      --surface:  #0e1318;
+      --border:   #1e2d3d;
+      --accent:   #00e5ff;
+      --accent2:  #ff6b00;
+      --text:     #c8d8e8;
+      --dim:      #445566;
+      --success:  #00ff88;
+      --danger:   #ff3355;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      width: min(560px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ── Header ── */
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    .header-tag {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      opacity: 0.6;
+      margin-bottom: 6px;
+    }
+
+    .header-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 38px;
+      letter-spacing: 6px;
+      color: var(--accent);
+      text-shadow: 0 0 30px rgba(0,229,255,0.3);
+      line-height: 1;
+    }
+
+    .header-sub {
+      font-size: 11px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      margin-top: 8px;
+    }
+
+    /* ── Auth gate ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      opacity: 0.7;
+      text-transform: uppercase;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--dim);
+      text-transform: uppercase;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--accent);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      padding: 12px 14px;
+      width: 100%;
+      outline: none;
+      letter-spacing: 2px;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent)22;
+    }
+
+    input::placeholder { color: var(--dim); opacity: 0.5; }
+
+    .btn {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 4px;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-primary:hover {
+      background: #33eeff;
+      box-shadow: 0 0 20px rgba(0,229,255,0.4);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent2);
+      border: 1px solid var(--accent2);
+    }
+
+    .btn-secondary:hover {
+      background: var(--accent2);
+      color: var(--bg);
+      box-shadow: 0 0 20px rgba(255,107,0,0.3);
+    }
+
+    .btn-download {
+      background: var(--success);
+      color: var(--bg);
+    }
+
+    .btn-download:hover {
+      box-shadow: 0 0 20px rgba(0,255,136,0.4);
+    }
+
+    .status-line {
+      font-size: 11px;
+      letter-spacing: 2px;
+      padding: 10px 14px;
+      border-radius: 3px;
+      display: none;
+    }
+
+    .status-line.error {
+      background: rgba(255,51,85,0.1);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      display: block;
+    }
+
+    .status-line.success {
+      background: rgba(0,255,136,0.07);
+      border: 1px solid var(--success);
+      color: var(--success);
+      display: block;
+    }
+
+    /* ── QR output ── */
+    .qr-section {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .qr-section.visible { display: flex; }
+
+    .qr-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .qr-meta {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .qr-meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+
+    .qr-meta-key { color: var(--dim); }
+    .qr-meta-val { color: var(--accent); }
+
+    #qr-output {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #qr-output canvas,
+    #qr-output img {
+      display: block;
+    }
+
+    .qr-url {
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: var(--dim);
+      word-break: break-all;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+    }
+
+    /* ── Batch section ── */
+    .batch-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .batch-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .batch-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .batch-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .batch-item-id { color: var(--accent); letter-spacing: 2px; }
+    .batch-item-status { color: var(--success); }
+    .batch-item-status.pending { color: var(--dim); }
+
+    /* ── Footer ── */
+    .footer {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--dim);
+      opacity: 0.4;
+      text-align: center;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-tag">// PFP SYSTEM — ADMIN</div>
+    <div class="header-title">QR GENERATOR</div>
+    <div class="header-sub">CARD CREATION TOOL — AUTHORISED ACCESS ONLY</div>
+  </div>
+
+  <!-- Auth gate -->
+  <div class="panel" id="auth-panel">
+    <div class="panel-label">// Authentication Required</div>
+    <div class="field-group">
+      <div class="field-label">Admin Password</div>
+      <input type="password" id="admin-pass" placeholder="Enter admin password" />
+    </div>
+    <div class="status-line" id="auth-status"></div>
+    <button class="btn btn-primary" onclick="authenticate()">ACCESS SYSTEM</button>
+  </div>
+
+  <!-- Main tool (hidden until auth) -->
+  <div id="main-tool" class="hidden">
+
+    <!-- Single QR generator -->
+    <div class="panel">
+      <div class="panel-label">// Generate Single QR Code</div>
+
+      <div class="field-group">
+        <div class="field-label">Card ID</div>
+        <input type="text" id="card-id-input" placeholder="e.g. CARD-001" />
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Card Name (optional — for reference)</div>
+        <input type="text" id="card-name-input" placeholder="e.g. Shadow Fox #001" />
+      </div>
+
+      <div class="status-line" id="gen-status"></div>
+      <button class="btn btn-primary" onclick="generateQR()">GENERATE QR CODE</button>
+    </div>
+
+    <!-- QR output -->
+    <div class="qr-section" id="qr-section">
+      <div class="qr-card">
+        <div class="qr-meta" id="qr-meta"></div>
+        <div id="qr-output"></div>
+        <div class="qr-url" id="qr-url"></div>
+        <div class="btn-row">
+          <button class="btn btn-download" onclick="downloadQR()">DOWNLOAD PNG</button>
+          <button class="btn btn-secondary" onclick="clearQR()">CLEAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch generator -->
+    <div class="batch-section">
+      <div class="panel-label">// Batch Queue</div>
+      <div class="batch-row">
+        <div class="field-group">
+          <div class="field-label">Start ID</div>
+          <input type="text" id="batch-start" placeholder="e.g. CARD-001" />
+        </div>
+        <div class="field-group">
+          <div class="field-label">End ID</div>
+          <input type="text" id="batch-end" placeholder="e.g. CARD-010" />
+        </div>
+        <button class="btn btn-secondary" style="width:auto; padding: 14px 18px; font-size:14px;" onclick="addBatch()">ADD</button>
+      </div>
+      <div class="batch-list" id="batch-list"></div>
+      <button class="btn btn-primary" onclick="downloadAllQR()" id="batch-download-btn" style="display:none;">DOWNLOAD ALL AS ZIP</button>
+    </div>
+
+  </div>
+
+  <div class="footer">PFP SYSTEM v1.0 — ADMIN TOOL — NOT FOR PUBLIC ACCESS</div>
+</div>
+
+<script>
+  const ADMIN_PASSWORD = 'EvoLveA2!'; // Change this to your own password
+  const BASE_URL = 'https://cardigancollector.github.io/pfp-system/living-card/?id=';
+  let currentQRCanvas = null;
+  let currentCardId = null;
+  let batchQueue = [];
+
+  // ── Auth ────────────────────────────────────────────────
+  function authenticate() {
+    const pass = document.getElementById('admin-pass').value;
+    const status = document.getElementById('auth-status');
+
+    if (pass === ADMIN_PASSWORD) {
+      document.getElementById('auth-panel').classList.add('hidden');
+      document.getElementById('main-tool').classList.remove('hidden');
+    } else {
+      status.textContent = '// ACCESS DENIED — INVALID PASSWORD';
+      status.className = 'status-line error';
+    }
+  }
+
+  document.getElementById('admin-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') authenticate();
+  });
+
+  // ── Generate single QR ─────────────────────────────────
+  function generateQR() {
+    const cardId   = document.getElementById('card-id-input').value.trim().toUpperCase();
+    const cardName = document.getElementById('card-name-input').value.trim();
+    const status   = document.getElementById('gen-status');
+
+    if (!cardId) {
+      status.textContent = '// ERROR — Card ID is required';
+      status.className = 'status-line error';
+      return;
+    }
+
+    status.className = 'status-line';
+    currentCardId = cardId;
+
+    const url = BASE_URL + encodeURIComponent(cardId);
+
+    // Clear previous
+    const output = document.getElementById('qr-output');
+    output.innerHTML = '';
+
+    new QRCode(output, {
+      text: url,
+      width: 220,
+      height: 220,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+
+    // Store canvas ref after QRCode renders
+    setTimeout(() => {
+      currentQRCanvas = output.querySelector('canvas');
+    }, 100);
+
+    // Meta
+    const now = new Date().toISOString().slice(0,19).replace('T',' ');
+    document.getElementById('qr-meta').innerHTML = `
+      <div class="qr-meta-row"><span class="qr-meta-key">CARD ID</span><span class="qr-meta-val">${cardId}</span></div>
+      ${cardName ? `<div class="qr-meta-row"><span class="qr-meta-key">CARD NAME</span><span class="qr-meta-val">${cardName}</span></div>` : ''}
+      <div class="qr-meta-row"><span class="qr-meta-key">GENERATED</span><span class="qr-meta-val">${now}</span></div>
+    `;
+
+    document.getElementById('qr-url').textContent = url;
+    document.getElementById('qr-section').classList.add('visible');
+
+    status.textContent = `// QR GENERATED — ${cardId}`;
+    status.className = 'status-line success';
+  }
+
+  document.getElementById('card-id-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') generateQR();
+  });
+
+  // ── Download single ────────────────────────────────────
+  function downloadQR() {
+    if (!currentQRCanvas) return;
+    const link = document.createElement('a');
+    link.download = `QR_${currentCardId}.png`;
+    link.href = currentQRCanvas.toDataURL('image/png');
+    link.click();
+  }
+
+  function clearQR() {
+    document.getElementById('qr-output').innerHTML = '';
+    document.getElementById('qr-section').classList.remove('visible');
+    document.getElementById('card-id-input').value = '';
+    document.getElementById('card-name-input').value = '';
+    document.getElementById('gen-status').className = 'status-line';
+    currentQRCanvas = null;
+    currentCardId = null;
+  }
+
+  // ── Batch queue ────────────────────────────────────────
+  function addBatch() {
+    const start = document.getElementById('batch-start').value.trim().toUpperCase();
+    const end   = document.getElementById('batch-end').value.trim().toUpperCase();
+
+    if (!start || !end) return;
+
+    // Parse numeric suffix e.g. CARD-001 → CARD- + 001
+    const match = start.match(/^([A-Z\-]+)(\d+)$/);
+    const matchEnd = end.match(/^([A-Z\-]+)(\d+)$/);
+    if (!match || !matchEnd) return;
+
+    const prefix  = match[1];
+    const startNum = parseInt(match[2]);
+    const endNum   = parseInt(matchEnd[2]);
+    const padLen   = match[2].length;
+
+    for (let i = startNum; i <= endNum; i++) {
+      const id = prefix + String(i).padStart(padLen, '0');
+      if (!batchQueue.find(b => b.id === id)) {
+        batchQueue.push({ id, status: 'pending' });
+      }
+    }
+
+    renderBatchList();
+    document.getElementById('batch-start').value = '';
+    document.getElementById('batch-end').value = '';
+  }
+
+  function renderBatchList() {
+    const list = document.getElementById('batch-list');
+    list.innerHTML = batchQueue.map(b => `
+      <div class="batch-item">
+        <span class="batch-item-id">${b.id}</span>
+        <span class="batch-item-status ${b.status}">${b.status === 'pending' ? '// QUEUED' : '// READY'}</span>
+      </div>
+    `).join('');
+
+    document.getElementById('batch-download-btn').style.display =
+      batchQueue.length > 0 ? 'block' : 'none';
+  }
+
+  // ── Download all as individual PNGs (zip via JSZip if available, else sequential) ──
+  async function downloadAllQR() {
+    if (batchQueue.length === 0) return;
+
+    for (const item of batchQueue) {
+      await new Promise(resolve => {
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'fixed';
+        tempDiv.style.left = '-9999px';
+        document.body.appendChild(tempDiv);
+
+        new QRCode(tempDiv, {
+          text: BASE_URL + encodeURIComponent(item.id),
+          width: 220,
+          height: 220,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H,
+        });
+
+        setTimeout(() => {
+          const canvas = tempDiv.querySelector('canvas');
+          if (canvas) {
+            const link = document.createElement('a');
+            link.download = `QR_${item.id}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          }
+          document.body.removeChild(tempDiv);
+          item.status = 'ready';
+          renderBatchList();
+          setTimeout(resolve, 400);
+        }, 200);
+      });
+    }
+  }
+</script>
+</body>
+</html>
