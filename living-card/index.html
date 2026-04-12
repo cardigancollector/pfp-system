@@ -66,7 +66,6 @@
       gap: 0;
     }
 
-    /* ── Card Frame ── */
     .card-frame {
       width: 100%;
       border-radius: 18px;
@@ -97,7 +96,6 @@
       position: relative;
     }
 
-    /* ── Top Band ── */
     .card-top {
       padding: 18px 22px 14px;
       display: flex;
@@ -125,7 +123,6 @@
       text-transform: uppercase;
     }
 
-    /* ── Visual Area ── */
     .card-visual {
       width: 100%;
       height: 280px;
@@ -174,7 +171,6 @@
       text-transform: uppercase;
     }
 
-    /* ── Stats Bar ── */
     .card-stats {
       padding: 16px 22px;
       border-top: 1px solid var(--accent-dim, #1a1a2e);
@@ -183,9 +179,7 @@
       gap: 4px;
     }
 
-    .stat {
-      text-align: center;
-    }
+    .stat { text-align: center; }
 
     .stat-value {
       font-family: 'Cinzel Decorative', serif;
@@ -202,10 +196,7 @@
       margin-top: 2px;
     }
 
-    /* ── XP Bar ── */
-    .xp-section {
-      padding: 4px 22px 18px;
-    }
+    .xp-section { padding: 4px 22px 18px; }
 
     .xp-header {
       display: flex;
@@ -243,7 +234,6 @@
       width: 0%;
     }
 
-    /* ── Owner Strip ── */
     .owner-strip {
       padding: 14px 22px;
       border-top: 1px solid var(--accent-dim, #1a1a2e);
@@ -267,7 +257,6 @@
       opacity: 0.8;
     }
 
-    /* ── Last Seen ── */
     .last-seen {
       margin-top: 16px;
       font-size: 11px;
@@ -277,7 +266,6 @@
       text-align: center;
     }
 
-    /* ── Decay Warning ── */
     .decay-warning {
       margin-top: 10px;
       padding: 10px 18px;
@@ -292,7 +280,28 @@
       display: none;
     }
 
-    /* ── Loading / Error ── */
+    /* scan toast */
+    .scan-toast {
+      margin-top: 14px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      display: none;
+    }
+    .scan-toast.success {
+      border: 1px solid #44ff8844;
+      background: #00ff4411;
+      color: #66ff99;
+    }
+    .scan-toast.already {
+      border: 1px solid #ffaa0044;
+      background: #ffaa0011;
+      color: #ffcc66;
+    }
+
     .state-screen {
       position: fixed;
       inset: 0;
@@ -344,18 +353,15 @@
 
 <canvas id="bg-canvas"></canvas>
 
-<!-- Loading screen -->
 <div class="state-screen" id="loading-screen">
   <div class="loader-ring"></div>
   <div class="loader-text">Awakening Card</div>
 </div>
 
-<!-- Error screen -->
 <div class="state-screen hidden" id="error-screen">
   <div class="error-text" id="error-msg">Card not found.</div>
 </div>
 
-<!-- Card -->
 <div class="card-container" id="card-container" style="opacity:0; transition: opacity 0.8s ease;">
 
   <div class="card-frame" id="card-frame">
@@ -409,11 +415,11 @@
 
   <div class="last-seen" id="last-seen"></div>
   <div class="decay-warning" id="decay-warning">⚠ This card is decaying</div>
+  <div class="scan-toast" id="scan-toast"></div>
 
 </div>
 
 <script>
-// ── Stage definitions ──────────────────────────────────────
 const STAGES = [
   { name: 'DORMANT',     level: 1,  minXP: 0,    nextXP: 100  },
   { name: 'AWAKENED',    level: 2,  minXP: 100,  nextXP: 250  },
@@ -444,7 +450,6 @@ const STAGE_THEMES = {
 
 const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 
-// ── Helpers ────────────────────────────────────────────────
 function getStageForXP(xp) {
   let stage = STAGES[0];
   for (const s of STAGES) { if (xp >= s.minXP) stage = s; }
@@ -468,7 +473,6 @@ function timeAgo(ts) {
 function applyTheme(stageName, grade) {
   const t = STAGE_THEMES[stageName] || STAGE_THEMES.DORMANT;
   const gc = GRADE_COLORS[grade?.toLowerCase()] || '#3a3a4a';
-  const root = document.documentElement;
 
   document.body.style.background = t.bg;
   const frame = document.getElementById('card-frame');
@@ -482,7 +486,6 @@ function applyTheme(stageName, grade) {
   inner.style.setProperty('--glow', t.glow);
   inner.style.setProperty('--accent-dim', t.bg);
 
-  // propagate to all children
   const els = ['card-id-label','stage-name','stage-level','stat-xp','stat-streak',
                 'stat-interactions','xp-next-label','owner-id','xp-fill'];
   els.forEach(id => {
@@ -503,13 +506,11 @@ function applyTheme(stageName, grade) {
     el.style.borderColor = t.accent + '22';
   });
 
-  // grade badge
   const badge = document.getElementById('grade-badge');
   badge.style.borderColor = gc;
   badge.style.color = gc;
 }
 
-// ── Background particle canvas ─────────────────────────────
 function initBgCanvas(theme) {
   const canvas = document.getElementById('bg-canvas');
   const ctx = canvas.getContext('2d');
@@ -549,7 +550,6 @@ function initBgCanvas(theme) {
   draw();
 }
 
-// ── Card visual canvas ─────────────────────────────────────
 function drawCardVisual(stageName, xp) {
   const canvas = document.getElementById('card-canvas');
   const ctx = canvas.getContext('2d');
@@ -559,11 +559,9 @@ function drawCardVisual(stageName, xp) {
 
   const W = canvas.offsetWidth, H = canvas.offsetHeight;
   const t = STAGE_THEMES[stageName] || STAGE_THEMES.DORMANT;
-  const intensity = Math.min(1, xp / 5000);
 
   ctx.clearRect(0, 0, W, H);
 
-  // Radial glow
   if (stageName !== 'DORMANT') {
     const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W * 0.7);
     grad.addColorStop(0, t.glow);
@@ -572,7 +570,6 @@ function drawCardVisual(stageName, xp) {
     ctx.fillRect(0, 0, W, H);
   }
 
-  // Orbiting rings for higher stages
   const rings = { DORMANT:0, AWAKENED:1, GROWING:1, ESTABLISHED:2, RENOWNED:2, LEGENDARY:3, MYTHIC:4 };
   const ringCount = rings[stageName] || 0;
   const now = Date.now() / 1000;
@@ -592,7 +589,6 @@ function drawCardVisual(stageName, xp) {
     ctx.restore();
   }
 
-  // MYTHIC: extra star burst
   if (stageName === 'MYTHIC') {
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2 + now * 0.1;
@@ -609,57 +605,89 @@ function drawCardVisual(stageName, xp) {
   requestAnimationFrame(() => drawCardVisual(stageName, xp));
 }
 
+// ── Auto-scan on load ──────────────────────────────────────
+async function fireQRScan(cardId, ownerToken) {
+  const toast = document.getElementById('scan-toast');
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'qr_scan',
+        cardId: cardId,
+        ownerToken: ownerToken
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast.textContent = '✦ +10 XP awarded — scan logged';
+      toast.className = 'scan-toast success';
+      toast.style.display = 'block';
+    } else {
+      // Already scanned today or other soft error — show quietly
+      toast.textContent = 'Scan recorded';
+      toast.className = 'scan-toast already';
+      toast.style.display = 'block';
+    }
+  } catch(e) {
+    // Fail silently — card still displays
+  }
+}
+
 // ── Fetch & render ─────────────────────────────────────────
 async function loadCard() {
-  const params = new URLSearchParams(window.location.search);
-  const cardId = params.get('id');
+  const params     = new URLSearchParams(window.location.search);
+  const cardId     = params.get('id') || params.get('card_id');
+  const ownerToken = params.get('owner_token') || params.get('ownerToken');
 
   if (!cardId) return showError('No card ID specified.');
 
   try {
-    const res = await fetch(`${API}?action=get_card&cardId=${encodeURIComponent(cardId)}`);
+    const res  = await fetch(`${API}?action=get_card&card_id=${encodeURIComponent(cardId)}`);
     const data = await res.json();
 
     if (!data.success) return showError(data.error || 'Card not found.');
 
     renderCard(data);
+
+    // Fire scan XP only if owner token is present in URL
+    if (ownerToken) {
+      fireQRScan(cardId, ownerToken);
+    }
+
   } catch (e) {
     showError('Could not reach the card server.');
   }
 }
 
 function renderCard(data) {
-  const xp      = data.totalXP || 0;
-  const stage   = getStageForXP(xp);
-  const theme   = STAGE_THEMES[stage.name] || STAGE_THEMES.DORMANT;
-  const grade   = data.grade || 'copper';
+  const xp        = data.totalXP || 0;
+  const stage     = getStageForXP(xp);
+  const theme     = STAGE_THEMES[stage.name] || STAGE_THEMES.DORMANT;
+  const grade     = data.grade || 'copper';
   const daysSince = data.daysSinceInteraction || 0;
 
-  // Apply visuals
   applyTheme(stage.name, grade);
   initBgCanvas(theme);
   drawCardVisual(stage.name, xp);
 
-  // Populate text
-  document.getElementById('card-id-label').textContent    = data.cardId;
-  document.getElementById('grade-badge').textContent      = grade.toUpperCase();
-  document.getElementById('stage-name').textContent       = stage.name;
-  document.getElementById('stage-level').textContent      = `Level ${stage.level}`;
-  document.getElementById('stat-xp').textContent          = xp.toLocaleString();
-  document.getElementById('stat-streak').textContent      = data.streak || 0;
+  document.getElementById('card-id-label').textContent     = data.cardId;
+  document.getElementById('grade-badge').textContent       = grade.toUpperCase();
+  document.getElementById('stage-name').textContent        = stage.name;
+  document.getElementById('stage-level').textContent       = `Level ${stage.level}`;
+  document.getElementById('stat-xp').textContent           = xp.toLocaleString();
+  document.getElementById('stat-streak').textContent       = data.streak || 0;
   document.getElementById('stat-interactions').textContent = data.totalInteractions || 0;
-  document.getElementById('owner-id').textContent         = data.ownerId || '—';
-  document.getElementById('last-seen').textContent        = timeAgo(data.lastInteraction);
+  document.getElementById('owner-id').textContent          = data.ownerId || '—';
+  document.getElementById('last-seen').textContent         = timeAgo(data.lastInteraction);
 
-  // XP progress bar
-  const progress = xpProgress(xp, stage);
+  const progress  = xpProgress(xp, stage);
   const nextLabel = stage.nextXP ? `${xp} / ${stage.nextXP} XP` : 'MAX';
   document.getElementById('xp-next-label').textContent = nextLabel;
   setTimeout(() => {
     document.getElementById('xp-fill').style.width = (progress * 100) + '%';
   }, 300);
 
-  // Decay warning
   if (daysSince >= 1) {
     const w = document.getElementById('decay-warning');
     w.style.display = 'block';
@@ -667,7 +695,6 @@ function renderCard(data) {
     else if (daysSince >= 3) w.textContent = '⚠ This card is decaying rapidly';
   }
 
-  // Reveal
   document.getElementById('loading-screen').classList.add('hidden');
   const container = document.getElementById('card-container');
   container.style.opacity = '1';
