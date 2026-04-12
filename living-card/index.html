@@ -635,7 +635,7 @@ async function loadCard() {
   if (!cardId) return showError('No card ID specified.');
 
   try {
-    const res  = await fetch(`${API}?action=get_card&card_id=${encodeURIComponent(cardId)}`);
+    const res  = await fetch(`${API}?action=get_card&card_id=${encodeURIComponent(cardId)}`, { redirect: 'follow' });
     const data = await res.json();
 
     if (!data.success) return showError(data.error || 'Card not found.');
