@@ -1319,13 +1319,13 @@ async function logScan() {
         cardData['Current XP'] = data.totalXP;
       }
     } else {
-      btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today\'s Scan — +10 XP';
+      btn.innerHTML = "<span class=\"scan-btn-icon\">📱</span> Log Today's Scan - +10 XP";
       feedback.textContent = data.error || 'Scan could not be logged.';
       feedback.className = 'scan-feedback error';
       btn.disabled = false;
     }
   } catch(e) {
-    btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today\'s Scan — +10 XP';
+    btn.innerHTML = "<span class=\"scan-btn-icon\">📱</span> Log Today's Scan - +10 XP";
     feedback.textContent = 'Connection error — try again.';
     feedback.className = 'scan-feedback error';
     btn.disabled = false;
