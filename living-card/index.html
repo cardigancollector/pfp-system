@@ -627,6 +627,31 @@ async function fireQRScan(cardId, ownerToken) {
   }
 }
 
+function fetchViaScript(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_pfp_cb_' + Date.now();
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (script.parentNode) document.body.removeChild(script);
+      reject(new Error('timeout'));
+    }, 8000);
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = url + '&callback=' + cbName;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('script error'));
+    };
+    document.body.appendChild(script);
+  });
+}
+
 async function loadCard() {
   const params     = new URLSearchParams(window.location.search);
   const cardId     = params.get('id') || params.get('card_id');
@@ -634,22 +659,25 @@ async function loadCard() {
 
   if (!cardId) return showError('No card ID specified.');
 
+  const url = `${API}?action=get_card&card_id=${encodeURIComponent(cardId)}`;
+  let data = null;
+
   try {
-    const res  = await fetch(`${API}?action=get_card&card_id=${encodeURIComponent(cardId)}`, { redirect: 'follow' });
-    const data = await res.json();
-
-    if (!data.success) return showError(data.error || 'Card not found.');
-
-    // API returns data inside data.card — extract it here
-    renderCard(data.card);
-
-    if (ownerToken) {
-      fireQRScan(cardId, ownerToken);
+    const res = await fetch(url);
+    data = await res.json();
+  } catch(e) {
+    try {
+      data = await fetchViaScript(url);
+    } catch(e2) {
+      return showError('Could not reach the card server.');
     }
-
-  } catch (e) {
-    showError('Could not reach the card server.');
   }
+
+  if (!data || !data.success) return showError((data && data.error) || 'Card not found.');
+
+  renderCard(data.card);
+
+  if (ownerToken) fireQRScan(cardId, ownerToken);
 }
 
 function renderCard(card) {
