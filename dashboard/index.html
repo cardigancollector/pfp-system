@@ -813,12 +813,25 @@
 
     <!-- Charts Row -->
     <div class="section-title animate-in delay-2">Activity Analytics</div>
-    <div class="animate-in delay-3">
+    <div class="two-col animate-in delay-3">
+      <!-- XP Sources -->
       <div class="glass chart-wrap">
         <div class="chart-title">XP Sources Breakdown</div>
-        <div class="chart-canvas-wrap" style="height:220px;">
+        <div class="chart-canvas-wrap" style="height:200px;">
           <canvas id="sourceChart"></canvas>
         </div>
+      </div>
+      <!-- Global Rank -->
+      <div class="glass rank-wrap">
+        <div class="rank-number" id="d-rank">#—</div>
+        <div class="rank-label">Global Rank</div>
+        <div class="rank-divider"></div>
+        <div class="rank-stat"><span class="rank-stat-label">XP Percentile</span><span class="rank-stat-val" id="d-percentile">—</span></div>
+        <div class="rank-stat"><span class="rank-stat-label">Top</span><span class="rank-stat-val" id="d-top">—%</span></div>
+        <div class="rank-stat"><span class="rank-stat-label">Interactions/Day</span><span class="rank-stat-val" id="d-ipd">—</span></div>
+        <div class="rank-stat"><span class="rank-stat-label">XP Earned Today</span><span class="rank-stat-val" id="d-today-xp">—</span></div>
+        <div class="rank-divider"></div>
+        <div style="font-size:0.72rem;color:var(--text-dim);font-style:italic;line-height:1.5;" id="d-rank-note"></div>
       </div>
     </div>
 
@@ -834,7 +847,6 @@
           <span><span style="display:inline-block;width:10px;height:10px;background:rgba(192,57,43,0.4);border-radius:2px;margin-right:4px;"></span>Decay</span>
         </div>
       </div>
-
       <!-- Card Health -->
       <div class="glass health-wrap">
         <div class="chart-title">Card Health Index</div>
@@ -870,9 +882,9 @@
       </div>
     </div>
 
-    <!-- Card Details + Milestones + Rank -->
+    <!-- Card Details + Milestones -->
     <div class="section-title animate-in delay-4">Card Details & Milestones</div>
-    <div class="three-col animate-in delay-4">
+    <div class="two-col animate-in delay-4">
       <!-- Card Profile -->
       <div class="glass">
         <div class="chart-title" style="padding:24px 24px 0;">Card Profile</div>
@@ -880,18 +892,6 @@
       </div>
       <!-- Milestones -->
       <div class="glass milestone-list" id="milestone-list"></div>
-      <!-- Rank -->
-      <div class="glass rank-wrap">
-        <div class="rank-number" id="d-rank">#—</div>
-        <div class="rank-label">Global Rank</div>
-        <div class="rank-divider"></div>
-        <div class="rank-stat"><span class="rank-stat-label">XP Percentile</span><span class="rank-stat-val" id="d-percentile">—</span></div>
-        <div class="rank-stat"><span class="rank-stat-label">Top</span><span class="rank-stat-val" id="d-top">—%</span></div>
-        <div class="rank-stat"><span class="rank-stat-label">Interactions/Day</span><span class="rank-stat-val" id="d-ipd">—</span></div>
-        <div class="rank-stat"><span class="rank-stat-label">XP Earned Today</span><span class="rank-stat-val" id="d-today-xp">—</span></div>
-        <div class="rank-divider"></div>
-        <div style="font-size:0.72rem;color:var(--text-dim);font-style:italic;line-height:1.5;" id="d-rank-note"></div>
-      </div>
     </div>
 
     <!-- Interaction Log -->
