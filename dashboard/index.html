@@ -1293,40 +1293,32 @@ async function logScan() {
   }
 
   btn.disabled = true;
-  btn.innerHTML = '<span class="scan-btn-icon">⏳</span> Logging scan…';
+  btn.innerHTML = '<span class="scan-btn-icon">⏳</span> Logging scan...';
   feedback.textContent = '';
   feedback.className = 'scan-feedback';
 
   try {
-    const res = await fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'qr_scan',
-        cardId: cardId,
-        ownerToken: ownerToken
-      })
-    });
+    const url = API + '?action=qr_scan&card_id=' + encodeURIComponent(cardId) + '&owner_token=' + encodeURIComponent(ownerToken);
+    const res  = await fetch(url);
     const data = await res.json();
 
     if (data.success) {
-      btn.innerHTML = '<span class="scan-btn-icon">✦</span> Scan Logged — +10 XP Awarded';
-      feedback.textContent = `XP: ${data.totalXP?.toLocaleString() || '—'}  ·  Stage: ${data.stage || '—'}`;
+      btn.innerHTML = '<span class="scan-btn-icon">✦</span> Scan Logged - +10 XP Awarded';
+      feedback.textContent = 'XP: ' + (data.totalXP ? data.totalXP.toLocaleString() : '--') + '  Stage: ' + (data.stage || '--');
       feedback.className = 'scan-feedback success';
-      // Update XP display live
       if (data.totalXP !== undefined) {
         document.getElementById('d-xp').textContent = data.totalXP.toLocaleString();
         cardData['Current XP'] = data.totalXP;
       }
     } else {
-      btn.innerHTML = "<span class=\"scan-btn-icon\">📱</span> Log Today's Scan - +10 XP";
+      btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today Scan - +10 XP';
       feedback.textContent = data.error || 'Scan could not be logged.';
       feedback.className = 'scan-feedback error';
       btn.disabled = false;
     }
   } catch(e) {
-    btn.innerHTML = "<span class=\"scan-btn-icon\">📱</span> Log Today's Scan - +10 XP";
-    feedback.textContent = 'Connection error — try again.';
+    btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today Scan - +10 XP';
+    feedback.textContent = 'Connection error - try again.';
     feedback.className = 'scan-feedback error';
     btn.disabled = false;
   }
