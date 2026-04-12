@@ -754,10 +754,10 @@
         <div class="owner-name" id="d-owner-name">Loading…</div>
         <div class="owner-since" id="d-owner-since"></div>
         <div style="margin-top:12px;" id="d-grade-badge"></div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;flex-shrink:0;">
-        <div style="font-family:'Cinzel Decorative',serif;font-size:2.6rem;font-weight:900;color:var(--gold);text-shadow:0 0 30px rgba(201,168,76,0.4);line-height:1;letter-spacing:0.04em;" id="d-rank-hero">#—</div>
-        <div style="font-size:0.6rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--text-dim);">Global Rank</div>
+        <div style="margin-top:24px;display:flex;align-items:baseline;gap:12px;">
+          <div style="font-family:'Cinzel Decorative',serif;font-size:5rem;font-weight:900;color:var(--gold);text-shadow:0 0 50px rgba(201,168,76,0.5);line-height:1;" id="d-rank-hero">#—</div>
+          <div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-dim);padding-bottom:8px;">Global Rank</div>
+        </div>
       </div>
       <div class="owner-art-badge">
         <img src="pfp_card46.jpg" alt="Card Art">
@@ -1083,6 +1083,7 @@ function buildDashboard(c) {
     (interactions / Math.max(1, Math.floor((Date.now() - new Date(c['Claim Date']).getTime()) / 86400000))).toFixed(2) : '0.00';
 
   document.getElementById('d-rank').textContent = '#' + rank;
+  document.getElementById('d-rank-hero').textContent = '#' + rank;
   document.getElementById('d-rank-hero').textContent = '#' + rank;
   document.getElementById('d-percentile').textContent = `Top ${topPct}%`;
   document.getElementById('d-top').textContent = topPct;
