@@ -704,6 +704,55 @@
   }
 
   /* ── RESPONSIVE ── */
+  /* ── SCAN BUTTON ── */
+  .scan-btn-wrap {
+    margin-bottom: 32px;
+    animation: fadeUp 0.5s ease both;
+    animation-delay: 0.15s;
+  }
+  .scan-btn {
+    width: 100%;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.14));
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .scan-btn:hover {
+    background: linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.28));
+    box-shadow: 0 0 40px rgba(201,168,76,0.2);
+  }
+  .scan-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: var(--glass-border);
+    color: var(--text-dim);
+  }
+  .scan-btn-icon { font-size: 1.2rem; }
+  .scan-feedback {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.8rem;
+    font-style: italic;
+    min-height: 20px;
+    transition: all 0.3s;
+  }
+  .scan-feedback.success { color: var(--green); }
+  .scan-feedback.error   { color: var(--red); }
+  .scan-feedback.already { color: var(--gold-dim); }
+
   @media (max-width: 900px) {
     .stat-grid { grid-template-columns: repeat(2, 1fr); }
     .two-col, .three-col { grid-template-columns: 1fr; }
@@ -762,6 +811,15 @@
       <div class="owner-art-badge">
         <img src="pfp_card46.jpg" alt="Card Art">
       </div>
+    </div>
+
+    <!-- Log Scan Button -->
+    <div class="scan-btn-wrap">
+      <button class="scan-btn" id="scan-btn" onclick="logScan()">
+        <span class="scan-btn-icon">📱</span>
+        Log Today's Scan — +10 XP
+      </button>
+      <div class="scan-feedback" id="scan-feedback"></div>
     </div>
 
     <!-- Stat Cards -->
@@ -1220,6 +1278,58 @@ function buildLog(interactions, xp, daysSince) {
       <div class="log-xp ${isNeg ? 'neg' : 'pos'}">${t.xp}</div>
     </div>`;
   }).join('') || '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet.</div>';
+}
+
+// ── Log Scan ──────────────────────────────────────────────
+async function logScan() {
+  const btn      = document.getElementById('scan-btn');
+  const feedback = document.getElementById('scan-feedback');
+  const cardId   = cardData['Card ID'];
+
+  if (!cardId || !ownerToken) {
+    feedback.textContent = 'Missing card ID or token.';
+    feedback.className = 'scan-feedback error';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="scan-btn-icon">⏳</span> Logging scan…';
+  feedback.textContent = '';
+  feedback.className = 'scan-feedback';
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'qr_scan',
+        cardId: cardId,
+        ownerToken: ownerToken
+      })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      btn.innerHTML = '<span class="scan-btn-icon">✦</span> Scan Logged — +10 XP Awarded';
+      feedback.textContent = `XP: ${data.totalXP?.toLocaleString() || '—'}  ·  Stage: ${data.stage || '—'}`;
+      feedback.className = 'scan-feedback success';
+      // Update XP display live
+      if (data.totalXP !== undefined) {
+        document.getElementById('d-xp').textContent = data.totalXP.toLocaleString();
+        cardData['Current XP'] = data.totalXP;
+      }
+    } else {
+      btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today's Scan — +10 XP';
+      feedback.textContent = data.error || 'Scan could not be logged.';
+      feedback.className = 'scan-feedback error';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today's Scan — +10 XP';
+    feedback.textContent = 'Connection error — try again.';
+    feedback.className = 'scan-feedback error';
+    btn.disabled = false;
+  }
 }
 
 // Enter key support
