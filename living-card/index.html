@@ -693,7 +693,7 @@ function renderCard(card) {
   const printRun       = card['Print Run']                  || '';
 
   // Derive grade from Print Run field
-  const grade = (printRun || '').toLowerCase().split(' ')[0] || 'copper';
+  const grade = String(printRun || '').toLowerCase().split(' ')[0] || 'copper';
 
   // Use the stage from the sheet — this is the source of truth
   const theme    = STAGE_THEMES[stageName] || STAGE_THEMES.DORMANT;
