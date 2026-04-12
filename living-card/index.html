@@ -280,7 +280,6 @@
       display: none;
     }
 
-    /* scan toast */
     .scan-toast {
       margin-top: 14px;
       padding: 10px 18px;
@@ -605,18 +604,13 @@ function drawCardVisual(stageName, xp) {
   requestAnimationFrame(() => drawCardVisual(stageName, xp));
 }
 
-// ── Auto-scan on load ──────────────────────────────────────
 async function fireQRScan(cardId, ownerToken) {
   const toast = document.getElementById('scan-toast');
   try {
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'qr_scan',
-        cardId: cardId,
-        ownerToken: ownerToken
-      })
+      body: JSON.stringify({ action: 'qr_scan', cardId, ownerToken })
     });
     const data = await res.json();
     if (data.success) {
@@ -624,17 +618,15 @@ async function fireQRScan(cardId, ownerToken) {
       toast.className = 'scan-toast success';
       toast.style.display = 'block';
     } else {
-      // Already scanned today or other soft error — show quietly
       toast.textContent = 'Scan recorded';
       toast.className = 'scan-toast already';
       toast.style.display = 'block';
     }
   } catch(e) {
-    // Fail silently — card still displays
+    // Fail silently
   }
 }
 
-// ── Fetch & render ─────────────────────────────────────────
 async function loadCard() {
   const params     = new URLSearchParams(window.location.search);
   const cardId     = params.get('id') || params.get('card_id');
@@ -648,9 +640,9 @@ async function loadCard() {
 
     if (!data.success) return showError(data.error || 'Card not found.');
 
-    renderCard(data);
+    // API returns data inside data.card — extract it here
+    renderCard(data.card);
 
-    // Fire scan XP only if owner token is present in URL
     if (ownerToken) {
       fireQRScan(cardId, ownerToken);
     }
@@ -660,29 +652,41 @@ async function loadCard() {
   }
 }
 
-function renderCard(data) {
-  const xp        = data.totalXP || 0;
-  const stage     = getStageForXP(xp);
-  const theme     = STAGE_THEMES[stage.name] || STAGE_THEMES.DORMANT;
-  const grade     = data.grade || 'copper';
-  const daysSince = data.daysSinceInteraction || 0;
+function renderCard(card) {
+  // Read directly from the card object using exact sheet column names
+  const xp             = Number(card['Current XP'])        || 0;
+  const stageName      = (card['Evolution Stage']          || 'DORMANT').toUpperCase().trim();
+  const level          = Number(card['Current Level'])      || 1;
+  const streak         = Number(card['Streak (days)'])      || 0;
+  const totalInt       = Number(card['Total Interactions']) || 0;
+  const lastInteraction= card['Last Interaction']           || null;
+  const daysSince      = Number(card['Days Since Scan'])    || 0;
+  const ownerId        = card['Current Owner Token']        || '—';
+  const printRun       = card['Print Run']                  || '';
 
-  applyTheme(stage.name, grade);
+  // Derive grade from Print Run field
+  const grade = (printRun || '').toLowerCase().split(' ')[0] || 'copper';
+
+  // Use the stage from the sheet — this is the source of truth
+  const theme    = STAGE_THEMES[stageName] || STAGE_THEMES.DORMANT;
+  const stageObj = STAGES.find(s => s.name === stageName) || STAGES[0];
+
+  applyTheme(stageName, grade);
   initBgCanvas(theme);
-  drawCardVisual(stage.name, xp);
+  drawCardVisual(stageName, xp);
 
-  document.getElementById('card-id-label').textContent     = data.cardId;
+  document.getElementById('card-id-label').textContent     = card['Card ID'] || '—';
   document.getElementById('grade-badge').textContent       = grade.toUpperCase();
-  document.getElementById('stage-name').textContent        = stage.name;
-  document.getElementById('stage-level').textContent       = `Level ${stage.level}`;
+  document.getElementById('stage-name').textContent        = stageName;
+  document.getElementById('stage-level').textContent       = `Level ${level}`;
   document.getElementById('stat-xp').textContent           = xp.toLocaleString();
-  document.getElementById('stat-streak').textContent       = data.streak || 0;
-  document.getElementById('stat-interactions').textContent = data.totalInteractions || 0;
-  document.getElementById('owner-id').textContent          = data.ownerId || '—';
-  document.getElementById('last-seen').textContent         = timeAgo(data.lastInteraction);
+  document.getElementById('stat-streak').textContent       = streak;
+  document.getElementById('stat-interactions').textContent = totalInt;
+  document.getElementById('owner-id').textContent          = ownerId;
+  document.getElementById('last-seen').textContent         = timeAgo(lastInteraction);
 
-  const progress  = xpProgress(xp, stage);
-  const nextLabel = stage.nextXP ? `${xp} / ${stage.nextXP} XP` : 'MAX';
+  const progress  = xpProgress(xp, stageObj);
+  const nextLabel = stageObj.nextXP ? `${xp} / ${stageObj.nextXP} XP` : 'MAX';
   document.getElementById('xp-next-label').textContent = nextLabel;
   setTimeout(() => {
     document.getElementById('xp-fill').style.width = (progress * 100) + '%';
@@ -696,8 +700,7 @@ function renderCard(data) {
   }
 
   document.getElementById('loading-screen').classList.add('hidden');
-  const container = document.getElementById('card-container');
-  container.style.opacity = '1';
+  document.getElementById('card-container').style.opacity = '1';
 }
 
 function showError(msg) {
