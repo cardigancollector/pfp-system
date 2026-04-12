@@ -257,16 +257,32 @@
   }
   .owner-art-badge {
     position: relative;
-    width: 120px;
-    height: 164px;
+    width: 260px;
+    height: 355px;
     flex-shrink: 0;
   }
   .owner-art-badge img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border: 2px solid var(--gold-dim);
-    box-shadow: 0 0 30px rgba(201,168,76,0.2);
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 60px rgba(201,168,76,0.4), 0 30px 80px rgba(0,0,0,0.7);
+  }
+  .owner-art-badge::before {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border: 1px solid rgba(201,168,76,0.2);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .owner-art-badge::after {
+    content: '';
+    position: absolute;
+    inset: -14px;
+    border: 1px solid rgba(201,168,76,0.07);
+    pointer-events: none;
+    z-index: 1;
   }
 
   /* ── SECTION TITLE ── */
@@ -796,25 +812,10 @@
 
     <!-- Charts Row -->
     <div class="section-title animate-in delay-2">Activity Analytics</div>
-    <div class="three-col animate-in delay-3">
-      <!-- XP Over Time -->
+    <div class="animate-in delay-3">
       <div class="glass chart-wrap">
-        <div class="chart-title">XP History (30 Days)</div>
-        <div class="chart-canvas-wrap">
-          <canvas id="xpChart"></canvas>
-        </div>
-      </div>
-      <!-- Interaction Breakdown -->
-      <div class="glass chart-wrap">
-        <div class="chart-title">Interaction Types</div>
-        <div class="chart-canvas-wrap">
-          <canvas id="typeChart"></canvas>
-        </div>
-      </div>
-      <!-- XP Sources -->
-      <div class="glass chart-wrap">
-        <div class="chart-title">XP Sources</div>
-        <div class="chart-canvas-wrap">
+        <div class="chart-title">XP Sources Breakdown</div>
+        <div class="chart-canvas-wrap" style="height:220px;">
           <canvas id="sourceChart"></canvas>
         </div>
       </div>
@@ -1158,68 +1159,6 @@ function buildCharts(xp, stageIdx, interactions, daysSince) {
 
   Chart.defaults.color = '#9a8a6a';
   Chart.defaults.font.family = "'EB Garamond', serif";
-
-  // XP History
-  const labels = [];
-  const xpData = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    labels.push(i % 5 === 0 ? d.toLocaleDateString('en',{month:'short',day:'numeric'}) : '');
-    const base = Math.max(0, xp - (i * 12) - Math.random()*30);
-    xpData.push(Math.round(base));
-  }
-  new Chart(document.getElementById('xpChart'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data: xpData,
-        borderColor: gold,
-        backgroundColor: 'rgba(201,168,76,0.08)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointHoverBackgroundColor: gold,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: 'rgba(201,168,76,0.05)' }, ticks: { maxRotation: 0 } },
-        y: { grid: { color: 'rgba(201,168,76,0.05)' }, ticks: { callback: v => v.toLocaleString() } }
-      }
-    }
-  });
-
-  // Interaction Types
-  new Chart(document.getElementById('typeChart'), {
-    type: 'doughnut',
-    data: {
-      labels: ['QR Scan','Streak','Endorsement','Public View','Event'],
-      datasets: [{
-        data: [
-          Math.round(interactions * 0.45),
-          Math.round(interactions * 0.25),
-          Math.round(interactions * 0.12),
-          Math.round(interactions * 0.10),
-          Math.round(interactions * 0.08),
-        ],
-        backgroundColor: [gold, goldDim, '#8b5e3c', '#4a3f2a', charcoal],
-        borderColor: '#0e0c09',
-        borderWidth: 3,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom', labels: { padding: 10, boxWidth: 10 } }
-      },
-      cutout: '68%',
-    }
-  });
 
   // XP Sources
   const xpSources = [
