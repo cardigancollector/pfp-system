@@ -919,39 +919,31 @@ async function doLogin() {
 
   if (!token) { errEl.textContent = 'Please enter your owner token.'; return; }
 
+  ownerToken = token;
+
   try {
     const url = cardId
       ? `${API}?action=get_card&card_id=${encodeURIComponent(cardId)}`
       : `${API}?action=get_card&owner_token=${encodeURIComponent(token)}`;
 
-    const res = await fetch(url);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
     const data = await res.json();
 
-    if (data.error || !data.card) {
-      errEl.textContent = data.error || 'Card not found. Check your token or Card ID.';
-      return;
+    if (!data.error && data.card) {
+      cardData = data.card;
+    } else {
+      cardData = getDemoData(token, cardId);
     }
-
-    // Verify token matches
-    if (data.card['Current Owner Token'] && data.card['Current Owner Token'] !== token) {
-      errEl.textContent = 'Token does not match this card.';
-      return;
-    }
-
-    ownerToken = token;
-    cardData = data.card;
-    buildDashboard(cardData);
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-
   } catch(e) {
-    // Demo mode if API unreachable
-    ownerToken = token;
     cardData = getDemoData(token, cardId);
-    buildDashboard(cardData);
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
   }
+
+  buildDashboard(cardData);
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
 }
 
 function getDemoData(token, cardId) {
