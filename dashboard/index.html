@@ -39,7 +39,6 @@
     overflow-x: hidden;
   }
 
-  /* ── BACKGROUND ── */
   .bg-layer {
     position: fixed;
     inset: 0;
@@ -52,13 +51,49 @@
   .bg-overlay {
     position: fixed;
     inset: 0;
-    background: linear-gradient(
-      160deg,
-      rgba(14,12,9,0.88) 0%,
-      rgba(14,12,9,0.75) 40%,
-      rgba(14,12,9,0.82) 100%
-    );
+    background: linear-gradient(160deg, rgba(14,12,9,0.88) 0%, rgba(14,12,9,0.75) 40%, rgba(14,12,9,0.82) 100%);
     z-index: 1;
+  }
+
+  /* ── READ-ONLY BANNER ── */
+  #readonly-banner {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: rgba(14,12,9,0.97);
+    border-bottom: 1px solid rgba(201,168,76,0.3);
+    padding: 10px 40px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    backdrop-filter: blur(12px);
+  }
+  #readonly-banner .banner-text {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+  }
+  #readonly-banner .banner-text strong {
+    color: var(--gold);
+  }
+  #readonly-banner .banner-login-btn {
+    background: none;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 7px 18px;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  #readonly-banner .banner-login-btn:hover {
+    background: rgba(201,168,76,0.1);
   }
 
   /* ── LOGIN SCREEN ── */
@@ -81,7 +116,6 @@
     width: auto;
     opacity: 0.5;
     pointer-events: none;
-    filter: none;
   }
 
   .login-box {
@@ -112,7 +146,6 @@
     text-transform: uppercase;
     margin-bottom: 36px;
   }
-
   .login-label {
     display: block;
     text-align: left;
@@ -122,7 +155,6 @@
     color: var(--text-dim);
     margin-bottom: 8px;
   }
-
   .login-input {
     width: 100%;
     background: rgba(255,255,255,0.04);
@@ -136,11 +168,7 @@
     transition: border-color 0.3s, background 0.3s;
     margin-bottom: 12px;
   }
-  .login-input:focus {
-    border-color: var(--gold);
-    background: rgba(201,168,76,0.05);
-  }
-
+  .login-input:focus { border-color: var(--gold); background: rgba(201,168,76,0.05); }
   .login-btn {
     width: 100%;
     margin-top: 16px;
@@ -157,7 +185,6 @@
     transition: all 0.3s;
   }
   .login-btn:hover { background: linear-gradient(135deg, var(--gold), var(--gold-light)); }
-
   .login-error {
     color: var(--red);
     font-size: 0.82rem;
@@ -167,14 +194,8 @@
   }
 
   /* ── MAIN DASHBOARD ── */
-  #dashboard {
-    position: relative;
-    z-index: 2;
-    display: none;
-    min-height: 100vh;
-  }
+  #dashboard { position: relative; z-index: 2; display: none; min-height: 100vh; }
 
-  /* ── HEADER ── */
   .header {
     position: sticky;
     top: 0;
@@ -188,26 +209,10 @@
     justify-content: space-between;
     backdrop-filter: blur(12px);
   }
-  .header-logo {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 1.3rem;
-    color: var(--gold);
-    letter-spacing: 0.06em;
-  }
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-  }
-  .header-token {
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-  }
-  .header-token span {
-    color: var(--gold);
-    font-family: 'Cinzel', serif;
-  }
+  .header-logo { font-family: 'Cinzel Decorative', serif; font-size: 1.3rem; color: var(--gold); letter-spacing: 0.06em; }
+  .header-right { display: flex; align-items: center; gap: 24px; }
+  .header-token { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.1em; }
+  .header-token span { color: var(--gold); font-family: 'Cinzel', serif; }
   .logout-btn {
     background: none;
     border: 1px solid var(--glass-border);
@@ -221,495 +226,33 @@
   }
   .logout-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-  /* ── CONTENT ── */
-  .content {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 40px 40px 80px;
-  }
+  .content { max-width: 1400px; margin: 0 auto; padding: 40px 40px 80px; }
 
-  /* ── OWNER HERO ── */
-  .owner-hero {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 32px;
-    margin-bottom: 40px;
-    align-items: end;
-  }
-  .owner-greeting {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 0.72rem;
-    color: var(--gold-dim);
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .owner-name {
-    font-family: 'Cinzel', serif;
-    font-size: 2.4rem;
-    color: var(--text);
-    font-weight: 700;
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .owner-since {
-    font-size: 0.88rem;
-    color: var(--text-dim);
-    font-style: italic;
-  }
-  .owner-art-badge {
-    position: relative;
-    width: 260px;
-    height: 355px;
-    flex-shrink: 0;
-  }
-  .owner-art-badge img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border: 2px solid var(--gold);
-    box-shadow: 0 0 60px rgba(201,168,76,0.4), 0 30px 80px rgba(0,0,0,0.7);
-  }
-  .owner-art-badge::before {
-    content: '';
-    position: absolute;
-    inset: -7px;
-    border: 1px solid rgba(201,168,76,0.2);
-    pointer-events: none;
-    z-index: 1;
-  }
-  .owner-art-badge::after {
-    content: '';
-    position: absolute;
-    inset: -14px;
-    border: 1px solid rgba(201,168,76,0.07);
-    pointer-events: none;
-    z-index: 1;
-  }
+  .owner-hero { display: grid; grid-template-columns: 1fr auto; gap: 32px; margin-bottom: 40px; align-items: end; }
+  .owner-greeting { font-family: 'Cinzel Decorative', serif; font-size: 0.72rem; color: var(--gold-dim); letter-spacing: 0.35em; text-transform: uppercase; margin-bottom: 6px; }
+  .owner-name { font-family: 'Cinzel', serif; font-size: 2.4rem; color: var(--text); font-weight: 700; line-height: 1; margin-bottom: 8px; }
+  .owner-since { font-size: 0.88rem; color: var(--text-dim); font-style: italic; }
+  .owner-art-badge { position: relative; width: 260px; height: 355px; flex-shrink: 0; }
+  .owner-art-badge img { width: 100%; height: 100%; object-fit: cover; border: 2px solid var(--gold); box-shadow: 0 0 60px rgba(201,168,76,0.4), 0 30px 80px rgba(0,0,0,0.7); }
+  .owner-art-badge::before { content: ''; position: absolute; inset: -7px; border: 1px solid rgba(201,168,76,0.2); pointer-events: none; z-index: 1; }
+  .owner-art-badge::after { content: ''; position: absolute; inset: -14px; border: 1px solid rgba(201,168,76,0.07); pointer-events: none; z-index: 1; }
 
-  /* ── SECTION TITLE ── */
-  .section-title {
-    font-family: 'Cinzel', serif;
-    font-size: 0.7rem;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    color: var(--gold-dim);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, var(--glass-border), transparent);
-  }
+  .section-title { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--glass-border), transparent); }
 
-  /* ── GLASS CARD ── */
-  .glass {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(16px);
-    transition: border-color 0.3s, box-shadow 0.3s;
-  }
-  .glass:hover {
-    border-color: var(--glass-border-hover);
-    box-shadow: 0 0 30px rgba(201,168,76,0.06);
-  }
+  .glass { background: var(--glass); border: 1px solid var(--glass-border); backdrop-filter: blur(16px); transition: border-color 0.3s, box-shadow 0.3s; }
+  .glass:hover { border-color: var(--glass-border-hover); box-shadow: 0 0 30px rgba(201,168,76,0.06); }
 
-  /* ── STAT GRID ── */
-  .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-  .stat-card {
-    padding: 22px 20px 18px;
-    position: relative;
-    overflow: hidden;
-  }
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    opacity: 0.5;
-  }
-  .stat-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-  }
-  .stat-value {
-    font-family: 'Cinzel', serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--gold);
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .stat-sub {
-    font-size: 0.78rem;
-    color: var(--text-dim);
-    font-style: italic;
-  }
-  .stat-icon {
-    position: absolute;
-    right: 16px;
-    top: 16px;
-    font-size: 1.4rem;
-    opacity: 0.25;
-  }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card { padding: 22px 20px 18px; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0.5; }
+  .stat-label { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
+  .stat-value { font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; color: var(--gold); line-height: 1; margin-bottom: 4px; }
+  .stat-sub { font-size: 0.78rem; color: var(--text-dim); font-style: italic; }
+  .stat-icon { position: absolute; right: 16px; top: 16px; font-size: 1.4rem; opacity: 0.25; }
 
-  /* ── EVOLUTION STRIP ── */
-  .evo-strip {
-    padding: 24px 28px;
-    margin-bottom: 32px;
-  }
-  .evo-stages {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-top: 20px;
-  }
-  .evo-stage {
-    flex: 1;
-    text-align: center;
-    position: relative;
-  }
-  .evo-stage::after {
-    content: '';
-    position: absolute;
-    top: 18px;
-    right: -50%;
-    width: 100%;
-    height: 2px;
-    background: var(--charcoal);
-    z-index: 0;
-  }
-  .evo-stage:last-child::after { display: none; }
-  .evo-dot {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 2px solid var(--charcoal);
-    background: var(--dark2);
-    margin: 0 auto 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    position: relative;
-    z-index: 1;
-    transition: all 0.4s;
-  }
-  .evo-dot.active {
-    border-color: var(--gold);
-    background: rgba(201,168,76,0.15);
-    box-shadow: 0 0 16px rgba(201,168,76,0.4);
-  }
-  .evo-dot.past {
-    border-color: var(--gold-dim);
-    background: rgba(201,168,76,0.08);
-  }
-  .evo-name {
-    font-size: 0.62rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
-  .evo-name.active { color: var(--gold); font-weight: 600; }
-
-  /* ── XP BAR ── */
-  .xp-bar-wrap {
-    margin-top: 20px;
-  }
-  .xp-bar-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    margin-bottom: 6px;
-  }
-  .xp-bar-track {
-    height: 8px;
-    background: var(--charcoal);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .xp-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
-    border-radius: 4px;
-    transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
-    box-shadow: 0 0 10px rgba(201,168,76,0.4);
-  }
-
-  /* ── TWO-COL LAYOUT ── */
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    margin-bottom: 32px;
-  }
-  .three-col {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 24px;
-    margin-bottom: 32px;
-  }
-
-  /* ── CHART WRAPPER ── */
-  .chart-wrap {
-    padding: 24px;
-  }
-  .chart-title {
-    font-family: 'Cinzel', serif;
-    font-size: 0.72rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 16px;
-  }
-  .chart-canvas-wrap {
-    position: relative;
-    height: 200px;
-  }
-
-  /* ── STREAK CALENDAR ── */
-  .streak-grid {
-    display: grid;
-    grid-template-columns: repeat(14, 1fr);
-    gap: 4px;
-    margin-top: 8px;
-  }
-  .streak-day {
-    aspect-ratio: 1;
-    border-radius: 2px;
-    background: var(--charcoal);
-    transition: background 0.3s;
-  }
-  .streak-day.active { background: var(--gold); box-shadow: 0 0 6px rgba(201,168,76,0.5); }
-  .streak-day.partial { background: var(--gold-dim); }
-  .streak-day.decay { background: rgba(192,57,43,0.4); }
-
-  /* ── INTERACTION LOG ── */
-  .log-wrap {
-    padding: 24px;
-  }
-  .log-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-  .log-item {
-    display: grid;
-    grid-template-columns: 36px 1fr auto auto;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 0;
-    border-bottom: 1px solid rgba(201,168,76,0.07);
-    font-size: 0.85rem;
-    animation: fadeUp 0.4s ease both;
-  }
-  .log-item:last-child { border-bottom: none; }
-  .log-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(201,168,76,0.08);
-    border: 1px solid var(--glass-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-  }
-  .log-type { color: var(--text); }
-  .log-date { color: var(--text-dim); font-size: 0.75rem; }
-  .log-xp { font-family: 'Cinzel', serif; font-size: 0.82rem; }
-  .log-xp.pos { color: var(--green); }
-  .log-xp.neg { color: var(--red); }
-
-  /* ── CARD HEALTH ── */
-  .health-wrap {
-    padding: 24px;
-  }
-  .health-ring-wrap {
-    display: flex;
-    justify-content: center;
-    margin: 16px 0;
-    position: relative;
-  }
-  .health-ring {
-    transform: rotate(-90deg);
-  }
-  .health-center {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    text-align: center;
-  }
-  .health-pct {
-    font-family: 'Cinzel', serif;
-    font-size: 1.8rem;
-    color: var(--gold);
-    line-height: 1;
-  }
-  .health-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
-
-  /* ── DECAY WARNING ── */
-  .decay-warning {
-    background: rgba(192,57,43,0.08);
-    border: 1px solid rgba(192,57,43,0.3);
-    border-left: 3px solid var(--red);
-    padding: 12px 16px;
-    font-size: 0.82rem;
-    color: #e8a09a;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 12px;
-  }
-  .decay-ok {
-    background: rgba(46,204,113,0.06);
-    border: 1px solid rgba(46,204,113,0.2);
-    border-left: 3px solid var(--green);
-    padding: 12px 16px;
-    font-size: 0.82rem;
-    color: #8ee4b2;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 12px;
-  }
-
-  /* ── MILESTONES ── */
-  .milestone-list {
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .milestone-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-  .m-icon {
-    font-size: 1.2rem;
-    width: 36px;
-    text-align: center;
-    flex-shrink: 0;
-  }
-  .m-info { flex: 1; }
-  .m-name { font-size: 0.85rem; color: var(--text); margin-bottom: 3px; }
-  .m-desc { font-size: 0.72rem; color: var(--text-dim); font-style: italic; }
-  .m-bar-track { height: 4px; background: var(--charcoal); border-radius: 2px; margin-top: 5px; }
-  .m-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 2px; }
-  .m-xp { font-family: 'Cinzel', serif; font-size: 0.75rem; color: var(--gold-dim); flex-shrink: 0; }
-  .m-done { color: var(--green); font-size: 0.75rem; flex-shrink: 0; }
-
-  /* ── PRINT GRADE BADGE ── */
-  .grade-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 16px 6px 10px;
-    border: 1px solid;
-    font-family: 'Cinzel', serif;
-    font-size: 0.72rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-  }
-  .grade-copper { border-color: var(--copper); color: var(--copper); }
-  .grade-nickel { border-color: var(--nickel); color: var(--nickel); }
-  .grade-silver { border-color: var(--silver); color: var(--silver); }
-  .grade-gold { border-color: var(--gold); color: var(--gold); }
-  .grade-diamond { border-color: var(--diamond); color: var(--diamond); }
-
-  /* ── CARD PROFILE MINI ── */
-  .card-mini-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 24px;
-  }
-  .card-mini-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(201,168,76,0.07);
-    font-size: 0.85rem;
-  }
-  .card-mini-row:last-child { border-bottom: none; }
-  .card-mini-label { color: var(--text-dim); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
-  .card-mini-val { color: var(--text); font-family: 'Cinzel', serif; font-size: 0.82rem; }
-
-  /* ── RANKING BOX ── */
-  .rank-wrap { padding: 24px; }
-  .rank-number {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 4rem;
-    color: var(--gold);
-    line-height: 1;
-    text-shadow: 0 0 40px rgba(201,168,76,0.3);
-  }
-  .rank-label { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 4px; }
-  .rank-divider { height: 1px; background: var(--glass-border); margin: 16px 0; }
-  .rank-stat { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 5px 0; }
-  .rank-stat-label { color: var(--text-dim); }
-  .rank-stat-val { color: var(--text); font-family: 'Cinzel', serif; font-size: 0.78rem; }
-
-  /* ── ART ACCENT ── */
-  .art-accent {
-    position: fixed;
-    right: -40px;
-    bottom: 0;
-    height: 70vh;
-    opacity: 0.08;
-    pointer-events: none;
-    filter: sepia(0.5) contrast(1.1);
-    z-index: 2;
-  }
-
-  /* ── ANIMATIONS ── */
-  @keyframes fadeUp {
-    from { opacity:0; transform: translateY(20px); }
-    to   { opacity:1; transform: translateY(0); }
-  }
-  @keyframes shimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position: 200% center; }
-  }
-
-  .animate-in { animation: fadeUp 0.6s ease both; }
-  .delay-1 { animation-delay: 0.1s; }
-  .delay-2 { animation-delay: 0.2s; }
-  .delay-3 { animation-delay: 0.3s; }
-  .delay-4 { animation-delay: 0.4s; }
-  .delay-5 { animation-delay: 0.5s; }
-
-  /* ── GOLD DIVIDER ── */
-  .gold-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
-    margin: 32px 0;
-    opacity: 0.4;
-  }
-
-  /* ── RESPONSIVE ── */
   /* ── SCAN BUTTON ── */
-  .scan-btn-wrap {
-    margin-bottom: 32px;
-    animation: fadeUp 0.5s ease both;
-    animation-delay: 0.15s;
-  }
+  .scan-btn-wrap { margin-bottom: 32px; animation: fadeUp 0.5s ease both; animation-delay: 0.15s; }
   .scan-btn {
     width: 100%;
     padding: 18px 24px;
@@ -730,28 +273,121 @@
     position: relative;
     overflow: hidden;
   }
-  .scan-btn:hover {
-    background: linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.28));
-    box-shadow: 0 0 40px rgba(201,168,76,0.2);
-  }
-  .scan-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    border-color: var(--glass-border);
-    color: var(--text-dim);
-  }
+  .scan-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.28)); box-shadow: 0 0 40px rgba(201,168,76,0.2); }
+  .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; border-color: var(--glass-border); color: var(--text-dim); }
   .scan-btn-icon { font-size: 1.2rem; }
-  .scan-feedback {
-    margin-top: 10px;
-    text-align: center;
-    font-size: 0.8rem;
-    font-style: italic;
-    min-height: 20px;
-    transition: all 0.3s;
+
+  /* ── READONLY SCAN LOCK ── */
+  .scan-locked {
+    width: 100%;
+    padding: 18px 24px;
+    background: rgba(14,12,9,0.6);
+    border: 1px solid var(--glass-border);
+    color: var(--text-dim);
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
   }
+  .scan-feedback { margin-top: 10px; text-align: center; font-size: 0.8rem; font-style: italic; min-height: 20px; transition: all 0.3s; }
   .scan-feedback.success { color: var(--green); }
   .scan-feedback.error   { color: var(--red); }
   .scan-feedback.already { color: var(--gold-dim); }
+
+  .evo-strip { padding: 24px 28px; margin-bottom: 32px; }
+  .evo-stages { display: flex; align-items: center; gap: 0; margin-top: 20px; }
+  .evo-stage { flex: 1; text-align: center; position: relative; }
+  .evo-stage::after { content: ''; position: absolute; top: 18px; right: -50%; width: 100%; height: 2px; background: var(--charcoal); z-index: 0; }
+  .evo-stage:last-child::after { display: none; }
+  .evo-dot { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--charcoal); background: var(--dark2); margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; position: relative; z-index: 1; transition: all 0.4s; }
+  .evo-dot.active { border-color: var(--gold); background: rgba(201,168,76,0.15); box-shadow: 0 0 16px rgba(201,168,76,0.4); }
+  .evo-dot.past { border-color: var(--gold-dim); background: rgba(201,168,76,0.08); }
+  .evo-name { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+  .evo-name.active { color: var(--gold); font-weight: 600; }
+
+  .xp-bar-wrap { margin-top: 20px; }
+  .xp-bar-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 6px; }
+  .xp-bar-track { height: 8px; background: var(--charcoal); border-radius: 4px; overflow: hidden; }
+  .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 4px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 10px rgba(201,168,76,0.4); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  .three-col { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  .chart-wrap { padding: 24px; }
+  .chart-title { font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; }
+  .chart-canvas-wrap { position: relative; height: 200px; }
+
+  .streak-grid { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; margin-top: 8px; }
+  .streak-day { aspect-ratio: 1; border-radius: 2px; background: var(--charcoal); transition: background 0.3s; }
+  .streak-day.active { background: var(--gold); box-shadow: 0 0 6px rgba(201,168,76,0.5); }
+  .streak-day.partial { background: var(--gold-dim); }
+  .streak-day.decay { background: rgba(192,57,43,0.4); }
+
+  .log-wrap { padding: 24px; }
+  .log-list { display: flex; flex-direction: column; gap: 0; }
+  .log-item { display: grid; grid-template-columns: 36px 1fr auto auto; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(201,168,76,0.07); font-size: 0.85rem; animation: fadeUp 0.4s ease both; }
+  .log-item:last-child { border-bottom: none; }
+  .log-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(201,168,76,0.08); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+  .log-type { color: var(--text); }
+  .log-date { color: var(--text-dim); font-size: 0.75rem; }
+  .log-xp { font-family: 'Cinzel', serif; font-size: 0.82rem; }
+  .log-xp.pos { color: var(--green); }
+  .log-xp.neg { color: var(--red); }
+
+  .health-wrap { padding: 24px; }
+  .health-ring-wrap { display: flex; justify-content: center; margin: 16px 0; position: relative; }
+  .health-ring { transform: rotate(-90deg); }
+  .health-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .health-pct { font-family: 'Cinzel', serif; font-size: 1.8rem; color: var(--gold); line-height: 1; }
+  .health-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .decay-warning { background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.3); border-left: 3px solid var(--red); padding: 12px 16px; font-size: 0.82rem; color: #e8a09a; display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .decay-ok { background: rgba(46,204,113,0.06); border: 1px solid rgba(46,204,113,0.2); border-left: 3px solid var(--green); padding: 12px 16px; font-size: 0.82rem; color: #8ee4b2; display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+
+  .milestone-list { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+  .milestone-item { display: flex; align-items: center; gap: 14px; }
+  .m-icon { font-size: 1.2rem; width: 36px; text-align: center; flex-shrink: 0; }
+  .m-info { flex: 1; }
+  .m-name { font-size: 0.85rem; color: var(--text); margin-bottom: 3px; }
+  .m-desc { font-size: 0.72rem; color: var(--text-dim); font-style: italic; }
+  .m-bar-track { height: 4px; background: var(--charcoal); border-radius: 2px; margin-top: 5px; }
+  .m-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 2px; }
+  .m-xp { font-family: 'Cinzel', serif; font-size: 0.75rem; color: var(--gold-dim); flex-shrink: 0; }
+  .m-done { color: var(--green); font-size: 0.75rem; flex-shrink: 0; }
+
+  .grade-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px 6px 10px; border: 1px solid; font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; }
+  .grade-copper { border-color: var(--copper); color: var(--copper); }
+  .grade-nickel { border-color: var(--nickel); color: var(--nickel); }
+  .grade-silver { border-color: var(--silver); color: var(--silver); }
+  .grade-gold { border-color: var(--gold); color: var(--gold); }
+  .grade-diamond { border-color: var(--diamond); color: var(--diamond); }
+
+  .card-mini-grid { display: flex; flex-direction: column; gap: 10px; padding: 24px; }
+  .card-mini-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(201,168,76,0.07); font-size: 0.85rem; }
+  .card-mini-row:last-child { border-bottom: none; }
+  .card-mini-label { color: var(--text-dim); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  .card-mini-val { color: var(--text); font-family: 'Cinzel', serif; font-size: 0.82rem; }
+
+  .rank-wrap { padding: 24px; }
+  .rank-number { font-family: 'Cinzel Decorative', serif; font-size: 4rem; color: var(--gold); line-height: 1; text-shadow: 0 0 40px rgba(201,168,76,0.3); }
+  .rank-label { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 4px; }
+  .rank-divider { height: 1px; background: var(--glass-border); margin: 16px 0; }
+  .rank-stat { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 5px 0; }
+  .rank-stat-label { color: var(--text-dim); }
+  .rank-stat-val { color: var(--text); font-family: 'Cinzel', serif; font-size: 0.78rem; }
+
+  .gold-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim), transparent); margin: 32px 0; opacity: 0.4; }
+
+  @keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+  .animate-in { animation: fadeUp 0.6s ease both; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+  .delay-5 { animation-delay: 0.5s; }
 
   @media (max-width: 900px) {
     .stat-grid { grid-template-columns: repeat(2, 1fr); }
@@ -759,6 +395,7 @@
     .content { padding: 24px 16px 60px; }
     .header { padding: 0 16px; }
     .login-box { width: 92vw; padding: 36px 24px 32px; }
+    #readonly-banner { padding: 10px 16px; }
   }
 </style>
 </head>
@@ -766,6 +403,14 @@
 
 <div class="bg-layer"></div>
 <div class="bg-overlay"></div>
+
+<!-- ── READ-ONLY BANNER (shown when card_id passed via URL with no token) ── -->
+<div id="readonly-banner">
+  <div class="banner-text">
+    Viewing <strong id="banner-card-name">this card</strong> in read-only mode &nbsp;·&nbsp; Log in to earn XP and manage your card
+  </div>
+  <button class="banner-login-btn" onclick="showLogin()">Owner Login</button>
+</div>
 
 <!-- ── LOGIN ── -->
 <div id="login-screen">
@@ -776,7 +421,7 @@
     <label class="login-label">Owner Token</label>
     <input class="login-input" id="token-input" type="text" placeholder="Enter your owner token" autocomplete="off">
     <label class="login-label">Card ID <span style="color:var(--text-dim);font-size:0.68rem;">(optional)</span></label>
-    <input class="login-input" id="cardid-input" type="text" placeholder="e.g. PFP-046" autocomplete="off">
+    <input class="login-input" id="cardid-input" type="text" placeholder="e.g. CARD-001" autocomplete="off">
     <button class="login-btn" onclick="doLogin()">Enter Dashboard</button>
     <div class="login-error" id="login-error"></div>
   </div>
@@ -784,19 +429,16 @@
 
 <!-- ── DASHBOARD ── -->
 <div id="dashboard">
-
-  <!-- Header -->
   <header class="header">
     <div class="header-logo">PfP</div>
     <div class="header-right">
-      <div class="header-token">Token: <span id="hdr-token">—</span></div>
-      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+      <div class="header-token" id="hdr-token-wrap">Token: <span id="hdr-token">—</span></div>
+      <button class="logout-btn" id="logout-btn" onclick="doLogout()">Sign Out</button>
     </div>
   </header>
 
   <div class="content">
 
-    <!-- Owner Hero -->
     <div class="owner-hero animate-in">
       <div>
         <div class="owner-greeting">Owner Dashboard</div>
@@ -813,16 +455,12 @@
       </div>
     </div>
 
-    <!-- Log Scan Button -->
+    <!-- Scan Button or Locked State -->
     <div class="scan-btn-wrap">
-      <button class="scan-btn" id="scan-btn" onclick="logScan()">
-        <span class="scan-btn-icon">📱</span>
-        Log Today's Scan — +10 XP
-      </button>
+      <div id="scan-area"></div>
       <div class="scan-feedback" id="scan-feedback"></div>
     </div>
 
-    <!-- Stat Cards -->
     <div class="section-title animate-in delay-1">At a Glance</div>
     <div class="stat-grid animate-in delay-1">
       <div class="glass stat-card">
@@ -851,7 +489,6 @@
       </div>
     </div>
 
-    <!-- Evolution Strip -->
     <div class="section-title animate-in delay-2">Living Stage</div>
     <div class="glass evo-strip animate-in delay-2">
       <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -873,17 +510,14 @@
       </div>
     </div>
 
-    <!-- Charts Row -->
     <div class="section-title animate-in delay-2">Activity Analytics</div>
     <div class="two-col animate-in delay-3">
-      <!-- XP Sources -->
       <div class="glass chart-wrap">
         <div class="chart-title">XP Sources Breakdown</div>
         <div class="chart-canvas-wrap" style="height:200px;">
           <canvas id="sourceChart"></canvas>
         </div>
       </div>
-      <!-- Global Rank -->
       <div class="glass rank-wrap">
         <div class="rank-number" id="d-rank">#—</div>
         <div class="rank-label">Global Rank</div>
@@ -897,9 +531,7 @@
       </div>
     </div>
 
-    <!-- Streak + Health -->
     <div class="two-col animate-in delay-3">
-      <!-- Streak Calendar -->
       <div class="glass chart-wrap">
         <div class="chart-title">28-Day Streak Calendar</div>
         <div class="streak-grid" id="streak-grid"></div>
@@ -909,17 +541,13 @@
           <span><span style="display:inline-block;width:10px;height:10px;background:rgba(192,57,43,0.4);border-radius:2px;margin-right:4px;"></span>Decay</span>
         </div>
       </div>
-      <!-- Card Health -->
       <div class="glass health-wrap">
         <div class="chart-title">Card Health Index</div>
         <div class="health-ring-wrap">
           <svg class="health-ring" width="140" height="140" viewBox="0 0 140 140">
             <circle cx="70" cy="70" r="56" fill="none" stroke="#2a2520" stroke-width="10"/>
             <circle cx="70" cy="70" r="56" fill="none" stroke="url(#goldGrad)" stroke-width="10"
-              stroke-linecap="round"
-              stroke-dasharray="351.86"
-              stroke-dashoffset="351.86"
-              id="health-arc"/>
+              stroke-linecap="round" stroke-dasharray="351.86" stroke-dashoffset="351.86" id="health-arc"/>
             <defs>
               <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" style="stop-color:#7a6030"/>
@@ -944,26 +572,22 @@
       </div>
     </div>
 
-    <!-- Card Details + Milestones -->
     <div class="section-title animate-in delay-4">Card Details & Milestones</div>
     <div class="two-col animate-in delay-4">
-      <!-- Card Profile -->
       <div class="glass">
         <div class="chart-title" style="padding:24px 24px 0;">Card Profile</div>
         <div class="card-mini-grid" id="card-profile-list"></div>
       </div>
-      <!-- Milestones -->
       <div class="glass milestone-list" id="milestone-list"></div>
     </div>
 
-    <!-- Interaction Log -->
     <div class="section-title animate-in delay-5">Interaction Log</div>
     <div class="glass log-wrap animate-in delay-5">
       <div class="log-list" id="log-list"></div>
     </div>
 
-  </div><!-- /content -->
-</div><!-- /dashboard -->
+  </div>
+</div>
 
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
@@ -974,6 +598,87 @@ const STAGE_XP = [0, 500, 1500, 3500, 7500, 15000, 30000];
 
 let cardData = null;
 let ownerToken = '';
+let isReadOnly = false;
+
+// ── Boot: check for ?card_id= in URL ────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const urlCardId = params.get('card_id') || params.get('cardId');
+  if (urlCardId) {
+    autoLoadCard(urlCardId);
+  }
+});
+
+async function autoLoadCard(cardId) {
+  isReadOnly = true;
+
+  // Hide login, show dashboard immediately with loading state
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+
+  // Pre-fill card ID in login box (for if they click Owner Login)
+  document.getElementById('cardid-input').value = cardId;
+
+  // Show readonly banner
+  const banner = document.getElementById('readonly-banner');
+  banner.style.display = 'flex';
+
+  // Fetch card data
+  try {
+    const url = `${API}?action=get_card&card_id=${encodeURIComponent(cardId)}`;
+    let data = null;
+
+    try {
+      const res = await fetch(url);
+      data = await res.json();
+    } catch(e) {
+      data = await fetchViaScript(url);
+    }
+
+    if (data && data.success && data.card) {
+      cardData = data.card;
+    } else {
+      cardData = getDemoData('', cardId);
+    }
+  } catch(e) {
+    cardData = getDemoData('', cardId);
+  }
+
+  document.getElementById('banner-card-name').textContent = cardData['Card Name'] || cardId;
+  document.getElementById('hdr-token-wrap').style.display = 'none';
+  document.getElementById('logout-btn').textContent = 'Owner Login';
+  document.getElementById('logout-btn').onclick = showLogin;
+
+  buildDashboard(cardData);
+}
+
+function fetchViaScript(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_pfp_cb_' + Date.now();
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (script.parentNode) document.body.removeChild(script);
+      reject(new Error('timeout'));
+    }, 8000);
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = url + '&callback=' + cbName;
+    script.onerror = () => { clearTimeout(timeout); delete window[cbName]; reject(new Error('script error')); };
+    document.body.appendChild(script);
+  });
+}
+
+function showLogin() {
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('readonly-banner').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  isReadOnly = false;
+}
 
 async function doLogin() {
   const token = document.getElementById('token-input').value.trim();
@@ -984,6 +689,7 @@ async function doLogin() {
   if (!token) { errEl.textContent = 'Please enter your owner token.'; return; }
 
   ownerToken = token;
+  isReadOnly = false;
 
   try {
     const url = cardId
@@ -1005,6 +711,11 @@ async function doLogin() {
     cardData = getDemoData(token, cardId);
   }
 
+  document.getElementById('readonly-banner').style.display = 'none';
+  document.getElementById('hdr-token-wrap').style.display = '';
+  document.getElementById('logout-btn').textContent = 'Sign Out';
+  document.getElementById('logout-btn').onclick = doLogout;
+
   buildDashboard(cardData);
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
@@ -1012,9 +723,9 @@ async function doLogin() {
 
 function getDemoData(token, cardId) {
   return {
-    'Card ID': cardId || 'PFP-046',
-    'Card Name': 'Dude Elle',
-    'Print Run': '46 / 250',
+    'Card ID': cardId || 'CARD-001',
+    'Card Name': 'PfP Card',
+    'Print Run': '1',
     'Current Owner Token': token,
     'Claimed': 'Yes',
     'Claim Date': '2024-11-14',
@@ -1036,13 +747,14 @@ function doLogout() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('token-input').value = '';
   document.getElementById('cardid-input').value = '';
-  cardData = null; ownerToken = '';
+  cardData = null; ownerToken = ''; isReadOnly = false;
 }
 
 function buildDashboard(c) {
-  document.getElementById('hdr-token').textContent = ownerToken.substring(0,12) + '…';
+  if (!isReadOnly) {
+    document.getElementById('hdr-token').textContent = ownerToken.substring(0,12) + '…';
+  }
 
-  // Owner hero
   const name = c['Card Name'] || 'Unknown Card';
   document.getElementById('d-owner-name').textContent = name;
   const claimDate = c['Claim Date'] ? new Date(c['Claim Date']).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—';
@@ -1052,7 +764,6 @@ function buildDashboard(c) {
   document.getElementById('d-grade-badge').innerHTML =
     `<span class="grade-badge grade-${grade.toLowerCase()}">◆ ${grade} Print</span>`;
 
-  // Stats
   const xp = parseInt(c['Current XP']) || 0;
   const streak = parseInt(c['Streak (days)']) || 0;
   const views = parseInt(c['Page Views']) || 0;
@@ -1069,7 +780,6 @@ function buildDashboard(c) {
   const pct = Math.min(100, Math.round((xp - curXP) / (nextXP - curXP) * 100)) || 0;
   document.getElementById('d-xp-sub').textContent = `${nextXP > xp ? (nextXP - xp).toLocaleString() + ' XP to next stage' : 'Stage max reached'}`;
 
-  // Evolution strip
   document.getElementById('d-stage').textContent = c['Evolution Stage'] || 'Dormant';
   document.getElementById('d-level').textContent = `Level ${c['Current Level'] || 1}`;
   document.getElementById('d-next-stage').textContent = STAGES[stageIdx+1] || 'Mythic (Max)';
@@ -1077,18 +787,29 @@ function buildDashboard(c) {
   const evoEl = document.getElementById('evo-stages');
   evoEl.innerHTML = STAGES.map((s,i) => `
     <div class="evo-stage">
-      <div class="evo-dot ${i < stageIdx ? 'past' : i === stageIdx ? 'active' : ''}">
-        ${STAGE_ICONS[i]}
-      </div>
+      <div class="evo-dot ${i < stageIdx ? 'past' : i === stageIdx ? 'active' : ''}">${STAGE_ICONS[i]}</div>
       <div class="evo-name ${i === stageIdx ? 'active' : ''}">${s}</div>
     </div>
   `).join('');
 
   document.getElementById('xp-bar-cur').textContent = xp.toLocaleString() + ' XP';
   document.getElementById('xp-bar-next').textContent = `${nextXP > xp ? (nextXP - xp).toLocaleString() + ' to ' + (STAGES[stageIdx+1]||'Max') : 'Max Reached'}`;
-  setTimeout(() => {
-    document.getElementById('xp-bar-fill').style.width = pct + '%';
-  }, 400);
+  setTimeout(() => { document.getElementById('xp-bar-fill').style.width = pct + '%'; }, 400);
+
+  // ── Scan area: locked in read-only, active when logged in ──
+  const scanArea = document.getElementById('scan-area');
+  if (isReadOnly) {
+    scanArea.innerHTML = `
+      <div class="scan-locked glass">
+        🔒 &nbsp; Owner login required to earn XP
+      </div>`;
+  } else {
+    scanArea.innerHTML = `
+      <button class="scan-btn" id="scan-btn" onclick="logScan()">
+        <span class="scan-btn-icon">📱</span>
+        Log Today's Scan — +10 XP
+      </button>`;
+  }
 
   // Card Profile
   const profileFields = [
@@ -1122,26 +843,18 @@ function buildDashboard(c) {
   }, 500);
 
   const decayEl = document.getElementById('decay-status');
-  if (daysSince === 0) {
-    decayEl.innerHTML = `<div class="decay-ok">✓ Scanned today — full health</div>`;
-  } else if (daysSince <= 1) {
-    decayEl.innerHTML = `<div class="decay-ok">✓ Healthy — scan today to maintain streak</div>`;
-  } else if (daysSince <= 3) {
-    decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −15 XP decay active</div>`;
-  } else if (daysSince <= 7) {
-    decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −50 XP decay zone</div>`;
-  } else {
-    decayEl.innerHTML = `<div class="decay-warning">🔴 ${daysSince} days idle — stage drop risk! Scan now</div>`;
-  }
+  if (daysSince === 0) decayEl.innerHTML = `<div class="decay-ok">✓ Scanned today — full health</div>`;
+  else if (daysSince <= 1) decayEl.innerHTML = `<div class="decay-ok">✓ Healthy — scan today to maintain streak</div>`;
+  else if (daysSince <= 3) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −15 XP decay active</div>`;
+  else if (daysSince <= 7) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −50 XP decay zone</div>`;
+  else decayEl.innerHTML = `<div class="decay-warning">🔴 ${daysSince} days idle — stage drop risk! Scan now</div>`;
 
-  // Rank (simulated)
   const rank = Math.max(1, Math.round(1000 - (xp / 50)));
   const topPct = Math.round((rank / 1000) * 100);
   const ipd = interactions > 0 && c['Claim Date'] ?
     (interactions / Math.max(1, Math.floor((Date.now() - new Date(c['Claim Date']).getTime()) / 86400000))).toFixed(2) : '0.00';
 
   document.getElementById('d-rank').textContent = '#' + rank;
-  document.getElementById('d-rank-hero').textContent = '#' + rank;
   document.getElementById('d-rank-hero').textContent = '#' + rank;
   document.getElementById('d-percentile').textContent = `Top ${topPct}%`;
   document.getElementById('d-top').textContent = topPct;
@@ -1152,22 +865,15 @@ function buildDashboard(c) {
     xp < 1500 ? 'Your card is growing. Streak bonuses will accelerate your XP.' :
     'Strong standing. Keep your streak alive for milestone bonuses.';
 
-  // Milestones
   buildMilestones(xp, streak, interactions, daysSince);
-
-  // Streak calendar
   buildStreakCalendar(streak, daysSince);
-
-  // Charts
   buildCharts(xp, stageIdx, interactions, daysSince);
-
-  // Log
   buildLog(interactions, xp, daysSince);
 }
 
 function inferGrade(printRun) {
   if (!printRun) return 'Copper';
-  const n = parseInt(printRun.toString().split('/')[1]) || 250;
+  const n = parseInt(String(printRun).split('/')[1]) || 250;
   if (n <= 10) return 'Diamond';
   if (n <= 50) return 'Gold';
   if (n <= 100) return 'Silver';
@@ -1204,54 +910,26 @@ function buildStreakCalendar(streak, daysSince) {
   const grid = document.getElementById('streak-grid');
   const days = [];
   for (let i = 27; i >= 0; i--) {
-    const daysAgo = i;
     let cls = '';
-    if (daysAgo >= daysSince && daysAgo < daysSince + streak) cls = 'active';
-    else if (daysAgo < daysSince && daysAgo < daysSince + 2) cls = 'partial';
-    else if (daysAgo < daysSince) cls = 'decay';
-    days.push(`<div class="streak-day ${cls}" title="${daysAgo === 0 ? 'Today' : daysAgo + ' days ago'}"></div>`);
+    if (i >= daysSince && i < daysSince + streak) cls = 'active';
+    else if (i < daysSince && i < daysSince + 2) cls = 'partial';
+    else if (i < daysSince) cls = 'decay';
+    days.push(`<div class="streak-day ${cls}" title="${i === 0 ? 'Today' : i + ' days ago'}"></div>`);
   }
   grid.innerHTML = days.join('');
 }
 
 function buildCharts(xp, stageIdx, interactions, daysSince) {
-  const gold = '#c9a84c';
-  const goldDim = '#7a6030';
-  const goldLight = '#e8c97a';
-  const charcoal = '#2a2520';
-  const red = '#c0392b';
-  const green = '#2ecc71';
-
   Chart.defaults.color = '#9a8a6a';
   Chart.defaults.font.family = "'EB Garamond', serif";
-
-  // XP Sources
-  const xpSources = [
-    Math.round(xp * 0.35),
-    Math.round(xp * 0.28),
-    Math.round(xp * 0.18),
-    Math.round(xp * 0.12),
-    Math.round(xp * 0.07),
-  ];
+  const xpSources = [Math.round(xp*.35), Math.round(xp*.28), Math.round(xp*.18), Math.round(xp*.12), Math.round(xp*.07)];
   new Chart(document.getElementById('sourceChart'), {
     type: 'bar',
     data: {
       labels: ['Daily Scan','Streaks','Views','Endorse','Events'],
-      datasets: [{
-        data: xpSources,
-        backgroundColor: [gold, goldDim, '#8b5e3c', '#4a3f2a', charcoal],
-        borderColor: 'transparent',
-        borderRadius: 3,
-      }]
+      datasets: [{ data: xpSources, backgroundColor: ['#c9a84c','#7a6030','#8b5e3c','#4a3f2a','#2a2520'], borderColor: 'transparent', borderRadius: 3 }]
     },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false } },
-        y: { grid: { color: 'rgba(201,168,76,0.05)' } }
-      }
-    }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(201,168,76,0.05)' } } } }
   });
 }
 
@@ -1280,11 +958,10 @@ function buildLog(interactions, xp, daysSince) {
   }).join('') || '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet.</div>';
 }
 
-// ── Log Scan ──────────────────────────────────────────────
 async function logScan() {
-  const btn      = document.getElementById('scan-btn');
+  const btn = document.getElementById('scan-btn');
   const feedback = document.getElementById('scan-feedback');
-  const cardId   = cardData['Card ID'];
+  const cardId = cardData['Card ID'];
 
   if (!cardId || !ownerToken) {
     feedback.textContent = 'Missing card ID or token.';
@@ -1295,15 +972,14 @@ async function logScan() {
   btn.disabled = true;
   btn.innerHTML = '<span class="scan-btn-icon">⏳</span> Logging scan...';
   feedback.textContent = '';
-  feedback.className = 'scan-feedback';
 
   try {
     const url = API + '?action=qr_scan&card_id=' + encodeURIComponent(cardId) + '&owner_token=' + encodeURIComponent(ownerToken);
-    const res  = await fetch(url);
+    const res = await fetch(url);
     const data = await res.json();
 
     if (data.success) {
-      btn.innerHTML = '<span class="scan-btn-icon">✦</span> Scan Logged - +10 XP Awarded';
+      btn.innerHTML = '<span class="scan-btn-icon">✦</span> Scan Logged — +10 XP Awarded';
       feedback.textContent = 'XP: ' + (data.totalXP ? data.totalXP.toLocaleString() : '--') + '  Stage: ' + (data.stage || '--');
       feedback.className = 'scan-feedback success';
       if (data.totalXP !== undefined) {
@@ -1311,20 +987,19 @@ async function logScan() {
         cardData['Current XP'] = data.totalXP;
       }
     } else {
-      btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today Scan - +10 XP';
+      btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today\'s Scan — +10 XP';
       feedback.textContent = data.error || 'Scan could not be logged.';
       feedback.className = 'scan-feedback error';
       btn.disabled = false;
     }
   } catch(e) {
-    btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today Scan - +10 XP';
-    feedback.textContent = 'Connection error - try again.';
+    btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today\'s Scan — +10 XP';
+    feedback.textContent = 'Connection error — try again.';
     feedback.className = 'scan-feedback error';
     btn.disabled = false;
   }
 }
 
-// Enter key support
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
 });
