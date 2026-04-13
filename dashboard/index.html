@@ -552,16 +552,12 @@ async function performClaim(claimCode, errEl, btnSelector) {
   document.getElementById('loading-screen').style.display = 'flex';
 
   try {
-    const res  = await fetchWithTimeout(LIVING_API, 10000, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action:    'claim_card',
-        cardId:    urlCardId,
-        claimCode: claimCode,
-        ownerToken: 'OWN-' + urlCardId  // token tied to EVO ID — unique per card
-      })
-    });
+    const url  = LIVING_API
+      + '?action=claim_card'
+      + '&card_id='    + encodeURIComponent(urlCardId)
+      + '&claim_code=' + encodeURIComponent(claimCode)
+      + '&owner_token='+ encodeURIComponent('OWN-' + urlCardId);
+    const res  = await fetchWithTimeout(url, 10000);
     const data = await res.json();
 
     if (data.success || (data.status === 200)) {
@@ -792,11 +788,11 @@ async function logScan() {
   btn.innerHTML = '<span>⏳</span> Logging scan...';
   feedback.textContent = '';
   try {
-    const res  = await fetchWithTimeout(LIVING_API, 8000, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action:'qr_scan', cardId: cardId, ownerToken: token })
-    });
+    const url  = LIVING_API
+      + '?action=qr_scan'
+      + '&card_id='    + encodeURIComponent(cardId)
+      + '&owner_token='+ encodeURIComponent(token);
+    const res  = await fetchWithTimeout(url, 8000);
     const data = await res.json();
     if (data.success || data.status === 200) {
       btn.innerHTML = '<span>✦</span> Scan Logged — +10 XP Awarded';
