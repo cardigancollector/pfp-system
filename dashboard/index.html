@@ -919,7 +919,7 @@ function showClaimScreen(mode) {
 function fetchWithTimeout(url, ms, opts) {
   const ctrl = new AbortController();
   const t    = setTimeout(() => ctrl.abort(), ms);
-  return fetch(url, Object.assign({ signal: ctrl.signal }, opts || {})).finally(() => clearTimeout(t));
+  return fetch(url, Object.assign({ signal: ctrl.signal, redirect: 'follow' }, opts || {})).finally(() => clearTimeout(t));
 }
 function esc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
