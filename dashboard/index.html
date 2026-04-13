@@ -3,291 +3,224 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PfP — Owner Dashboard</title>
+<title>PfP — Living Card</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
-    --gold: #c9a84c;
-    --gold-light: #e8c97a;
-    --gold-dim: #7a6030;
-    --bronze: #8b5e3c;
-    --dark: #0e0c09;
-    --dark2: #1a1710;
-    --dark3: #251f14;
-    --charcoal: #2a2520;
-    --text: #e8d9b8;
-    --text-dim: #9a8a6a;
-    --red: #c0392b;
-    --green: #2ecc71;
-    --copper: #b87333;
-    --nickel: #9e9e9e;
-    --silver: #c0c0c0;
-    --diamond: #a8d8ea;
-    --glass: rgba(14,12,9,0.72);
-    --glass-border: rgba(201,168,76,0.25);
+    --gold: #c9a84c; --gold-light: #e8c97a; --gold-dim: #7a6030;
+    --dark: #0e0c09; --dark2: #1a1710; --dark3: #251f14;
+    --charcoal: #2a2520; --text: #e8d9b8; --text-dim: #9a8a6a;
+    --red: #c0392b; --green: #2ecc71;
+    --copper: #b87333; --nickel: #9e9e9e; --silver: #c0c0c0; --diamond: #a8d8ea;
+    --glass: rgba(14,12,9,0.72); --glass-border: rgba(201,168,76,0.25);
     --glass-border-hover: rgba(201,168,76,0.6);
   }
-
   * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'EB Garamond',serif; background:var(--dark); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  .bg-layer { position:fixed; inset:0; background-image:url('pfp_bg.jpg'); background-size:cover; background-position:center top; background-attachment:fixed; z-index:0; }
+  .bg-overlay { position:fixed; inset:0; background:linear-gradient(160deg,rgba(14,12,9,0.88) 0%,rgba(14,12,9,0.75) 40%,rgba(14,12,9,0.82) 100%); z-index:1; }
 
-  body {
-    font-family: 'EB Garamond', serif;
-    background: var(--dark);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
+  /* ── LOADING ── */
+  #loading-screen { position:fixed; inset:0; z-index:300; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--dark); gap:24px; }
+  .loading-logo { font-family:'Cinzel Decorative',serif; font-size:2.5rem; color:var(--gold); letter-spacing:0.08em; text-shadow:0 0 40px rgba(201,168,76,0.4); }
+  .loading-spinner { width:48px; height:48px; border:3px solid rgba(201,168,76,0.2); border-top-color:var(--gold); border-radius:50%; animation:spin 0.9s linear infinite; }
+  .loading-text { font-size:0.78rem; color:var(--text-dim); letter-spacing:0.25em; text-transform:uppercase; }
+  .loading-sub { font-size:0.72rem; color:var(--gold-dim); font-style:italic; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* ── ERROR ── */
+  #error-screen { position:fixed; inset:0; z-index:300; display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--dark); gap:16px; text-align:center; padding:2rem; }
+  .error-title { font-family:'Cinzel',serif; font-size:1.4rem; color:var(--gold); }
+  .error-msg { color:var(--text-dim); font-size:0.9rem; max-width:440px; line-height:1.7; }
+
+  /* ── CLAIM / LOGIN SCREEN ── */
+  #claim-screen { position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; padding:2rem; }
+  .claim-box {
+    position:relative; z-index:2; background:rgba(14,12,9,0.95);
+    border:1px solid var(--glass-border); border-top:2px solid var(--gold);
+    padding:48px 44px 40px; width:100%; max-width:440px; text-align:center;
+    box-shadow:0 0 80px rgba(201,168,76,0.08),0 40px 80px rgba(0,0,0,0.7);
+    animation:fadeUp 0.6s ease both;
   }
+  .claim-logo { font-family:'Cinzel Decorative',serif; font-size:2rem; color:var(--gold); letter-spacing:0.08em; margin-bottom:4px; text-shadow:0 0 40px rgba(201,168,76,0.4); }
+  .claim-card-name { font-family:'Cinzel',serif; font-size:1.15rem; color:var(--text); margin-bottom:4px; }
+  .claim-evo-id { font-family:monospace; font-size:0.75rem; color:var(--gold-dim); letter-spacing:1px; margin-bottom:28px; }
+  .claim-label { display:block; text-align:left; font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
+  .claim-input-wrap { position:relative; margin-bottom:16px; }
+  .claim-input { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-bottom:1px solid var(--gold-dim); color:var(--text); font-family:'EB Garamond',serif; font-size:1.1rem; padding:12px 16px; outline:none; transition:border-color 0.3s,background 0.3s; letter-spacing:1px; text-align:center; }
+  .claim-input:focus { border-color:var(--gold); background:rgba(201,168,76,0.05); }
+  .claim-input.readonly-field { background:rgba(201,168,76,0.04); color:var(--gold-dim); font-size:0.85rem; cursor:default; }
+  .claim-btn { width:100%; margin-top:8px; padding:14px; background:linear-gradient(135deg,var(--gold-dim),var(--gold)); border:none; color:var(--dark); font-family:'Cinzel',serif; font-size:0.85rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; }
+  .claim-btn:hover { background:linear-gradient(135deg,var(--gold),var(--gold-light)); }
+  .claim-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .claim-error { color:var(--red); font-size:0.82rem; margin-top:10px; min-height:18px; letter-spacing:0.05em; }
+  .claim-divider { height:1px; background:var(--glass-border); margin:24px 0; }
+  .claim-hint { font-size:0.78rem; color:var(--text-dim); line-height:1.6; font-style:italic; }
 
-  .bg-layer {
-    position: fixed; inset: 0;
-    background-image: url('pfp_bg.jpg');
-    background-size: cover; background-position: center top; background-attachment: fixed;
-    z-index: 0;
-  }
-  .bg-overlay {
-    position: fixed; inset: 0;
-    background: linear-gradient(160deg, rgba(14,12,9,0.88) 0%, rgba(14,12,9,0.75) 40%, rgba(14,12,9,0.82) 100%);
-    z-index: 1;
-  }
+  /* ── READONLY BANNER ── */
+  #readonly-banner { display:none; position:sticky; top:0; z-index:200; background:rgba(14,12,9,0.97); border-bottom:1px solid rgba(201,168,76,0.3); padding:10px 40px; align-items:center; justify-content:space-between; gap:16px; backdrop-filter:blur(12px); }
+  #readonly-banner .banner-text { font-size:0.78rem; color:var(--text-dim); letter-spacing:0.08em; }
+  #readonly-banner .banner-text strong { color:var(--gold); }
+  #readonly-banner .banner-claim-btn { background:none; border:1px solid var(--gold); color:var(--gold); font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; padding:7px 18px; cursor:pointer; transition:all 0.3s; white-space:nowrap; }
+  #readonly-banner .banner-claim-btn:hover { background:rgba(201,168,76,0.1); }
 
-  /* ── LOADING SCREEN ── */
-  #loading-screen {
-    position: fixed; inset: 0; z-index: 300;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: var(--dark);
-    gap: 24px;
-  }
-  .loading-logo { font-family: 'Cinzel Decorative', serif; font-size: 2.5rem; color: var(--gold); letter-spacing: 0.08em; text-shadow: 0 0 40px rgba(201,168,76,0.4); }
-  .loading-spinner { width: 48px; height: 48px; border: 3px solid rgba(201,168,76,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.9s linear infinite; }
-  .loading-text { font-size: 0.78rem; color: var(--text-dim); letter-spacing: 0.25em; text-transform: uppercase; }
-  .loading-sub { font-size: 0.72rem; color: var(--gold-dim); font-style: italic; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* ── OWNER BANNER (logged in) ── */
+  #owner-banner { display:none; position:sticky; top:0; z-index:200; background:rgba(14,12,9,0.97); border-bottom:1px solid rgba(46,204,113,0.25); padding:10px 40px; align-items:center; justify-content:space-between; gap:16px; backdrop-filter:blur(12px); }
+  #owner-banner .owner-text { font-size:0.78rem; color:#8ee4b2; letter-spacing:0.08em; }
+  #owner-banner .owner-text strong { color:var(--green); }
+  #owner-banner .signout-btn { background:none; border:1px solid rgba(46,204,113,0.3); color:#8ee4b2; font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; padding:7px 18px; cursor:pointer; transition:all 0.3s; white-space:nowrap; }
+  #owner-banner .signout-btn:hover { border-color:var(--green); color:var(--green); }
 
-  /* ── ERROR SCREEN ── */
-  #error-screen {
-    position: fixed; inset: 0; z-index: 300;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    background: var(--dark); gap: 16px; text-align: center; padding: 2rem;
-  }
-  .error-title { font-family: 'Cinzel', serif; font-size: 1.4rem; color: var(--gold); }
-  .error-msg { color: var(--text-dim); font-size: 0.9rem; max-width: 440px; line-height: 1.7; }
-  .error-id { font-family: monospace; color: var(--gold-dim); font-size: 0.85rem; margin-top: 4px; }
+  /* ── DASHBOARD ── */
+  #dashboard { position:relative; z-index:2; display:none; min-height:100vh; }
+  .header { position:sticky; top:0; z-index:50; background:rgba(10,9,6,0.95); border-bottom:1px solid var(--glass-border); padding:0 40px; height:64px; display:flex; align-items:center; justify-content:space-between; backdrop-filter:blur(12px); }
+  .header-logo { font-family:'Cinzel Decorative',serif; font-size:1.3rem; color:var(--gold); letter-spacing:0.06em; }
+  .header-card-name { font-family:'Cinzel',serif; font-size:0.85rem; color:var(--text-dim); letter-spacing:0.1em; }
 
-  /* ── READ-ONLY BANNER ── */
-  #readonly-banner {
-    display: none;
-    position: sticky; top: 0; z-index: 200;
-    background: rgba(14,12,9,0.97);
-    border-bottom: 1px solid rgba(201,168,76,0.3);
-    padding: 10px 40px;
-    align-items: center; justify-content: space-between; gap: 16px;
-    backdrop-filter: blur(12px);
-  }
-  #readonly-banner .banner-text { font-size: 0.78rem; color: var(--text-dim); letter-spacing: 0.08em; }
-  #readonly-banner .banner-text strong { color: var(--gold); }
-  #readonly-banner .banner-login-btn {
-    background: none; border: 1px solid var(--gold); color: var(--gold);
-    font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.15em;
-    text-transform: uppercase; padding: 7px 18px; cursor: pointer; transition: all 0.3s; white-space: nowrap; flex-shrink: 0;
-  }
-  #readonly-banner .banner-login-btn:hover { background: rgba(201,168,76,0.1); }
+  .content { max-width:1400px; margin:0 auto; padding:40px 40px 80px; }
 
-  /* ── LOGIN SCREEN ── */
-  #login-screen {
-    position: fixed; inset: 0; z-index: 100;
-    display: none; align-items: center; justify-content: flex-start;
-    flex-direction: row; padding-left: 8vw;
-  }
-  .login-art { position: absolute; right: -5vw; top: -5vh; height: 115vh; width: auto; opacity: 0.5; pointer-events: none; }
-  .login-box {
-    position: relative; z-index: 2;
-    background: rgba(14,12,9,0.92); border: 1px solid var(--glass-border); border-top: 2px solid var(--gold);
-    padding: 52px 48px 44px; width: 420px; text-align: center;
-    box-shadow: 0 0 80px rgba(201,168,76,0.08), 0 40px 80px rgba(0,0,0,0.7);
-    animation: fadeUp 0.8s ease both;
-  }
-  .login-logo { font-family: 'Cinzel Decorative', serif; font-size: 2.2rem; color: var(--gold); letter-spacing: 0.08em; margin-bottom: 4px; text-shadow: 0 0 40px rgba(201,168,76,0.4); }
-  .login-sub { font-size: 0.78rem; color: var(--text-dim); letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 36px; }
-  .login-label { display: block; text-align: left; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
-  .login-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-bottom: 1px solid var(--gold-dim); color: var(--text); font-family: 'EB Garamond', serif; font-size: 1rem; padding: 12px 16px; outline: none; transition: border-color 0.3s, background 0.3s; margin-bottom: 12px; }
-  .login-input:focus { border-color: var(--gold); background: rgba(201,168,76,0.05); }
-  .login-btn { width: 100%; margin-top: 16px; padding: 14px; background: linear-gradient(135deg, var(--gold-dim), var(--gold)); border: none; color: var(--dark); font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: all 0.3s; }
-  .login-btn:hover { background: linear-gradient(135deg, var(--gold), var(--gold-light)); }
-  .login-error { color: var(--red); font-size: 0.82rem; margin-top: 10px; min-height: 18px; letter-spacing: 0.05em; }
+  .owner-hero { display:grid; grid-template-columns:1fr auto; gap:32px; margin-bottom:32px; align-items:end; }
+  .owner-greeting { font-family:'Cinzel Decorative',serif; font-size:0.72rem; color:var(--gold-dim); letter-spacing:0.35em; text-transform:uppercase; margin-bottom:6px; }
+  .owner-name { font-family:'Cinzel',serif; font-size:2.4rem; color:var(--text); font-weight:700; line-height:1; margin-bottom:8px; }
+  .owner-meta { font-size:0.88rem; color:var(--text-dim); font-style:italic; }
+  .owner-art-badge { position:relative; width:260px; height:355px; flex-shrink:0; }
+  .owner-art-badge img { width:100%; height:100%; object-fit:cover; border:2px solid var(--gold); box-shadow:0 0 60px rgba(201,168,76,0.4),0 30px 80px rgba(0,0,0,0.7); }
+  .owner-art-badge .no-image { width:100%; height:100%; background:var(--dark3); border:2px solid var(--glass-border); display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:0.8rem; letter-spacing:0.1em; }
+  .owner-art-badge::before { content:''; position:absolute; inset:-7px; border:1px solid rgba(201,168,76,0.2); pointer-events:none; z-index:1; }
+  .owner-art-badge::after { content:''; position:absolute; inset:-14px; border:1px solid rgba(201,168,76,0.07); pointer-events:none; z-index:1; }
 
-  /* ── MAIN DASHBOARD ── */
-  #dashboard { position: relative; z-index: 2; display: none; min-height: 100vh; }
+  .evo-id-pill { display:inline-flex; align-items:center; gap:8px; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.35); border-radius:4px; padding:5px 12px; margin-top:10px; font-family:monospace; font-size:0.82rem; color:#d8b4fe; letter-spacing:1px; }
+  .evo-id-pill span { color:rgba(196,181,253,0.5); font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; font-family:'Cinzel',serif; }
 
-  .header {
-    position: sticky; top: 0; z-index: 50;
-    background: rgba(10,9,6,0.95); border-bottom: 1px solid var(--glass-border);
-    padding: 0 40px; height: 64px;
-    display: flex; align-items: center; justify-content: space-between;
-    backdrop-filter: blur(12px);
-  }
-  .header-logo { font-family: 'Cinzel Decorative', serif; font-size: 1.3rem; color: var(--gold); letter-spacing: 0.06em; }
-  .header-right { display: flex; align-items: center; gap: 24px; }
-  .header-token { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.1em; }
-  .header-token span { color: var(--gold); font-family: 'Cinzel', serif; }
-  .logout-btn { background: none; border: 1px solid var(--glass-border); color: var(--text-dim); font-family: 'EB Garamond', serif; font-size: 0.8rem; padding: 6px 16px; cursor: pointer; letter-spacing: 0.1em; transition: all 0.3s; }
-  .logout-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .card-analyzer-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:32px; }
+  .cas-item { background:var(--glass); border:1px solid var(--glass-border); padding:14px 16px; backdrop-filter:blur(12px); }
+  .cas-label { font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; }
+  .cas-value { font-family:'Cinzel',serif; font-size:0.95rem; color:var(--text); }
+  .cas-value.gold { color:var(--gold); }
 
-  .content { max-width: 1400px; margin: 0 auto; padding: 40px 40px 80px; }
+  .section-title { font-family:'Cinzel',serif; font-size:0.7rem; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:16px; display:flex; align-items:center; gap:12px; }
+  .section-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--glass-border),transparent); }
 
-  /* ── CARD HERO ── */
-  .owner-hero { display: grid; grid-template-columns: 1fr auto; gap: 32px; margin-bottom: 40px; align-items: end; }
-  .owner-greeting { font-family: 'Cinzel Decorative', serif; font-size: 0.72rem; color: var(--gold-dim); letter-spacing: 0.35em; text-transform: uppercase; margin-bottom: 6px; }
-  .owner-name { font-family: 'Cinzel', serif; font-size: 2.4rem; color: var(--text); font-weight: 700; line-height: 1; margin-bottom: 8px; }
-  .owner-since { font-size: 0.88rem; color: var(--text-dim); font-style: italic; }
-  .owner-art-badge { position: relative; width: 260px; height: 355px; flex-shrink: 0; }
-  .owner-art-badge img { width: 100%; height: 100%; object-fit: cover; border: 2px solid var(--gold); box-shadow: 0 0 60px rgba(201,168,76,0.4), 0 30px 80px rgba(0,0,0,0.7); }
-  .owner-art-badge .no-image { width: 100%; height: 100%; background: var(--dark3); border: 2px solid var(--glass-border); display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 0.8rem; letter-spacing: 0.1em; }
-  .owner-art-badge::before { content: ''; position: absolute; inset: -7px; border: 1px solid rgba(201,168,76,0.2); pointer-events: none; z-index: 1; }
-  .owner-art-badge::after { content: ''; position: absolute; inset: -14px; border: 1px solid rgba(201,168,76,0.07); pointer-events: none; z-index: 1; }
+  .glass { background:var(--glass); border:1px solid var(--glass-border); backdrop-filter:blur(16px); transition:border-color 0.3s,box-shadow 0.3s; }
+  .glass:hover { border-color:var(--glass-border-hover); box-shadow:0 0 30px rgba(201,168,76,0.06); }
 
-  /* ── EVO ID PILL ── */
-  .evo-id-pill {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.35);
-    border-radius: 4px; padding: 5px 12px; margin-top: 10px;
-    font-family: monospace; font-size: 0.82rem; color: #d8b4fe; letter-spacing: 1px;
-  }
-  .evo-id-pill span { color: rgba(196,181,253,0.5); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Cinzel', serif; }
+  .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+  .stat-card { padding:22px 20px 18px; position:relative; overflow:hidden; }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0.5; }
+  .stat-label { font-size:0.65rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
+  .stat-value { font-family:'Cinzel',serif; font-size:2rem; font-weight:700; color:var(--gold); line-height:1; margin-bottom:4px; }
+  .stat-sub { font-size:0.78rem; color:var(--text-dim); font-style:italic; }
+  .stat-icon { position:absolute; right:16px; top:16px; font-size:1.4rem; opacity:0.25; }
 
-  /* ── CARD STATS FROM ANALYZER ── */
-  .card-analyzer-strip {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;
-    margin-bottom: 32px;
-  }
-  .cas-item {
-    background: var(--glass); border: 1px solid var(--glass-border);
-    padding: 14px 16px; backdrop-filter: blur(12px);
-  }
-  .cas-label { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; }
-  .cas-value { font-family: 'Cinzel', serif; font-size: 0.95rem; color: var(--text); }
-  .cas-value.gold { color: var(--gold); }
+  /* ── SCAN AREA ── */
+  .scan-btn-wrap { margin-bottom:32px; }
+  .scan-btn { width:100%; padding:18px 24px; background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.14)); border:1px solid var(--gold); color:var(--gold); font-family:'Cinzel',serif; font-size:0.9rem; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; display:flex; align-items:center; justify-content:center; gap:12px; }
+  .scan-btn:hover { background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.28)); box-shadow:0 0 40px rgba(201,168,76,0.2); }
+  .scan-btn:disabled { opacity:0.5; cursor:not-allowed; border-color:var(--glass-border); color:var(--text-dim); }
+  .scan-locked { width:100%; padding:18px 24px; background:rgba(14,12,9,0.6); border:1px solid var(--glass-border); color:var(--text-dim); font-family:'Cinzel',serif; font-size:0.82rem; letter-spacing:0.2em; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:12px; cursor:pointer; transition:all 0.3s; }
+  .scan-locked:hover { border-color:var(--gold); color:var(--gold-dim); }
+  .scan-feedback { margin-top:10px; text-align:center; font-size:0.8rem; font-style:italic; min-height:20px; transition:all 0.3s; }
+  .scan-feedback.success { color:var(--green); }
+  .scan-feedback.error { color:var(--red); }
 
-  .section-title { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
-  .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--glass-border), transparent); }
+  /* ── EVO STRIP ── */
+  .evo-strip { padding:24px; margin-bottom:32px; }
+  .evo-stages { display:flex; align-items:center; margin-top:20px; }
+  .evo-stage { flex:1; text-align:center; position:relative; }
+  .evo-stage::after { content:''; position:absolute; top:18px; right:-50%; width:100%; height:2px; background:var(--charcoal); z-index:0; }
+  .evo-stage:last-child::after { display:none; }
+  .evo-dot { width:36px; height:36px; border-radius:50%; border:2px solid var(--charcoal); background:var(--dark2); margin:0 auto 8px; display:flex; align-items:center; justify-content:center; font-size:1rem; position:relative; z-index:1; transition:all 0.4s; }
+  .evo-dot.active { border-color:var(--gold); background:rgba(201,168,76,0.15); box-shadow:0 0 16px rgba(201,168,76,0.4); }
+  .evo-dot.past { border-color:var(--gold-dim); background:rgba(201,168,76,0.08); }
+  .evo-name { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-dim); }
+  .evo-name.active { color:var(--gold); font-weight:600; }
+  .xp-bar-wrap { margin-top:20px; }
+  .xp-bar-labels { display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-dim); margin-bottom:6px; }
+  .xp-bar-track { height:8px; background:var(--charcoal); border-radius:4px; overflow:hidden; }
+  .xp-bar-fill { height:100%; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius:4px; transition:width 1.2s cubic-bezier(0.4,0,0.2,1); box-shadow:0 0 10px rgba(201,168,76,0.4); }
 
-  .glass { background: var(--glass); border: 1px solid var(--glass-border); backdrop-filter: blur(16px); transition: border-color 0.3s, box-shadow 0.3s; }
-  .glass:hover { border-color: var(--glass-border-hover); box-shadow: 0 0 30px rgba(201,168,76,0.06); }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px; }
+  .chart-wrap { padding:24px; }
+  .chart-title { font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:16px; }
+  .chart-canvas-wrap { position:relative; height:200px; }
 
-  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
-  .stat-card { padding: 22px 20px 18px; position: relative; overflow: hidden; }
-  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0.5; }
-  .stat-label { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
-  .stat-value { font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; color: var(--gold); line-height: 1; margin-bottom: 4px; }
-  .stat-sub { font-size: 0.78rem; color: var(--text-dim); font-style: italic; }
-  .stat-icon { position: absolute; right: 16px; top: 16px; font-size: 1.4rem; opacity: 0.25; }
+  .streak-grid { display:grid; grid-template-columns:repeat(14,1fr); gap:4px; margin-top:8px; }
+  .streak-day { aspect-ratio:1; border-radius:2px; background:var(--charcoal); transition:background 0.3s; }
+  .streak-day.active { background:var(--gold); box-shadow:0 0 6px rgba(201,168,76,0.5); }
+  .streak-day.partial { background:var(--gold-dim); }
+  .streak-day.decay { background:rgba(192,57,43,0.4); }
 
-  .scan-btn-wrap { margin-bottom: 32px; }
-  .scan-btn { width: 100%; padding: 18px 24px; background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.14)); border: 1px solid var(--gold); color: var(--gold); font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px; }
-  .scan-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.28)); box-shadow: 0 0 40px rgba(201,168,76,0.2); }
-  .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; border-color: var(--glass-border); color: var(--text-dim); }
-  .scan-locked { width: 100%; padding: 18px 24px; background: rgba(14,12,9,0.6); border: 1px solid var(--glass-border); color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 0.82rem; letter-spacing: 0.2em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 12px; }
-  .scan-feedback { margin-top: 10px; text-align: center; font-size: 0.8rem; font-style: italic; min-height: 20px; transition: all 0.3s; }
-  .scan-feedback.success { color: var(--green); }
-  .scan-feedback.error { color: var(--red); }
+  .log-wrap { padding:24px; }
+  .log-list { display:flex; flex-direction:column; gap:0; }
+  .log-item { display:grid; grid-template-columns:36px 1fr auto auto; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid rgba(201,168,76,0.07); font-size:0.85rem; }
+  .log-item:last-child { border-bottom:none; }
+  .log-icon { width:32px; height:32px; border-radius:50%; background:rgba(201,168,76,0.08); border:1px solid var(--glass-border); display:flex; align-items:center; justify-content:center; font-size:0.9rem; }
+  .log-type { color:var(--text); }
+  .log-date { color:var(--text-dim); font-size:0.75rem; }
+  .log-xp { font-family:'Cinzel',serif; font-size:0.82rem; }
+  .log-xp.pos { color:var(--green); }
+  .log-xp.neg { color:var(--red); }
 
-  .evo-strip { padding: 24px; margin-bottom: 32px; }
-  .evo-stages { display: flex; align-items: center; gap: 0; margin-top: 20px; }
-  .evo-stage { flex: 1; text-align: center; position: relative; }
-  .evo-stage::after { content: ''; position: absolute; top: 18px; right: -50%; width: 100%; height: 2px; background: var(--charcoal); z-index: 0; }
-  .evo-stage:last-child::after { display: none; }
-  .evo-dot { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--charcoal); background: var(--dark2); margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; position: relative; z-index: 1; transition: all 0.4s; }
-  .evo-dot.active { border-color: var(--gold); background: rgba(201,168,76,0.15); box-shadow: 0 0 16px rgba(201,168,76,0.4); }
-  .evo-dot.past { border-color: var(--gold-dim); background: rgba(201,168,76,0.08); }
-  .evo-name { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
-  .evo-name.active { color: var(--gold); font-weight: 600; }
+  .health-wrap { padding:24px; }
+  .health-ring-wrap { display:flex; justify-content:center; margin:16px 0; position:relative; }
+  .health-ring { transform:rotate(-90deg); }
+  .health-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+  .health-pct { font-family:'Cinzel',serif; font-size:1.8rem; color:var(--gold); line-height:1; }
+  .health-label { font-size:0.65rem; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
+  .decay-warning { background:rgba(192,57,43,0.08); border:1px solid rgba(192,57,43,0.3); border-left:3px solid var(--red); padding:12px 16px; font-size:0.82rem; color:#e8a09a; display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .decay-ok { background:rgba(46,204,113,0.06); border:1px solid rgba(46,204,113,0.2); border-left:3px solid var(--green); padding:12px 16px; font-size:0.82rem; color:#8ee4b2; display:flex; align-items:center; gap:10px; margin-top:12px; }
 
-  .xp-bar-wrap { margin-top: 20px; }
-  .xp-bar-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 6px; }
-  .xp-bar-track { height: 8px; background: var(--charcoal); border-radius: 4px; overflow: hidden; }
-  .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 4px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 10px rgba(201,168,76,0.4); }
+  .milestone-list { padding:24px; display:flex; flex-direction:column; gap:14px; }
+  .milestone-item { display:flex; align-items:center; gap:14px; }
+  .m-icon { font-size:1.2rem; width:36px; text-align:center; flex-shrink:0; }
+  .m-info { flex:1; }
+  .m-name { font-size:0.85rem; color:var(--text); margin-bottom:3px; }
+  .m-desc { font-size:0.72rem; color:var(--text-dim); font-style:italic; }
+  .m-bar-track { height:4px; background:var(--charcoal); border-radius:2px; margin-top:5px; }
+  .m-bar-fill { height:100%; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius:2px; }
+  .m-xp { font-family:'Cinzel',serif; font-size:0.75rem; color:var(--gold-dim); flex-shrink:0; }
+  .m-done { color:var(--green); font-size:0.75rem; flex-shrink:0; }
 
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
-  .chart-wrap { padding: 24px; }
-  .chart-title { font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; }
-  .chart-canvas-wrap { position: relative; height: 200px; }
+  .grade-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px 6px 10px; border:1px solid; font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; }
+  .grade-copper { border-color:var(--copper); color:var(--copper); }
+  .grade-nickel { border-color:var(--nickel); color:var(--nickel); }
+  .grade-silver { border-color:var(--silver); color:var(--silver); }
+  .grade-gold { border-color:var(--gold); color:var(--gold); }
+  .grade-diamond { border-color:var(--diamond); color:var(--diamond); }
 
-  .streak-grid { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; margin-top: 8px; }
-  .streak-day { aspect-ratio: 1; border-radius: 2px; background: var(--charcoal); transition: background 0.3s; }
-  .streak-day.active { background: var(--gold); box-shadow: 0 0 6px rgba(201,168,76,0.5); }
-  .streak-day.partial { background: var(--gold-dim); }
-  .streak-day.decay { background: rgba(192,57,43,0.4); }
+  .card-mini-grid { display:flex; flex-direction:column; gap:0; padding:24px; }
+  .card-mini-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(201,168,76,0.07); font-size:0.85rem; }
+  .card-mini-row:last-child { border-bottom:none; }
+  .card-mini-label { color:var(--text-dim); font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; }
+  .card-mini-val { color:var(--text); font-family:'Cinzel',serif; font-size:0.82rem; }
 
-  .log-wrap { padding: 24px; }
-  .log-list { display: flex; flex-direction: column; gap: 0; }
-  .log-item { display: grid; grid-template-columns: 36px 1fr auto auto; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(201,168,76,0.07); font-size: 0.85rem; }
-  .log-item:last-child { border-bottom: none; }
-  .log-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(201,168,76,0.08); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
-  .log-type { color: var(--text); }
-  .log-date { color: var(--text-dim); font-size: 0.75rem; }
-  .log-xp { font-family: 'Cinzel', serif; font-size: 0.82rem; }
-  .log-xp.pos { color: var(--green); }
-  .log-xp.neg { color: var(--red); }
+  .rank-wrap { padding:24px; }
+  .rank-number { font-family:'Cinzel Decorative',serif; font-size:4rem; color:var(--gold); line-height:1; text-shadow:0 0 40px rgba(201,168,76,0.3); }
+  .rank-label { font-size:0.72rem; color:var(--text-dim); letter-spacing:0.2em; text-transform:uppercase; margin-top:4px; }
+  .rank-divider { height:1px; background:var(--glass-border); margin:16px 0; }
+  .rank-stat { display:flex; justify-content:space-between; font-size:0.82rem; padding:5px 0; }
+  .rank-stat-label { color:var(--text-dim); }
+  .rank-stat-val { color:var(--text); font-family:'Cinzel',serif; font-size:0.78rem; }
 
-  .health-wrap { padding: 24px; }
-  .health-ring-wrap { display: flex; justify-content: center; margin: 16px 0; position: relative; }
-  .health-ring { transform: rotate(-90deg); }
-  .health-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
-  .health-pct { font-family: 'Cinzel', serif; font-size: 1.8rem; color: var(--gold); line-height: 1; }
-  .health-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
-  .decay-warning { background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.3); border-left: 3px solid var(--red); padding: 12px 16px; font-size: 0.82rem; color: #e8a09a; display: flex; align-items: center; gap: 10px; margin-top: 12px; }
-  .decay-ok { background: rgba(46,204,113,0.06); border: 1px solid rgba(46,204,113,0.2); border-left: 3px solid var(--green); padding: 12px 16px; font-size: 0.82rem; color: #8ee4b2; display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .animate-in { animation:fadeUp 0.6s ease both; }
+  .delay-1 { animation-delay:0.1s; }
+  .delay-2 { animation-delay:0.2s; }
+  .delay-3 { animation-delay:0.3s; }
+  .delay-4 { animation-delay:0.4s; }
+  .delay-5 { animation-delay:0.5s; }
 
-  .milestone-list { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
-  .milestone-item { display: flex; align-items: center; gap: 14px; }
-  .m-icon { font-size: 1.2rem; width: 36px; text-align: center; flex-shrink: 0; }
-  .m-info { flex: 1; }
-  .m-name { font-size: 0.85rem; color: var(--text); margin-bottom: 3px; }
-  .m-desc { font-size: 0.72rem; color: var(--text-dim); font-style: italic; }
-  .m-bar-track { height: 4px; background: var(--charcoal); border-radius: 2px; margin-top: 5px; }
-  .m-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 2px; }
-  .m-xp { font-family: 'Cinzel', serif; font-size: 0.75rem; color: var(--gold-dim); flex-shrink: 0; }
-  .m-done { color: var(--green); font-size: 0.75rem; flex-shrink: 0; }
-
-  .grade-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px 6px 10px; border: 1px solid; font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; }
-  .grade-copper { border-color: var(--copper); color: var(--copper); }
-  .grade-nickel { border-color: var(--nickel); color: var(--nickel); }
-  .grade-silver { border-color: var(--silver); color: var(--silver); }
-  .grade-gold { border-color: var(--gold); color: var(--gold); }
-  .grade-diamond { border-color: var(--diamond); color: var(--diamond); }
-
-  .card-mini-grid { display: flex; flex-direction: column; gap: 0; padding: 24px; }
-  .card-mini-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(201,168,76,0.07); font-size: 0.85rem; }
-  .card-mini-row:last-child { border-bottom: none; }
-  .card-mini-label { color: var(--text-dim); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
-  .card-mini-val { color: var(--text); font-family: 'Cinzel', serif; font-size: 0.82rem; }
-
-  .rank-wrap { padding: 24px; }
-  .rank-number { font-family: 'Cinzel Decorative', serif; font-size: 4rem; color: var(--gold); line-height: 1; text-shadow: 0 0 40px rgba(201,168,76,0.3); }
-  .rank-label { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 4px; }
-  .rank-divider { height: 1px; background: var(--glass-border); margin: 16px 0; }
-  .rank-stat { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 5px 0; }
-  .rank-stat-label { color: var(--text-dim); }
-  .rank-stat-val { color: var(--text); font-family: 'Cinzel', serif; font-size: 0.78rem; }
-
-  @keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
-  .animate-in { animation: fadeUp 0.6s ease both; }
-  .delay-1 { animation-delay: 0.1s; }
-  .delay-2 { animation-delay: 0.2s; }
-  .delay-3 { animation-delay: 0.3s; }
-  .delay-4 { animation-delay: 0.4s; }
-  .delay-5 { animation-delay: 0.5s; }
-
-  @media (max-width: 900px) {
-    .stat-grid { grid-template-columns: repeat(2, 1fr); }
-    .two-col { grid-template-columns: 1fr; }
-    .content { padding: 24px 16px 60px; }
-    .header { padding: 0 16px; }
-    .owner-hero { grid-template-columns: 1fr; }
-    .owner-art-badge { width: 180px; height: 246px; margin: 0 auto; }
-    .card-analyzer-strip { grid-template-columns: repeat(2, 1fr); }
-    #readonly-banner { padding: 10px 16px; }
-    .login-box { width: 92vw; padding: 36px 24px 32px; }
+  @media (max-width:900px) {
+    .stat-grid { grid-template-columns:repeat(2,1fr); }
+    .two-col { grid-template-columns:1fr; }
+    .content { padding:24px 16px 60px; }
+    .header { padding:0 16px; }
+    .owner-hero { grid-template-columns:1fr; }
+    .owner-art-badge { width:180px; height:246px; margin:0 auto; }
+    .card-analyzer-strip { grid-template-columns:repeat(2,1fr); }
+    #readonly-banner, #owner-banner { padding:10px 16px; }
+    .claim-box { padding:36px 24px 32px; }
   }
 </style>
 </head>
@@ -300,48 +233,78 @@
 <div id="loading-screen">
   <div class="loading-logo">PfP</div>
   <div class="loading-spinner"></div>
-  <div class="loading-text">Loading Card Data</div>
+  <div class="loading-text">Loading Card</div>
   <div class="loading-sub" id="loading-sub">Connecting to database…</div>
 </div>
 
 <!-- ── ERROR ── -->
 <div id="error-screen">
   <div class="error-title">Card Not Found</div>
-  <div class="error-msg" id="error-msg">No card with that Evolution ID could be found in the database.</div>
-  <div class="error-id" id="error-id"></div>
+  <div class="error-msg" id="error-msg">No card with that Evolution ID could be found.</div>
+</div>
+
+<!-- ── CLAIM / LOGIN SCREEN ── -->
+<div id="claim-screen">
+  <div class="claim-box">
+    <div class="claim-logo">PfP</div>
+    <div class="claim-card-name" id="claim-card-name">—</div>
+    <div class="claim-evo-id" id="claim-evo-id">—</div>
+
+    <div id="claim-unclaimed-section">
+      <label class="claim-label">Claim Code <span style="color:var(--text-dim);font-size:0.68rem;">(included with your card)</span></label>
+      <div class="claim-input-wrap">
+        <input class="claim-input" id="claim-code-input" type="text" placeholder="CLAIM-XXXXXX" autocomplete="off" style="text-transform:uppercase;">
+      </div>
+      <button class="claim-btn" onclick="doClaim()">Claim This Card</button>
+      <div class="claim-error" id="claim-error"></div>
+      <div class="claim-divider"></div>
+      <div class="claim-hint">Enter the claim code that came with your physical card. This links you as the owner and lets you earn XP. Your browser will remember you on this device.</div>
+    </div>
+
+    <div id="claim-returning-section" style="display:none;">
+      <div style="background:rgba(46,204,113,0.06);border:1px solid rgba(46,204,113,0.2);border-left:3px solid var(--green);padding:12px 16px;font-size:0.85rem;color:#8ee4b2;margin-bottom:20px;text-align:left;">
+        ✓ You are recognized as the owner of this card on this device.
+      </div>
+      <button class="claim-btn" onclick="enterAsSavedOwner()">Enter Dashboard</button>
+      <div class="claim-divider"></div>
+      <div class="claim-hint" style="margin-bottom:12px;">Not the owner? Enter the claim code from your physical card to transfer ownership.</div>
+      <div class="claim-input-wrap">
+        <input class="claim-input" id="transfer-code-input" type="text" placeholder="CLAIM-XXXXXX" autocomplete="off" style="text-transform:uppercase;">
+      </div>
+      <button class="claim-btn" style="background:linear-gradient(135deg,#2a1a0a,#7a6030);margin-top:8px;" onclick="doTransferClaim()">Transfer Ownership</button>
+      <div class="claim-error" id="transfer-error"></div>
+    </div>
+
+    <div id="claim-readonly-section" style="display:none;">
+      <button class="claim-btn" style="background:rgba(201,168,76,0.1);color:var(--gold);border:1px solid var(--gold);" onclick="enterReadOnly()">View Card (Read Only)</button>
+      <div class="claim-divider"></div>
+      <label class="claim-label">Own this card? Enter your claim code:</label>
+      <div class="claim-input-wrap">
+        <input class="claim-input" id="visitor-claim-input" type="text" placeholder="CLAIM-XXXXXX" autocomplete="off" style="text-transform:uppercase;">
+      </div>
+      <button class="claim-btn" onclick="doVisitorClaim()">Claim This Card</button>
+      <div class="claim-error" id="visitor-error"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ── READ-ONLY BANNER ── -->
 <div id="readonly-banner">
-  <div class="banner-text">
-    Viewing <strong id="banner-card-name">this card</strong> in read-only mode &nbsp;·&nbsp; Log in to earn XP and manage your card
-  </div>
-  <button class="banner-login-btn" onclick="showLogin()">Owner Login</button>
+  <div class="banner-text">Viewing <strong id="banner-card-name">this card</strong> in read-only mode</div>
+  <button class="banner-claim-btn" onclick="showClaimScreen()">Owner Login / Claim</button>
 </div>
 
-<!-- ── LOGIN ── -->
-<div id="login-screen">
-  <img class="login-art" src="pfp_art01.jpg" alt="">
-  <div class="login-box">
-    <div class="login-logo">PfP</div>
-    <div class="login-sub">Living Card System · Owner Portal</div>
-    <label class="login-label">Owner Token</label>
-    <input class="login-input" id="token-input" type="text" placeholder="Enter your owner token" autocomplete="off">
-    <label class="login-label">Card ID <span style="color:var(--text-dim);font-size:0.68rem;">(optional)</span></label>
-    <input class="login-input" id="cardid-input" type="text" placeholder="e.g. EVO-BITCOIN-005" autocomplete="off">
-    <button class="login-btn" onclick="doLogin()">Enter Dashboard</button>
-    <div class="login-error" id="login-error"></div>
-  </div>
+<!-- ── OWNER BANNER ── -->
+<div id="owner-banner">
+  <div class="owner-text">✓ Logged in as owner of <strong id="owner-banner-name">—</strong></div>
+  <button class="signout-btn" onclick="doSignOut()">Sign Out</button>
 </div>
 
 <!-- ── DASHBOARD ── -->
 <div id="dashboard">
   <header class="header">
     <div class="header-logo">PfP</div>
-    <div class="header-right">
-      <div class="header-token" id="hdr-token-wrap">Token: <span id="hdr-token">—</span></div>
-      <button class="logout-btn" id="logout-btn" onclick="doLogout()">Sign Out</button>
-    </div>
+    <div class="header-card-name" id="header-card-name"></div>
   </header>
 
   <div class="content">
@@ -349,9 +312,9 @@
     <div class="owner-hero animate-in">
       <div>
         <div class="owner-greeting">Living Card</div>
-        <div class="owner-name" id="d-card-name">Loading…</div>
-        <div class="owner-since" id="d-card-meta"></div>
-        <div style="margin-top:10px;" id="d-evo-id-pill"></div>
+        <div class="owner-name" id="d-card-name">—</div>
+        <div class="owner-meta" id="d-card-meta"></div>
+        <div id="d-evo-id-pill"></div>
         <div style="margin-top:12px;" id="d-grade-badge"></div>
         <div style="margin-top:24px;display:flex;align-items:baseline;gap:12px;">
           <div style="font-family:'Cinzel Decorative',serif;font-size:5rem;font-weight:900;color:var(--gold);text-shadow:0 0 50px rgba(201,168,76,0.5);line-height:1;" id="d-rank-hero">#—</div>
@@ -363,10 +326,8 @@
       </div>
     </div>
 
-    <!-- Card stats from Analyzer -->
     <div class="card-analyzer-strip animate-in delay-1" id="card-analyzer-strip"></div>
 
-    <!-- Scan -->
     <div class="scan-btn-wrap">
       <div id="scan-area"></div>
       <div class="scan-feedback" id="scan-feedback"></div>
@@ -374,30 +335,10 @@
 
     <div class="section-title animate-in delay-1">At a Glance</div>
     <div class="stat-grid animate-in delay-1">
-      <div class="glass stat-card">
-        <div class="stat-icon">✦</div>
-        <div class="stat-label">Current XP</div>
-        <div class="stat-value" id="d-xp">—</div>
-        <div class="stat-sub" id="d-xp-sub">Loading…</div>
-      </div>
-      <div class="glass stat-card">
-        <div class="stat-icon">🔥</div>
-        <div class="stat-label">Streak</div>
-        <div class="stat-value" id="d-streak">—</div>
-        <div class="stat-sub">consecutive days</div>
-      </div>
-      <div class="glass stat-card">
-        <div class="stat-icon">👁</div>
-        <div class="stat-label">Page Views</div>
-        <div class="stat-value" id="d-views">—</div>
-        <div class="stat-sub">total profile visits</div>
-      </div>
-      <div class="glass stat-card">
-        <div class="stat-icon">⚡</div>
-        <div class="stat-label">Interactions</div>
-        <div class="stat-value" id="d-interactions">—</div>
-        <div class="stat-sub">all time</div>
-      </div>
+      <div class="glass stat-card"><div class="stat-icon">✦</div><div class="stat-label">Current XP</div><div class="stat-value" id="d-xp">—</div><div class="stat-sub" id="d-xp-sub"></div></div>
+      <div class="glass stat-card"><div class="stat-icon">🔥</div><div class="stat-label">Streak</div><div class="stat-value" id="d-streak">—</div><div class="stat-sub">consecutive days</div></div>
+      <div class="glass stat-card"><div class="stat-icon">👁</div><div class="stat-label">Page Views</div><div class="stat-value" id="d-views">—</div><div class="stat-sub">total profile visits</div></div>
+      <div class="glass stat-card"><div class="stat-icon">⚡</div><div class="stat-label">Interactions</div><div class="stat-value" id="d-interactions">—</div><div class="stat-sub">all time</div></div>
     </div>
 
     <div class="section-title animate-in delay-2">Living Stage</div>
@@ -411,13 +352,8 @@
       </div>
       <div class="evo-stages" id="evo-stages"></div>
       <div class="xp-bar-wrap">
-        <div class="xp-bar-labels">
-          <span id="xp-bar-cur">0 XP</span>
-          <span id="xp-bar-next">— XP to next stage</span>
-        </div>
-        <div class="xp-bar-track">
-          <div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div>
-        </div>
+        <div class="xp-bar-labels"><span id="xp-bar-cur">0 XP</span><span id="xp-bar-next">—</span></div>
+        <div class="xp-bar-track"><div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div></div>
       </div>
     </div>
 
@@ -425,9 +361,7 @@
     <div class="two-col animate-in delay-3">
       <div class="glass chart-wrap">
         <div class="chart-title">XP Sources Breakdown</div>
-        <div class="chart-canvas-wrap" style="height:200px;">
-          <canvas id="sourceChart"></canvas>
-        </div>
+        <div class="chart-canvas-wrap"><canvas id="sourceChart"></canvas></div>
       </div>
       <div class="glass rank-wrap">
         <div class="rank-number" id="d-rank">#—</div>
@@ -457,28 +391,15 @@
         <div class="health-ring-wrap">
           <svg class="health-ring" width="140" height="140" viewBox="0 0 140 140">
             <circle cx="70" cy="70" r="56" fill="none" stroke="#2a2520" stroke-width="10"/>
-            <circle cx="70" cy="70" r="56" fill="none" stroke="url(#goldGrad)" stroke-width="10"
-              stroke-linecap="round" stroke-dasharray="351.86" stroke-dashoffset="351.86" id="health-arc"/>
-            <defs>
-              <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style="stop-color:#7a6030"/>
-                <stop offset="100%" style="stop-color:#e8c97a"/>
-              </linearGradient>
-            </defs>
+            <circle cx="70" cy="70" r="56" fill="none" stroke="url(#goldGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="351.86" stroke-dashoffset="351.86" id="health-arc"/>
+            <defs><linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#7a6030"/><stop offset="100%" style="stop-color:#e8c97a"/></linearGradient></defs>
           </svg>
-          <div class="health-center">
-            <div class="health-pct" id="health-pct">—</div>
-            <div class="health-label">Health</div>
-          </div>
+          <div class="health-center"><div class="health-pct" id="health-pct">—</div><div class="health-label">Health</div></div>
         </div>
         <div id="decay-status"></div>
         <div style="margin-top:16px;font-size:0.8rem;color:var(--text-dim);line-height:1.6;">
-          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(201,168,76,0.08)">
-            <span>Last Interaction</span><span style="color:var(--text)" id="d-last">—</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:4px 0;">
-            <span>Days Since Scan</span><span style="color:var(--text)" id="d-days-since">—</span>
-          </div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(201,168,76,0.08)"><span>Last Interaction</span><span style="color:var(--text)" id="d-last">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Days Since Scan</span><span style="color:var(--text)" id="d-days-since">—</span></div>
         </div>
       </div>
     </div>
@@ -501,19 +422,29 @@
 </div>
 
 <script>
-// ── API endpoints ─────────────────────────────────────────────
-const LIVING_API  = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+const LIVING_API   = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflBEX2r7mxTdyBxJOYXSlNcDgLGotqu28buVV4YHfBmO1MOvGDc/exec';
 
-const STAGES = ['Dormant','Awakened','Growing','Established','Renowned','Legendary','Mythic'];
+const STAGES      = ['Dormant','Awakened','Growing','Established','Renowned','Legendary','Mythic'];
 const STAGE_ICONS = ['💤','🌅','🌱','🏛️','🌟','⚚','🔮'];
-const STAGE_XP = [0, 500, 1500, 3500, 7500, 15000, 30000];
+const STAGE_XP    = [0, 500, 1500, 3500, 7500, 15000, 30000];
 
-let analyzerCard = null;  // data from New Database via Analyzer API
-let livingCard   = null;  // data from CARDS sheet via Living Card API
-let ownerToken   = '';
-let isReadOnly   = false;
+// ── Storage key helpers ───────────────────────────────────────
+// Stores { claimCode, cardName } per EVO ID in localStorage
+function storageKey(evoId) { return 'pfp_owner_' + evoId; }
+function saveOwner(evoId, claimCode, cardName) {
+  localStorage.setItem(storageKey(evoId), JSON.stringify({ claimCode: claimCode, cardName: cardName }));
+}
+function loadOwner(evoId) {
+  try { return JSON.parse(localStorage.getItem(storageKey(evoId))); } catch(e) { return null; }
+}
+function clearOwner(evoId) { localStorage.removeItem(storageKey(evoId)); }
+
+let analyzerCard = null;
+let livingCard   = null;
 let urlCardId    = '';
+let isOwner      = false;
+let savedOwner   = null;
 let sourceChartInstance = null;
 
 // ── Boot ──────────────────────────────────────────────────────
@@ -521,128 +452,203 @@ window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   urlCardId = params.get('card_id') || params.get('cardId') || '';
   if (urlCardId) {
-    bootWithEvoId(urlCardId);
+    boot(urlCardId);
   } else {
-    showLoginScreen();
+    showError('No card ID provided in the URL.');
   }
 });
 
-// ── Boot with EVO ID from URL ─────────────────────────────────
-async function bootWithEvoId(evoId) {
-  setLoading('Fetching card from database…');
+async function boot(evoId) {
+  setLoadingSub('Fetching card from database…');
 
-  // Step 1: hit Analyzer API to find card by livingCardId
-  let found = null;
+  // Step 1: Analyzer API — find card by livingCardId
   try {
-    const res = await fetchWithTimeout(ANALYZER_API + '?action=getCards', 10000);
+    const res  = await fetchWithTimeout(ANALYZER_API + '?action=getCards', 12000);
     const data = await res.json();
     if (data.success && data.cards) {
-      found = data.cards.find(c => c.livingCardId && c.livingCardId.trim() === evoId.trim());
+      analyzerCard = data.cards.find(c => c.livingCardId && c.livingCardId.trim() === evoId.trim()) || null;
     }
-  } catch(e) {
-    console.warn('Analyzer API error:', e);
-  }
+  } catch(e) { console.warn('Analyzer API error:', e); }
 
-  if (!found) {
-    showError('No card with Evolution ID <strong>' + esc(evoId) + '</strong> was found in the database.', evoId);
-    return;
-  }
+  if (!analyzerCard) { showError('No card with Evolution ID <strong>' + esc(evoId) + '</strong> was found.'); return; }
 
-  analyzerCard = found;
   setLoadingSub('Loading XP and interaction data…');
 
-  // Step 2: hit Living Card API for XP/stats (may return empty if card not yet interacted)
+  // Step 2: Living Card API — get XP/stats
   try {
-    const res = await fetchWithTimeout(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(evoId), 8000);
+    const res  = await fetchWithTimeout(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(evoId), 8000);
     const data = await res.json();
-    if (data && !data.error && data.card) {
-      livingCard = data.card;
+    if (data && data.success && data.card) livingCard = data.card;
+  } catch(e) { console.warn('Living Card API unavailable'); }
+
+  // Step 3: Check localStorage for saved owner
+  savedOwner = loadOwner(evoId);
+
+  hideLoading();
+
+  const cardName = analyzerCard.card || evoId;
+  const claimed  = livingCard && String(livingCard['Claimed']).toUpperCase() === 'YES';
+
+  // Populate claim screen card info
+  document.getElementById('claim-card-name').textContent = cardName;
+  document.getElementById('claim-evo-id').textContent    = evoId;
+
+  if (savedOwner) {
+    // Returning owner on this device — show confirm screen
+    showClaimScreen('returning');
+  } else if (!claimed) {
+    // Card not yet claimed — show claim form
+    showClaimScreen('unclaimed');
+  } else {
+    // Claimed by someone else — readonly with option to claim (transfer)
+    showDashboard(false);
+  }
+}
+
+// ── Claim screen modes ────────────────────────────────────────
+function showClaimScreen(mode) {
+  document.getElementById('loading-screen').style.display  = 'none';
+  document.getElementById('dashboard').style.display       = 'none';
+  document.getElementById('readonly-banner').style.display = 'none';
+  document.getElementById('owner-banner').style.display    = 'none';
+  document.getElementById('claim-screen').style.display    = 'flex';
+
+  document.getElementById('claim-unclaimed-section').style.display  = mode === 'unclaimed'  ? 'block' : 'none';
+  document.getElementById('claim-returning-section').style.display  = mode === 'returning'  ? 'block' : 'none';
+  document.getElementById('claim-readonly-section').style.display   = mode === 'readonly'   ? 'block' : 'none';
+}
+
+// ── First-time claim ──────────────────────────────────────────
+async function doClaim() {
+  const code  = document.getElementById('claim-code-input').value.trim().toUpperCase();
+  const errEl = document.getElementById('claim-error');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = 'Please enter your claim code.'; return; }
+
+  await performClaim(code, errEl, 'claim-btn');
+}
+
+async function doVisitorClaim() {
+  const code  = document.getElementById('visitor-claim-input').value.trim().toUpperCase();
+  const errEl = document.getElementById('visitor-error');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = 'Please enter your claim code.'; return; }
+  await performClaim(code, errEl, null);
+}
+
+async function doTransferClaim() {
+  const code  = document.getElementById('transfer-code-input').value.trim().toUpperCase();
+  const errEl = document.getElementById('transfer-error');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = 'Please enter your claim code.'; return; }
+  // Clear existing saved owner before transfer
+  clearOwner(urlCardId);
+  await performClaim(code, errEl, null);
+}
+
+async function performClaim(claimCode, errEl, btnSelector) {
+  setLoadingSub('Verifying claim code…');
+  document.getElementById('claim-screen').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'flex';
+
+  try {
+    const res  = await fetchWithTimeout(LIVING_API, 10000, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action:    'claim_card',
+        cardId:    urlCardId,
+        claimCode: claimCode,
+        ownerToken: 'OWN-' + urlCardId  // token tied to EVO ID — unique per card
+      })
+    });
+    const data = await res.json();
+
+    if (data.success || (data.status === 200)) {
+      // Save to localStorage — claimCode is their login key
+      const cardName = analyzerCard ? analyzerCard.card : urlCardId;
+      saveOwner(urlCardId, claimCode, cardName);
+      savedOwner = { claimCode: claimCode, cardName: cardName };
+
+      // Refresh living card data
+      try {
+        const r2   = await fetchWithTimeout(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
+        const d2   = await r2.json();
+        if (d2 && d2.success && d2.card) livingCard = d2.card;
+      } catch(e) {}
+
+      hideLoading();
+      showDashboard(true);
+    } else {
+      hideLoading();
+      document.getElementById('claim-screen').style.display = 'flex';
+      errEl.textContent = data.error || 'Invalid claim code. Please check and try again.';
     }
   } catch(e) {
-    console.warn('Living Card API unavailable, using defaults');
+    hideLoading();
+    document.getElementById('claim-screen').style.display = 'flex';
+    errEl.textContent = 'Connection error — please try again.';
+  }
+}
+
+function enterAsSavedOwner() {
+  isOwner = true;
+  document.getElementById('claim-screen').style.display = 'none';
+  showDashboard(true);
+}
+
+function enterReadOnly() {
+  document.getElementById('claim-screen').style.display = 'none';
+  showDashboard(false);
+}
+
+// ── Show dashboard ────────────────────────────────────────────
+function showDashboard(asOwner) {
+  isOwner = asOwner;
+  document.getElementById('loading-screen').style.display  = 'none';
+  document.getElementById('claim-screen').style.display    = 'none';
+  document.getElementById('dashboard').style.display       = 'block';
+
+  const cardName = analyzerCard ? analyzerCard.card : urlCardId;
+
+  if (asOwner) {
+    document.getElementById('owner-banner').style.display    = 'flex';
+    document.getElementById('readonly-banner').style.display = 'none';
+    document.getElementById('owner-banner-name').textContent = cardName;
+  } else {
+    document.getElementById('readonly-banner').style.display = 'flex';
+    document.getElementById('owner-banner').style.display    = 'none';
+    document.getElementById('banner-card-name').textContent  = cardName;
+    // Show readonly claim screen option
+    showClaimScreen('readonly');
+    document.getElementById('claim-screen').style.display    = 'none'; // hide until they click
   }
 
-  // Step 3: render
-  isReadOnly = true;
-  hideLoading();
-  showDashboard();
-  showReadonlyBanner(analyzerCard.card || evoId);
   buildDashboard();
 }
 
-// ── Login flow ────────────────────────────────────────────────
-function showLoginScreen() {
-  hideLoading();
-  document.getElementById('login-screen').style.display = 'flex';
+function showClaimScreenFromBanner() {
+  const claimed = livingCard && String(livingCard['Claimed']).toUpperCase() === 'YES';
+  showClaimScreen(claimed ? 'readonly' : 'unclaimed');
 }
 
-function showLogin() {
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('readonly-banner').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  isReadOnly = false;
+function doSignOut() {
+  clearOwner(urlCardId);
+  savedOwner = null;
+  isOwner    = false;
+  document.getElementById('owner-banner').style.display    = 'none';
+  document.getElementById('readonly-banner').style.display = 'flex';
+  buildDashboard(); // rebuild with locked scan button
 }
 
-async function doLogin() {
-  const token  = document.getElementById('token-input').value.trim();
-  const cardId = document.getElementById('cardid-input').value.trim() || urlCardId;
-  const errEl  = document.getElementById('login-error');
-  errEl.textContent = '';
-  if (!token) { errEl.textContent = 'Please enter your owner token.'; return; }
-
-  ownerToken = token;
-  isReadOnly = false;
-  setLoading('Authenticating…');
-  document.getElementById('login-screen').style.display = 'none';
-
-  // If card ID given and we don't have analyzer data yet, fetch it
-  if (cardId && !analyzerCard) {
-    try {
-      const res = await fetchWithTimeout(ANALYZER_API + '?action=getCards', 10000);
-      const data = await res.json();
-      if (data.success && data.cards) {
-        analyzerCard = data.cards.find(c => c.livingCardId && c.livingCardId.trim() === cardId.trim()) || null;
-      }
-    } catch(e) {}
-  }
-
-  // Fetch living card data with token
-  try {
-    const url = cardId
-      ? LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(cardId)
-      : LIVING_API + '?action=get_card&owner_token=' + encodeURIComponent(token);
-    const res  = await fetchWithTimeout(url, 8000);
-    const data = await res.json();
-    if (data && !data.error && data.card) livingCard = data.card;
-  } catch(e) {}
-
-  hideLoading();
-  document.getElementById('readonly-banner').style.display = 'none';
-  document.getElementById('hdr-token-wrap').style.display = '';
-  document.getElementById('hdr-token').textContent = token.substring(0,12) + '…';
-  document.getElementById('logout-btn').textContent  = 'Sign Out';
-  document.getElementById('logout-btn').onclick = doLogout;
-  showDashboard();
-  buildDashboard();
-}
-
-function doLogout() {
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('token-input').value  = '';
-  document.getElementById('cardid-input').value = '';
-  analyzerCard = null; livingCard = null; ownerToken = ''; isReadOnly = false;
-}
-
-// ── Build dashboard from both data sources ────────────────────
+// ── Build dashboard ───────────────────────────────────────────
 function buildDashboard() {
   const ac = analyzerCard || {};
   const lc = livingCard   || {};
 
-  // ── Card name + image ───────────────────────────────────────
-  const cardName = ac.card || lc['Card Name'] || 'PfP Living Card';
-  document.getElementById('d-card-name').textContent = cardName;
-  document.getElementById('banner-card-name').textContent = cardName;
+  const cardName = ac.card || urlCardId;
+  document.getElementById('d-card-name').textContent     = cardName;
+  document.getElementById('header-card-name').textContent = cardName;
 
   const evoId = ac.livingCardId || urlCardId || '';
   document.getElementById('d-evo-id-pill').innerHTML = evoId
@@ -651,42 +657,43 @@ function buildDashboard() {
   document.getElementById('d-card-meta').textContent =
     [ac.set, ac.rarity, ac.type].filter(Boolean).join('  ·  ') || '';
 
-  // Card image
+  // Image
   const artWrap = document.getElementById('card-art-wrap');
-  const imgUrl  = ac.imageUrl || '';
-  if (imgUrl) {
-    artWrap.innerHTML = `<img src="${esc(imgUrl)}" alt="${esc(cardName)}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>No Image</div>'">`;
+  if (ac.imageUrl) {
+    artWrap.innerHTML = `<img src="${esc(ac.imageUrl)}" alt="${esc(cardName)}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>No Image</div>'">`;
   }
 
-  // Grade badge
-  const rarity = (ac.rarity || '').toLowerCase();
-  const gradeMap = { copper:'copper', nickel:'nickel', silver:'silver', gold:'gold', diamond:'diamond' };
+  // Grade
+  const rarity    = (ac.rarity || '').toLowerCase();
+  const gradeMap  = { copper:'copper', nickel:'nickel', silver:'silver', gold:'gold', diamond:'diamond' };
   const gradeClass = gradeMap[rarity] || 'copper';
   document.getElementById('d-grade-badge').innerHTML =
     `<span class="grade-badge grade-${gradeClass}">◆ ${ac.rarity || 'Standard'}</span>`;
 
-  // ── Analyzer strip (card database fields) ──────────────────
+  // Analyzer strip
   const stripFields = [
-    { label: 'Value',     value: ac.value     ? '$' + parseFloat(ac.value).toFixed(2)  : '—', gold: true },
-    { label: 'Rank',      value: ac.rank       ? '#' + ac.rank                           : '—', gold: true },
-    { label: 'Set',       value: ac.set        || '—' },
-    { label: 'Qty Issued',value: ac.quantityIssued || '—' },
-    { label: 'Foil',      value: ac.foil       || '—' },
-    { label: 'Condition', value: ac.condition  || '—' },
+    { label:'Value',      value: ac.value ? '$' + parseFloat(ac.value).toFixed(2) : '—', gold:true },
+    { label:'Rank',       value: ac.rank  ? '#' + ac.rank : '—', gold:true },
+    { label:'Set',        value: ac.set        || '—' },
+    { label:'Qty Issued', value: ac.quantityIssued || '—' },
+    { label:'Foil',       value: ac.foil       || '—' },
+    { label:'Condition',  value: ac.condition  || '—' },
   ];
   document.getElementById('card-analyzer-strip').innerHTML = stripFields.map(f =>
     `<div class="cas-item"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':''}">${f.value}</div></div>`
   ).join('');
 
-  // ── XP / Living stats ───────────────────────────────────────
-  const xp           = parseInt(lc['Current XP'])       || 0;
-  const streak       = parseInt(lc['Streak (days)'])     || 0;
-  const views        = parseInt(lc['Page Views'])        || 0;
-  const interactions = parseInt(lc['Total Interactions'])|| 0;
-  const stage        = lc['Evolution Stage']             || STAGES[0];
-  const level        = parseInt(lc['Current Level'])     || 1;
-  const stageIdx     = Math.max(0, STAGES.indexOf(stage));
-  const claimDate    = lc['Claim Date']                  || null;
+  // XP / Living stats
+  const xp           = parseInt(lc['Current XP'])        || 0;
+  const streak       = parseInt(lc['Streak (days)'])      || 0;
+  const views        = parseInt(lc['Page Views'])         || 0;
+  const interactions = parseInt(lc['Total Interactions']) || 0;
+  const stage        = lc['Evolution Stage']              || STAGES[0];
+  const level        = parseInt(lc['Current Level'])      || 1;
+  const stageIdx     = Math.max(0, STAGES.findIndex(s => s.toUpperCase() === stage.toUpperCase()));
+  const claimDate    = lc['Claim Date'] || null;
+  const lastDate     = lc['Last Interaction'] ? new Date(lc['Last Interaction']) : null;
+  const daysSince    = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / 86400000) : 99;
 
   document.getElementById('d-xp').textContent           = xp.toLocaleString();
   document.getElementById('d-streak').textContent       = streak;
@@ -699,16 +706,15 @@ function buildDashboard() {
   const curXP  = STAGE_XP[stageIdx]   || 0;
   const nextXP = STAGE_XP[stageIdx+1] || STAGE_XP[stageIdx];
   const pct    = nextXP > curXP ? Math.min(100, Math.round((xp - curXP) / (nextXP - curXP) * 100)) : 100;
-  document.getElementById('d-xp-sub').textContent     = nextXP > xp ? `${(nextXP - xp).toLocaleString()} XP to next stage` : 'Stage max reached';
-  document.getElementById('xp-bar-cur').textContent   = xp.toLocaleString() + ' XP';
-  document.getElementById('xp-bar-next').textContent  = nextXP > xp ? `${(nextXP - xp).toLocaleString()} to ${STAGES[stageIdx+1]||'Max'}` : 'Max Reached';
+  document.getElementById('d-xp-sub').textContent    = nextXP > xp ? `${(nextXP - xp).toLocaleString()} XP to next stage` : 'Stage max reached';
+  document.getElementById('xp-bar-cur').textContent  = xp.toLocaleString() + ' XP';
+  document.getElementById('xp-bar-next').textContent = nextXP > xp ? `${(nextXP - xp).toLocaleString()} to ${STAGES[stageIdx+1]||'Max'}` : 'Max Reached';
   setTimeout(() => { document.getElementById('xp-bar-fill').style.width = pct + '%'; }, 400);
 
-  // Evolution stages
   document.getElementById('evo-stages').innerHTML = STAGES.map((s,i) => `
     <div class="evo-stage">
-      <div class="evo-dot ${i < stageIdx ? 'past' : i === stageIdx ? 'active' : ''}">${STAGE_ICONS[i]}</div>
-      <div class="evo-name ${i === stageIdx ? 'active' : ''}">${s}</div>
+      <div class="evo-dot ${i<stageIdx?'past':i===stageIdx?'active':''}">${STAGE_ICONS[i]}</div>
+      <div class="evo-name ${i===stageIdx?'active':''}">${s}</div>
     </div>`).join('');
 
   // Rank
@@ -716,34 +722,30 @@ function buildDashboard() {
   const topPct = Math.round((rank / 1000) * 100);
   const ipd    = interactions > 0 && claimDate
     ? (interactions / Math.max(1, Math.floor((Date.now() - new Date(claimDate).getTime()) / 86400000))).toFixed(2) : '0.00';
-  const lastDate   = lc['Last Interaction'] ? new Date(lc['Last Interaction']) : null;
-  const daysSince  = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / 86400000) : 99;
-
   document.getElementById('d-rank').textContent      = '#' + rank;
   document.getElementById('d-rank-hero').textContent = '#' + rank;
   document.getElementById('d-percentile').textContent = `Top ${topPct}%`;
   document.getElementById('d-top').textContent       = topPct;
   document.getElementById('d-ipd').textContent       = ipd;
-  document.getElementById('d-today-xp').textContent  = daysSince === 0 ? '+10 XP' : '0';
+  document.getElementById('d-today-xp').textContent  = daysSince <= 0 ? '+10 XP' : '0';
   document.getElementById('d-rank-note').textContent =
-    xp < 500  ? 'Interact daily to climb the ranks and awaken your card.' :
-    xp < 1500 ? 'Your card is growing. Streak bonuses will accelerate your XP.' :
-                'Strong standing. Keep your streak alive for milestone bonuses.';
+    xp < 500 ? 'Interact daily to climb the ranks and awaken your card.' :
+    xp < 1500 ? 'Your card is growing. Keep your streak alive for bonuses.' :
+    'Strong standing. Streak bonuses will accelerate your XP.';
 
   // Health
   const healthPct = Math.max(0, Math.min(100, 100 - (daysSince * 8)));
   document.getElementById('health-pct').textContent   = healthPct + '%';
   document.getElementById('d-last').textContent       = lastDate ? lastDate.toLocaleDateString() : '—';
   document.getElementById('d-days-since').textContent = daysSince <= 0 ? 'Today' : daysSince === 1 ? '1 day ago' : `${daysSince} days ago`;
-  const arc  = document.getElementById('health-arc');
-  const circ = 351.86;
+  const arc = document.getElementById('health-arc'); const circ = 351.86;
   setTimeout(() => {
     arc.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1)';
     arc.setAttribute('stroke-dashoffset', circ - (circ * healthPct / 100));
     arc.setAttribute('stroke', healthPct > 60 ? 'url(#goldGrad)' : healthPct > 30 ? '#c9a84c' : '#c0392b');
   }, 500);
   const decayEl = document.getElementById('decay-status');
-  if (daysSince <= 0)     decayEl.innerHTML = `<div class="decay-ok">✓ Scanned today — full health</div>`;
+  if (daysSince <= 0)      decayEl.innerHTML = `<div class="decay-ok">✓ Scanned today — full health</div>`;
   else if (daysSince <= 1) decayEl.innerHTML = `<div class="decay-ok">✓ Healthy — scan today to maintain streak</div>`;
   else if (daysSince <= 3) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −15 XP decay active</div>`;
   else if (daysSince <= 7) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −50 XP decay zone</div>`;
@@ -751,23 +753,23 @@ function buildDashboard() {
 
   // Scan area
   const scanArea = document.getElementById('scan-area');
-  if (isReadOnly) {
-    scanArea.innerHTML = `<div class="scan-locked glass">🔒 &nbsp; Owner login required to earn XP</div>`;
+  if (isOwner) {
+    scanArea.innerHTML = `<button class="scan-btn" id="scan-btn" onclick="logScan()"><span>📱</span> Log Today's Scan — +10 XP</button>`;
   } else {
-    scanArea.innerHTML = `<button class="scan-btn" id="scan-btn" onclick="logScan()"><span class="scan-btn-icon">📱</span>Log Today's Scan — +10 XP</button>`;
+    scanArea.innerHTML = `<div class="scan-locked glass" onclick="showClaimScreenFromBanner()">🔒 &nbsp; Claim this card to earn XP &nbsp;·&nbsp; <span style="color:var(--gold);text-decoration:underline;cursor:pointer;">Enter Claim Code</span></div>`;
   }
 
-  // Card profile (mix of analyzer + living card data)
+  // Card profile
   const profileFields = [
-    ['Card Name',     cardName],
-    ['Evolution ID',  evoId || '—'],
-    ['Rarity',        ac.rarity        || '—'],
-    ['Set',           ac.set           || '—'],
-    ['Type',          ac.type          || '—'],
-    ['Quantity Issued', ac.quantityIssued || '—'],
-    ['Value',         ac.value ? '$' + parseFloat(ac.value).toFixed(2) : '—'],
-    ['Claimed',       lc['Claimed']    || '—'],
-    ['Claim Date',    claimDate ? new Date(claimDate).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'],
+    ['Card Name',      cardName],
+    ['Evolution ID',   evoId || '—'],
+    ['Rarity',         ac.rarity        || '—'],
+    ['Set',            ac.set           || '—'],
+    ['Type',           ac.type          || '—'],
+    ['Qty Issued',     ac.quantityIssued|| '—'],
+    ['Value',          ac.value ? '$' + parseFloat(ac.value).toFixed(2) : '—'],
+    ['Claimed',        lc['Claimed']    || 'No'],
+    ['Claim Date',     claimDate ? new Date(claimDate).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'],
   ];
   document.getElementById('card-profile-list').innerHTML = profileFields.map(([l,v]) =>
     `<div class="card-mini-row"><span class="card-mini-label">${l}</span><span class="card-mini-val">${esc(String(v))}</span></div>`
@@ -781,32 +783,37 @@ function buildDashboard() {
 
 // ── Scan ──────────────────────────────────────────────────────
 async function logScan() {
-  const cardId  = (analyzerCard && analyzerCard.livingCardId) || urlCardId;
+  const cardId   = urlCardId;
+  const token    = 'OWN-' + urlCardId;
   const btn      = document.getElementById('scan-btn');
   const feedback = document.getElementById('scan-feedback');
-  if (!cardId || !ownerToken) { feedback.textContent = 'Missing card ID or token.'; feedback.className = 'scan-feedback error'; return; }
+  if (!cardId) return;
   btn.disabled = true;
-  btn.innerHTML = '<span class="scan-btn-icon">⏳</span> Logging scan...';
+  btn.innerHTML = '<span>⏳</span> Logging scan...';
   feedback.textContent = '';
   try {
-    const res  = await fetchWithTimeout(LIVING_API + '?action=qr_scan&card_id=' + encodeURIComponent(cardId) + '&owner_token=' + encodeURIComponent(ownerToken), 8000);
+    const res  = await fetchWithTimeout(LIVING_API, 8000, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action:'qr_scan', cardId: cardId, ownerToken: token })
+    });
     const data = await res.json();
-    if (data.success) {
-      btn.innerHTML = '<span class="scan-btn-icon">✦</span> Scan Logged — +10 XP Awarded';
+    if (data.success || data.status === 200) {
+      btn.innerHTML = '<span>✦</span> Scan Logged — +10 XP Awarded';
       feedback.textContent = 'XP: ' + (data.totalXP ? data.totalXP.toLocaleString() : '--') + '  Stage: ' + (data.stage || '--');
       feedback.className = 'scan-feedback success';
-      if (data.totalXP !== undefined && livingCard) {
-        livingCard['Current XP'] = data.totalXP;
+      if (data.totalXP !== undefined) {
         document.getElementById('d-xp').textContent = data.totalXP.toLocaleString();
+        if (livingCard) livingCard['Current XP'] = data.totalXP;
       }
     } else {
-      btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today\'s Scan — +10 XP';
+      btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
       feedback.textContent = data.error || 'Scan could not be logged.';
       feedback.className = 'scan-feedback error';
       btn.disabled = false;
     }
   } catch(e) {
-    btn.innerHTML = '<span class="scan-btn-icon">📱</span> Log Today\'s Scan — +10 XP';
+    btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
     feedback.textContent = 'Connection error — try again.';
     feedback.className = 'scan-feedback error';
     btn.disabled = false;
@@ -816,11 +823,11 @@ async function logScan() {
 // ── Milestones ────────────────────────────────────────────────
 function buildMilestones(xp, streak, interactions) {
   const milestones = [
-    { icon:'🌅', name:'First Awakening',  desc:'Reach 500 XP',           target:500,  current:xp,           unit:'XP' },
-    { icon:'🔥', name:'Week Warrior',     desc:'7-day streak',            target:7,    current:streak,        unit:'days' },
-    { icon:'⚡', name:'Power User',       desc:'50 total interactions',   target:50,   current:interactions,  unit:'scans' },
-    { icon:'🌙', name:'Month Bound',      desc:'30-day streak',           target:30,   current:streak,        unit:'days' },
-    { icon:'🏛️', name:'Established',     desc:'Reach 3,500 XP',          target:3500, current:xp,            unit:'XP' },
+    { icon:'🌅', name:'First Awakening', desc:'Reach 500 XP',          target:500,  current:xp },
+    { icon:'🔥', name:'Week Warrior',    desc:'7-day streak',           target:7,    current:streak },
+    { icon:'⚡', name:'Power User',      desc:'50 total interactions',  target:50,   current:interactions },
+    { icon:'🌙', name:'Month Bound',     desc:'30-day streak',          target:30,   current:streak },
+    { icon:'🏛️', name:'Established',    desc:'Reach 3,500 XP',         target:3500, current:xp },
   ];
   document.getElementById('milestone-list').innerHTML =
     `<div class="chart-title">Milestones</div>` +
@@ -829,12 +836,9 @@ function buildMilestones(xp, streak, interactions) {
       const pct  = Math.min(100, Math.round(m.current / m.target * 100));
       return `<div class="milestone-item">
         <div class="m-icon">${m.icon}</div>
-        <div class="m-info">
-          <div class="m-name">${m.name}</div>
-          <div class="m-desc">${m.desc}</div>
-          ${done ? '' : `<div class="m-bar-track"><div class="m-bar-fill" style="width:${pct}%"></div></div>`}
-        </div>
-        ${done ? `<div class="m-done">✓</div>` : `<div class="m-xp">${m.current}/${m.target}</div>`}
+        <div class="m-info"><div class="m-name">${m.name}</div><div class="m-desc">${m.desc}</div>${done?'':
+        `<div class="m-bar-track"><div class="m-bar-fill" style="width:${pct}%"></div></div>`}</div>
+        ${done?`<div class="m-done">✓</div>`:`<div class="m-xp">${m.current}/${m.target}</div>`}
       </div>`;
     }).join('');
 }
@@ -848,47 +852,44 @@ function buildStreakCalendar(streak, daysSince) {
     if (i >= daysSince && i < daysSince + streak) cls = 'active';
     else if (i < daysSince && i < daysSince + 2)  cls = 'partial';
     else if (i < daysSince)                        cls = 'decay';
-    days.push(`<div class="streak-day ${cls}" title="${i === 0 ? 'Today' : i + ' days ago'}"></div>`);
+    days.push(`<div class="streak-day ${cls}" title="${i===0?'Today':i+' days ago'}"></div>`);
   }
   grid.innerHTML = days.join('');
 }
 
 // ── Charts ────────────────────────────────────────────────────
 function buildCharts(xp) {
-  Chart.defaults.color      = '#9a8a6a';
-  Chart.defaults.font.family = "'EB Garamond', serif";
+  Chart.defaults.color = '#9a8a6a';
+  Chart.defaults.font.family = "'EB Garamond',serif";
   if (sourceChartInstance) { sourceChartInstance.destroy(); sourceChartInstance = null; }
-  const xpSources = [Math.round(xp*.35), Math.round(xp*.28), Math.round(xp*.18), Math.round(xp*.12), Math.round(xp*.07)];
+  const xpSrc = [Math.round(xp*.35),Math.round(xp*.28),Math.round(xp*.18),Math.round(xp*.12),Math.round(xp*.07)];
   sourceChartInstance = new Chart(document.getElementById('sourceChart'), {
-    type: 'bar',
-    data: {
-      labels: ['Daily Scan','Streaks','Views','Endorse','Events'],
-      datasets: [{ data: xpSources, backgroundColor: ['#c9a84c','#7a6030','#8b5e3c','#4a3f2a','#2a2520'], borderColor: 'transparent', borderRadius: 3 }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(201,168,76,0.05)' } } } }
+    type:'bar',
+    data: { labels:['Daily Scan','Streaks','Views','Endorse','Events'], datasets:[{ data:xpSrc, backgroundColor:['#c9a84c','#7a6030','#8b5e3c','#4a3f2a','#2a2520'], borderColor:'transparent', borderRadius:3 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ x:{grid:{display:false}}, y:{grid:{color:'rgba(201,168,76,0.05)'}} } }
   });
 }
 
 // ── Log ───────────────────────────────────────────────────────
 function buildLog(interactions, daysSince) {
   const types = [
-    { icon:'📱', label:'QR Scan',                xp:'+10' },
-    { icon:'🔥', label:'Streak Bonus (7 days)',  xp:'+100' },
-    { icon:'👁', label:'Public Showcase',         xp:'+25' },
-    { icon:'🤝', label:'Endorsement Received',   xp:'+30' },
-    { icon:'📱', label:'QR Scan',                xp:'+10' },
-    { icon:'⚠️', label:'Decay — 3 days idle',   xp:'−50' },
-    { icon:'📱', label:'QR Scan',                xp:'+10' },
-    { icon:'🎪', label:'Event Check-in',         xp:'+50' },
+    { icon:'📱', label:'QR Scan',               xp:'+10' },
+    { icon:'🔥', label:'Streak Bonus (7 days)', xp:'+100' },
+    { icon:'👁', label:'Public Showcase',        xp:'+25' },
+    { icon:'🤝', label:'Endorsement Received',  xp:'+30' },
+    { icon:'📱', label:'QR Scan',               xp:'+10' },
+    { icon:'⚠️', label:'Decay — 3 days idle',  xp:'−50' },
+    { icon:'📱', label:'QR Scan',               xp:'+10' },
+    { icon:'🎪', label:'Event Check-in',        xp:'+50' },
   ];
-  const log = document.getElementById('log-list');
+  const log   = document.getElementById('log-list');
   const count = Math.min(8, Math.max(0, interactions));
   if (count === 0) {
-    log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet. Scan your card to start earning XP.</div>';
+    log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet. Claim your card and scan to start earning XP.</div>';
     return;
   }
-  log.innerHTML = types.slice(0, count).map((t, i) => {
-    const daysAgo = i === 0 ? daysSince : i + Math.floor(Math.random() * 3);
+  log.innerHTML = types.slice(0,count).map((t,i) => {
+    const daysAgo = i === 0 ? daysSince : i + Math.floor(Math.random()*3);
     const dateStr = daysAgo <= 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`;
     const isNeg   = t.xp.startsWith('−');
     return `<div class="log-item" style="animation-delay:${i*0.05}s">
@@ -901,46 +902,41 @@ function buildLog(interactions, daysSince) {
 }
 
 // ── UI helpers ────────────────────────────────────────────────
-function showDashboard() {
-  document.getElementById('dashboard').style.display = 'block';
-  document.getElementById('login-screen').style.display = 'none';
-}
-function showReadonlyBanner(name) {
-  const b = document.getElementById('readonly-banner');
-  b.style.display = 'flex';
-  document.getElementById('hdr-token-wrap').style.display = 'none';
-  document.getElementById('logout-btn').textContent = 'Owner Login';
-  document.getElementById('logout-btn').onclick = showLogin;
-  document.getElementById('banner-card-name').textContent = name;
-}
-function setLoading(text) {
-  document.getElementById('loading-screen').style.display = 'flex';
-  document.getElementById('loading-text') && (document.getElementById('loading-text').textContent = text);
-}
-function setLoadingSub(text) {
-  document.getElementById('loading-sub').textContent = text;
-}
-function hideLoading() {
+function setLoadingSub(text) { document.getElementById('loading-sub').textContent = text; }
+function hideLoading() { document.getElementById('loading-screen').style.display = 'none'; }
+function showError(msg) {
   document.getElementById('loading-screen').style.display = 'none';
-}
-function showError(msg, id) {
-  document.getElementById('loading-screen').style.display = 'none';
-  const errEl = document.getElementById('error-screen');
-  errEl.style.display = 'flex';
+  const el = document.getElementById('error-screen');
+  el.style.display = 'flex';
   document.getElementById('error-msg').innerHTML = msg;
-  document.getElementById('error-id').textContent = id ? 'ID: ' + id : '';
 }
-function fetchWithTimeout(url, ms) {
+function showClaimScreen(mode) {
+  document.getElementById('loading-screen').style.display  = 'none';
+  document.getElementById('dashboard').style.display       = 'none';
+  document.getElementById('readonly-banner').style.display = 'none';
+  document.getElementById('owner-banner').style.display    = 'none';
+  document.getElementById('claim-screen').style.display    = 'flex';
+  document.getElementById('claim-unclaimed-section').style.display = mode==='unclaimed' ? 'block':'none';
+  document.getElementById('claim-returning-section').style.display = mode==='returning' ? 'block':'none';
+  document.getElementById('claim-readonly-section').style.display  = mode==='readonly'  ? 'block':'none';
+}
+function fetchWithTimeout(url, ms, opts) {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
-  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+  const t    = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, Object.assign({ signal: ctrl.signal }, opts || {})).finally(() => clearTimeout(t));
 }
 function esc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('login-screen').style.display === 'flex') doLogin();
+  if (e.key === 'Enter') {
+    const cs = document.getElementById('claim-screen');
+    if (cs.style.display === 'flex') {
+      const unc = document.getElementById('claim-unclaimed-section');
+      if (unc.style.display !== 'none') doClaim();
+    }
+  }
 });
 </script>
 </body>
