@@ -759,22 +759,7 @@ function buildDashboard() {
   document.getElementById('d-grade-badge').innerHTML =
     `<span class="grade-badge grade-${gradeClass}">◆ ${ac.rarity || 'Standard'}</span>`;
 
-  const baseValue = parseFloat(ac.value) || 0;
-  const mult      = getMultiplier(stageIdx);
-  const liveValue = baseValue * mult;
-  const multLabel = mult > 1 ? `+${Math.round((mult-1)*100)}% XP boost` : 'Base value';
-
-  const stripFields = [
-    { label:'Base Value',  value: baseValue ? '$' + baseValue.toFixed(2) : '—', gold:false },
-    { label:'Live Value',  value: baseValue ? '$' + liveValue.toFixed(2) : '—', gold:true, live:true, mult: mult > 1 ? multLabel : null },
-    { label:'Rank',        value: ac.rank  ? '#' + ac.rank : '—', gold:true },
-    { label:'Set',         value: ac.set        || '—' },
-    { label:'Qty Issued',  value: ac.quantityIssued || '—' },
-    { label:'Condition',   value: ac.condition  || '—' },
-  ];
-  document.getElementById('card-analyzer-strip').innerHTML = stripFields.map(f =>
-    `<div class="cas-item${f.live?' cas-live':''}"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':''}">${f.value}</div>${f.mult?`<div style="font-size:0.62rem;color:var(--green);margin-top:2px;letter-spacing:0.05em;">${f.mult}</div>`:''}</div>`
-  ).join('');
+  // Strip is built after stageIdx is calculated below
 
   const xp           = parseInt(lc['Current XP'])        || 0;
   const streak       = parseInt(lc['Streak (days)'])      || 0;
@@ -794,6 +779,23 @@ function buildDashboard() {
   document.getElementById('d-stage').textContent        = stage;
   document.getElementById('d-level').textContent        = `Level ${level}`;
   document.getElementById('d-next-stage').textContent   = STAGES[stageIdx+1] || 'Mythic (Max)';
+
+  // Build analyzer strip now that stageIdx is known
+  const baseValue = parseFloat(ac.value) || 0;
+  const mult      = getMultiplier(stageIdx);
+  const liveValue = baseValue * mult;
+  const multLabel = mult > 1 ? `+${Math.round((mult-1)*100)}% XP boost` : 'Base value';
+  const stripFields = [
+    { label:'Base Value', value: baseValue ? '$' + baseValue.toFixed(2) : '—', gold:false },
+    { label:'Live Value', value: baseValue ? '$' + liveValue.toFixed(2) : '—', gold:true, live:true, mult: mult > 1 ? multLabel : null },
+    { label:'Rank',       value: ac.rank  ? '#' + ac.rank : '—', gold:true },
+    { label:'Set',        value: ac.set        || '—' },
+    { label:'Qty Issued', value: ac.quantityIssued || '—' },
+    { label:'Condition',  value: ac.condition  || '—' },
+  ];
+  document.getElementById('card-analyzer-strip').innerHTML = stripFields.map(f =>
+    `<div class="cas-item${f.live?' cas-live':''}"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':''}">${f.value}</div>${f.mult?`<div style="font-size:0.62rem;color:var(--green);margin-top:2px;letter-spacing:0.05em;">${f.mult}</div>`:''}</div>`
+  ).join('');
 
   // Apply stage visual class to card art
   STAGE_CLASS.forEach(c => artWrap.classList.remove(c));
