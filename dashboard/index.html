@@ -290,8 +290,8 @@
 
 <!-- ── READ-ONLY BANNER ── -->
 <div id="readonly-banner">
-  <div class="banner-text">Viewing <strong id="banner-card-name">this card</strong> in read-only mode</div>
-  <button class="banner-claim-btn" onclick="showClaimScreen()">Owner Login / Claim</button>
+  <div class="banner-text">Viewing <strong id="banner-card-name">this card</strong> in read-only mode &nbsp;·&nbsp; Claim this card to earn XP</div>
+  <button class="banner-claim-btn" onclick="showClaimScreen('readonly')">Owner Login / Claim</button>
 </div>
 
 <!-- ── OWNER BANNER ── -->
@@ -429,11 +429,9 @@ const STAGES      = ['Dormant','Awakened','Growing','Established','Renowned','Le
 const STAGE_ICONS = ['💤','🌅','🌱','🏛️','🌟','⚚','🔮'];
 const STAGE_XP    = [0, 500, 1500, 3500, 7500, 15000, 30000];
 
-// ── Storage key helpers ───────────────────────────────────────
-// Stores { claimCode, cardName } per EVO ID in localStorage
 function storageKey(evoId) { return 'pfp_owner_' + evoId; }
 function saveOwner(evoId, claimCode, cardName) {
-  localStorage.setItem(storageKey(evoId), JSON.stringify({ claimCode: claimCode, cardName: cardName }));
+  localStorage.setItem(storageKey(evoId), JSON.stringify({ claimCode, cardName }));
 }
 function loadOwner(evoId) {
   try { return JSON.parse(localStorage.getItem(storageKey(evoId))); } catch(e) { return null; }
@@ -447,7 +445,6 @@ let isOwner      = false;
 let savedOwner   = null;
 let sourceChartInstance = null;
 
-// ── Boot ──────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   urlCardId = params.get('card_id') || params.get('cardId') || '';
@@ -461,7 +458,6 @@ window.addEventListener('DOMContentLoaded', () => {
 async function boot(evoId) {
   setLoadingSub('Fetching card from database…');
 
-  // Step 1: Analyzer API — find card by livingCardId
   try {
     const res  = await fetchWithTimeout(ANALYZER_API + '?action=getCards', 12000);
     const data = await res.json();
@@ -474,14 +470,12 @@ async function boot(evoId) {
 
   setLoadingSub('Loading XP and interaction data…');
 
-  // Step 2: Living Card API — get XP/stats
   try {
     const res  = await fetchWithTimeout(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(evoId), 8000);
     const data = await res.json();
     if (data && data.success && data.card) livingCard = data.card;
   } catch(e) { console.warn('Living Card API unavailable'); }
 
-  // Step 3: Check localStorage for saved owner
   savedOwner = loadOwner(evoId);
 
   hideLoading();
@@ -489,43 +483,37 @@ async function boot(evoId) {
   const cardName = analyzerCard.card || evoId;
   const claimed  = livingCard && String(livingCard['Claimed']).toUpperCase() === 'YES';
 
-  // Populate claim screen card info
   document.getElementById('claim-card-name').textContent = cardName;
   document.getElementById('claim-evo-id').textContent    = evoId;
 
   if (savedOwner) {
-    // Returning owner on this device — show confirm screen
     showClaimScreen('returning');
   } else if (!claimed) {
-    // Card not yet claimed — show claim form
     showClaimScreen('unclaimed');
   } else {
-    // Claimed by someone else — readonly with option to claim (transfer)
+    // ── FIX: card is claimed but no local owner — render dashboard in read-only mode ──
     showDashboard(false);
   }
 }
 
-// ── Claim screen modes ────────────────────────────────────────
+// ── Claim screen ──────────────────────────────────────────────
 function showClaimScreen(mode) {
   document.getElementById('loading-screen').style.display  = 'none';
   document.getElementById('dashboard').style.display       = 'none';
   document.getElementById('readonly-banner').style.display = 'none';
   document.getElementById('owner-banner').style.display    = 'none';
   document.getElementById('claim-screen').style.display    = 'flex';
-
-  document.getElementById('claim-unclaimed-section').style.display  = mode === 'unclaimed'  ? 'block' : 'none';
-  document.getElementById('claim-returning-section').style.display  = mode === 'returning'  ? 'block' : 'none';
-  document.getElementById('claim-readonly-section').style.display   = mode === 'readonly'   ? 'block' : 'none';
+  document.getElementById('claim-unclaimed-section').style.display = mode === 'unclaimed' ? 'block' : 'none';
+  document.getElementById('claim-returning-section').style.display = mode === 'returning' ? 'block' : 'none';
+  document.getElementById('claim-readonly-section').style.display  = mode === 'readonly'  ? 'block' : 'none';
 }
 
-// ── First-time claim ──────────────────────────────────────────
 async function doClaim() {
   const code  = document.getElementById('claim-code-input').value.trim().toUpperCase();
   const errEl = document.getElementById('claim-error');
   errEl.textContent = '';
   if (!code) { errEl.textContent = 'Please enter your claim code.'; return; }
-
-  await performClaim(code, errEl, 'claim-btn');
+  await performClaim(code, errEl);
 }
 
 async function doVisitorClaim() {
@@ -533,7 +521,7 @@ async function doVisitorClaim() {
   const errEl = document.getElementById('visitor-error');
   errEl.textContent = '';
   if (!code) { errEl.textContent = 'Please enter your claim code.'; return; }
-  await performClaim(code, errEl, null);
+  await performClaim(code, errEl);
 }
 
 async function doTransferClaim() {
@@ -541,12 +529,11 @@ async function doTransferClaim() {
   const errEl = document.getElementById('transfer-error');
   errEl.textContent = '';
   if (!code) { errEl.textContent = 'Please enter your claim code.'; return; }
-  // Clear existing saved owner before transfer
   clearOwner(urlCardId);
-  await performClaim(code, errEl, null);
+  await performClaim(code, errEl);
 }
 
-async function performClaim(claimCode, errEl, btnSelector) {
+async function performClaim(claimCode, errEl) {
   setLoadingSub('Verifying claim code…');
   document.getElementById('claim-screen').style.display = 'none';
   document.getElementById('loading-screen').style.display = 'flex';
@@ -561,15 +548,13 @@ async function performClaim(claimCode, errEl, btnSelector) {
     const data = await res.json();
 
     if (data.success || (data.status === 200)) {
-      // Save to localStorage — claimCode is their login key
       const cardName = analyzerCard ? analyzerCard.card : urlCardId;
       saveOwner(urlCardId, claimCode, cardName);
-      savedOwner = { claimCode: claimCode, cardName: cardName };
+      savedOwner = { claimCode, cardName };
 
-      // Refresh living card data
       try {
-        const r2   = await fetchWithTimeout(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
-        const d2   = await r2.json();
+        const r2 = await fetchWithTimeout(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
+        const d2 = await r2.json();
         if (d2 && d2.success && d2.card) livingCard = d2.card;
       } catch(e) {}
 
@@ -599,6 +584,8 @@ function enterReadOnly() {
 }
 
 // ── Show dashboard ────────────────────────────────────────────
+// FIX: removed the showClaimScreen('readonly') call that was blanking the page.
+// Read-only state is communicated via the readonly-banner only.
 function showDashboard(asOwner) {
   isOwner = asOwner;
   document.getElementById('loading-screen').style.display  = 'none';
@@ -615,17 +602,10 @@ function showDashboard(asOwner) {
     document.getElementById('readonly-banner').style.display = 'flex';
     document.getElementById('owner-banner').style.display    = 'none';
     document.getElementById('banner-card-name').textContent  = cardName;
-    // Show readonly claim screen option
-    showClaimScreen('readonly');
-    document.getElementById('claim-screen').style.display    = 'none'; // hide until they click
+    // No showClaimScreen call here — dashboard stays visible, banner has the CTA
   }
 
   buildDashboard();
-}
-
-function showClaimScreenFromBanner() {
-  const claimed = livingCard && String(livingCard['Claimed']).toUpperCase() === 'YES';
-  showClaimScreen(claimed ? 'readonly' : 'unclaimed');
 }
 
 function doSignOut() {
@@ -634,7 +614,8 @@ function doSignOut() {
   isOwner    = false;
   document.getElementById('owner-banner').style.display    = 'none';
   document.getElementById('readonly-banner').style.display = 'flex';
-  buildDashboard(); // rebuild with locked scan button
+  document.getElementById('banner-card-name').textContent  = analyzerCard ? analyzerCard.card : urlCardId;
+  buildDashboard();
 }
 
 // ── Build dashboard ───────────────────────────────────────────
@@ -643,7 +624,7 @@ function buildDashboard() {
   const lc = livingCard   || {};
 
   const cardName = ac.card || urlCardId;
-  document.getElementById('d-card-name').textContent     = cardName;
+  document.getElementById('d-card-name').textContent      = cardName;
   document.getElementById('header-card-name').textContent = cardName;
 
   const evoId = ac.livingCardId || urlCardId || '';
@@ -653,20 +634,17 @@ function buildDashboard() {
   document.getElementById('d-card-meta').textContent =
     [ac.set, ac.rarity, ac.type].filter(Boolean).join('  ·  ') || '';
 
-  // Image
   const artWrap = document.getElementById('card-art-wrap');
   if (ac.imageUrl) {
     artWrap.innerHTML = `<img src="${esc(ac.imageUrl)}" alt="${esc(cardName)}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>No Image</div>'">`;
   }
 
-  // Grade
-  const rarity    = (ac.rarity || '').toLowerCase();
-  const gradeMap  = { copper:'copper', nickel:'nickel', silver:'silver', gold:'gold', diamond:'diamond' };
+  const rarity     = (ac.rarity || '').toLowerCase();
+  const gradeMap   = { copper:'copper', nickel:'nickel', silver:'silver', gold:'gold', diamond:'diamond' };
   const gradeClass = gradeMap[rarity] || 'copper';
   document.getElementById('d-grade-badge').innerHTML =
     `<span class="grade-badge grade-${gradeClass}">◆ ${ac.rarity || 'Standard'}</span>`;
 
-  // Analyzer strip
   const stripFields = [
     { label:'Value',      value: ac.value ? '$' + parseFloat(ac.value).toFixed(2) : '—', gold:true },
     { label:'Rank',       value: ac.rank  ? '#' + ac.rank : '—', gold:true },
@@ -679,7 +657,6 @@ function buildDashboard() {
     `<div class="cas-item"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':''}">${f.value}</div></div>`
   ).join('');
 
-  // XP / Living stats
   const xp           = parseInt(lc['Current XP'])        || 0;
   const streak       = parseInt(lc['Streak (days)'])      || 0;
   const views        = parseInt(lc['Page Views'])         || 0;
@@ -713,23 +690,21 @@ function buildDashboard() {
       <div class="evo-name ${i===stageIdx?'active':''}">${s}</div>
     </div>`).join('');
 
-  // Rank
   const rank   = Math.max(1, Math.round(1000 - (xp / 50)));
   const topPct = Math.round((rank / 1000) * 100);
   const ipd    = interactions > 0 && claimDate
     ? (interactions / Math.max(1, Math.floor((Date.now() - new Date(claimDate).getTime()) / 86400000))).toFixed(2) : '0.00';
-  document.getElementById('d-rank').textContent      = '#' + rank;
-  document.getElementById('d-rank-hero').textContent = '#' + rank;
+  document.getElementById('d-rank').textContent       = '#' + rank;
+  document.getElementById('d-rank-hero').textContent  = '#' + rank;
   document.getElementById('d-percentile').textContent = `Top ${topPct}%`;
-  document.getElementById('d-top').textContent       = topPct;
-  document.getElementById('d-ipd').textContent       = ipd;
-  document.getElementById('d-today-xp').textContent  = daysSince <= 0 ? '+10 XP' : '0';
-  document.getElementById('d-rank-note').textContent =
-    xp < 500 ? 'Interact daily to climb the ranks and awaken your card.' :
+  document.getElementById('d-top').textContent        = topPct;
+  document.getElementById('d-ipd').textContent        = ipd;
+  document.getElementById('d-today-xp').textContent   = daysSince <= 0 ? '+10 XP' : '0';
+  document.getElementById('d-rank-note').textContent  =
+    xp < 500  ? 'Interact daily to climb the ranks and awaken your card.' :
     xp < 1500 ? 'Your card is growing. Keep your streak alive for bonuses.' :
-    'Strong standing. Streak bonuses will accelerate your XP.';
+                'Strong standing. Streak bonuses will accelerate your XP.';
 
-  // Health
   const healthPct = Math.max(0, Math.min(100, 100 - (daysSince * 8)));
   document.getElementById('health-pct').textContent   = healthPct + '%';
   document.getElementById('d-last').textContent       = lastDate ? lastDate.toLocaleDateString() : '—';
@@ -740,6 +715,7 @@ function buildDashboard() {
     arc.setAttribute('stroke-dashoffset', circ - (circ * healthPct / 100));
     arc.setAttribute('stroke', healthPct > 60 ? 'url(#goldGrad)' : healthPct > 30 ? '#c9a84c' : '#c0392b');
   }, 500);
+
   const decayEl = document.getElementById('decay-status');
   if (daysSince <= 0)      decayEl.innerHTML = `<div class="decay-ok">✓ Scanned today — full health</div>`;
   else if (daysSince <= 1) decayEl.innerHTML = `<div class="decay-ok">✓ Healthy — scan today to maintain streak</div>`;
@@ -747,25 +723,24 @@ function buildDashboard() {
   else if (daysSince <= 7) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −50 XP decay zone</div>`;
   else                     decayEl.innerHTML = `<div class="decay-warning">🔴 ${daysSince} days idle — stage drop risk! Scan now</div>`;
 
-  // Scan area
+  // Scan area — locked with claim CTA for read-only visitors
   const scanArea = document.getElementById('scan-area');
   if (isOwner) {
     scanArea.innerHTML = `<button class="scan-btn" id="scan-btn" onclick="logScan()"><span>📱</span> Log Today's Scan — +10 XP</button>`;
   } else {
-    scanArea.innerHTML = `<div class="scan-locked glass" onclick="showClaimScreenFromBanner()">🔒 &nbsp; Claim this card to earn XP &nbsp;·&nbsp; <span style="color:var(--gold);text-decoration:underline;cursor:pointer;">Enter Claim Code</span></div>`;
+    scanArea.innerHTML = `<div class="scan-locked glass" onclick="showClaimScreen('readonly')">🔒 &nbsp; Claim this card to earn XP &nbsp;·&nbsp; <span style="color:var(--gold);text-decoration:underline;cursor:pointer;">Enter Claim Code</span></div>`;
   }
 
-  // Card profile
   const profileFields = [
-    ['Card Name',      cardName],
-    ['Evolution ID',   evoId || '—'],
-    ['Rarity',         ac.rarity        || '—'],
-    ['Set',            ac.set           || '—'],
-    ['Type',           ac.type          || '—'],
-    ['Qty Issued',     ac.quantityIssued|| '—'],
-    ['Value',          ac.value ? '$' + parseFloat(ac.value).toFixed(2) : '—'],
-    ['Claimed',        lc['Claimed']    || 'No'],
-    ['Claim Date',     claimDate ? new Date(claimDate).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'],
+    ['Card Name',    cardName],
+    ['Evolution ID', evoId || '—'],
+    ['Rarity',       ac.rarity         || '—'],
+    ['Set',          ac.set            || '—'],
+    ['Type',         ac.type           || '—'],
+    ['Qty Issued',   ac.quantityIssued || '—'],
+    ['Value',        ac.value ? '$' + parseFloat(ac.value).toFixed(2) : '—'],
+    ['Claimed',      lc['Claimed']     || 'No'],
+    ['Claim Date',   claimDate ? new Date(claimDate).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'],
   ];
   document.getElementById('card-profile-list').innerHTML = profileFields.map(([l,v]) =>
     `<div class="card-mini-row"><span class="card-mini-label">${l}</span><span class="card-mini-val">${esc(String(v))}</span></div>`
@@ -819,11 +794,11 @@ async function logScan() {
 // ── Milestones ────────────────────────────────────────────────
 function buildMilestones(xp, streak, interactions) {
   const milestones = [
-    { icon:'🌅', name:'First Awakening', desc:'Reach 500 XP',          target:500,  current:xp },
-    { icon:'🔥', name:'Week Warrior',    desc:'7-day streak',           target:7,    current:streak },
-    { icon:'⚡', name:'Power User',      desc:'50 total interactions',  target:50,   current:interactions },
-    { icon:'🌙', name:'Month Bound',     desc:'30-day streak',          target:30,   current:streak },
-    { icon:'🏛️', name:'Established',    desc:'Reach 3,500 XP',         target:3500, current:xp },
+    { icon:'🌅', name:'First Awakening', desc:'Reach 500 XP',         target:500,  current:xp },
+    { icon:'🔥', name:'Week Warrior',    desc:'7-day streak',          target:7,    current:streak },
+    { icon:'⚡', name:'Power User',      desc:'50 total interactions', target:50,   current:interactions },
+    { icon:'🌙', name:'Month Bound',     desc:'30-day streak',         target:30,   current:streak },
+    { icon:'🏛️', name:'Established',    desc:'Reach 3,500 XP',        target:3500, current:xp },
   ];
   document.getElementById('milestone-list').innerHTML =
     `<div class="chart-title">Milestones</div>` +
@@ -897,7 +872,7 @@ function buildLog(interactions, daysSince) {
   }).join('');
 }
 
-// ── UI helpers ────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────
 function setLoadingSub(text) { document.getElementById('loading-sub').textContent = text; }
 function hideLoading() { document.getElementById('loading-screen').style.display = 'none'; }
 function showError(msg) {
@@ -905,16 +880,6 @@ function showError(msg) {
   const el = document.getElementById('error-screen');
   el.style.display = 'flex';
   document.getElementById('error-msg').innerHTML = msg;
-}
-function showClaimScreen(mode) {
-  document.getElementById('loading-screen').style.display  = 'none';
-  document.getElementById('dashboard').style.display       = 'none';
-  document.getElementById('readonly-banner').style.display = 'none';
-  document.getElementById('owner-banner').style.display    = 'none';
-  document.getElementById('claim-screen').style.display    = 'flex';
-  document.getElementById('claim-unclaimed-section').style.display = mode==='unclaimed' ? 'block':'none';
-  document.getElementById('claim-returning-section').style.display = mode==='returning' ? 'block':'none';
-  document.getElementById('claim-readonly-section').style.display  = mode==='readonly'  ? 'block':'none';
 }
 function fetchWithTimeout(url, ms, opts) {
   const ctrl = new AbortController();
