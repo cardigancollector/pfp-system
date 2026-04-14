@@ -502,33 +502,31 @@ async function boot(evoId) {
   }
 }
 
-// JSONP fetch to bypass CORS on Google Apps Script
+// JSONP fetch via new proxy endpoint on Analyzer API
 function fetchAnalyzerCard(evoId) {
   return new Promise((resolve, reject) => {
     const cbName = 'pfp_cb_' + Date.now();
     const script = document.createElement('script');
     const timer  = setTimeout(() => {
       delete window[cbName];
-      document.body.removeChild(script);
+      if (document.body.contains(script)) document.body.removeChild(script);
       reject(new Error('timeout'));
     }, 12000);
 
     window[cbName] = function(data) {
       clearTimeout(timer);
       delete window[cbName];
-      document.body.removeChild(script);
-      if (data.success && data.cards) {
-        const match = data.cards.find(c =>
-          c.livingCardId && c.livingCardId.trim().toLowerCase() === evoId.trim().toLowerCase()
-        ) || null;
-        resolve(match);
-      } else {
-        resolve(null);
-      }
+      if (document.body.contains(script)) document.body.removeChild(script);
+      resolve(data.success && data.card ? data.card : null);
     };
 
-    script.src = ANALYZER_API + '?action=getCards&callback=' + cbName;
-    script.onerror = () => { clearTimeout(timer); delete window[cbName]; reject(new Error('script error')); };
+    script.src = ANALYZER_API + '?action=getCardByEvoId&evoId=' + encodeURIComponent(evoId) + '&callback=' + cbName;
+    script.onerror = () => {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error('script error'));
+    };
     document.body.appendChild(script);
   });
 }
