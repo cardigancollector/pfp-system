@@ -85,38 +85,194 @@
   .owner-name { font-family:'Cinzel',serif; font-size:2.4rem; color:var(--text); font-weight:700; line-height:1; margin-bottom:8px; }
   .owner-meta { font-size:0.88rem; color:var(--text-dim); font-style:italic; }
   .owner-art-badge { position:relative; width:260px; height:355px; flex-shrink:0; }
-  .owner-art-badge img { width:100%; height:100%; object-fit:cover; border:2px solid var(--gold); box-shadow:0 0 60px rgba(201,168,76,0.4),0 30px 80px rgba(0,0,0,0.7); }
-  .owner-art-badge .no-image { width:100%; height:100%; background:var(--dark3); border:2px solid var(--glass-border); display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:0.8rem; letter-spacing:0.1em; }
-  .owner-art-badge::before { content:''; position:absolute; inset:-7px; border:1px solid rgba(201,168,76,0.2); pointer-events:none; z-index:1; }
-  .owner-art-badge::after { content:''; position:absolute; inset:-14px; border:1px solid rgba(201,168,76,0.07); pointer-events:none; z-index:1; }
+  .owner-art-badge img { width:100%; height:100%; object-fit:cover; }
+  .owner-art-badge .no-image { width:100%; height:100%; background:var(--dark3); border:4px solid #1a1510; display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:0.8rem; letter-spacing:0.1em; }
 
-  /* ── STAGE VISUAL EFFECTS ── */
+  /* ── STAGE VISUAL EFFECTS — OVERHAULED ── */
   .stage-wrap { position:relative; }
 
-  .stage-dormant img { filter:saturate(0.5) brightness(0.85); border:2px solid #3a3530 !important; box-shadow:none !important; }
+  /* shared: all stage borders sit on a pseudo that we can animate freely */
+  .owner-art-badge::before,
+  .owner-art-badge::after { content:''; position:absolute; pointer-events:none; z-index:3; border-radius:2px; }
 
-  .stage-awakened img { filter:saturate(0.8); border:2px solid #b87333 !important; box-shadow:0 0 30px rgba(184,115,51,0.4),0 20px 60px rgba(0,0,0,0.7) !important; animation:pulse-awakened 3s ease-in-out infinite; }
-  @keyframes pulse-awakened { 0%,100%{box-shadow:0 0 20px rgba(184,115,51,0.3),0 20px 60px rgba(0,0,0,0.7)} 50%{box-shadow:0 0 50px rgba(184,115,51,0.6),0 20px 60px rgba(0,0,0,0.7)} }
-
-  .stage-growing img { border:2px solid var(--copper) !important; box-shadow:0 0 40px rgba(184,115,51,0.5),0 25px 70px rgba(0,0,0,0.7) !important; animation:pulse-growing 2.5s ease-in-out infinite; }
-  @keyframes pulse-growing { 0%,100%{box-shadow:0 0 30px rgba(184,115,51,0.4)} 50%{box-shadow:0 0 60px rgba(184,115,51,0.7)} }
-
-  .stage-established img { border:2px solid var(--silver) !important; box-shadow:0 0 50px rgba(192,192,192,0.4),0 25px 70px rgba(0,0,0,0.7) !important; animation:shimmer-established 2s ease-in-out infinite; }
-  @keyframes shimmer-established { 0%,100%{filter:brightness(1) saturate(1)} 50%{filter:brightness(1.15) saturate(1.1)} }
-
-  .stage-renowned img { border:2px solid var(--gold) !important; box-shadow:0 0 60px rgba(201,168,76,0.6),0 0 120px rgba(201,168,76,0.2),0 30px 80px rgba(0,0,0,0.7) !important; animation:pulse-renowned 2s ease-in-out infinite; }
-  @keyframes pulse-renowned { 0%,100%{box-shadow:0 0 40px rgba(201,168,76,0.5),0 30px 80px rgba(0,0,0,0.7)} 50%{box-shadow:0 0 80px rgba(201,168,76,0.8),0 0 140px rgba(201,168,76,0.3),0 30px 80px rgba(0,0,0,0.7)} }
-
-  .stage-legendary img { border:3px solid var(--gold-light) !important; box-shadow:0 0 80px rgba(232,201,122,0.7),0 0 160px rgba(201,168,76,0.3),0 30px 80px rgba(0,0,0,0.8) !important; animation:burst-legendary 1.8s ease-in-out infinite; filter:brightness(1.05) saturate(1.2); }
-  @keyframes burst-legendary { 0%,100%{box-shadow:0 0 60px rgba(232,201,122,0.6),0 30px 80px rgba(0,0,0,0.8)} 40%{box-shadow:0 0 100px rgba(232,201,122,0.9),0 0 200px rgba(201,168,76,0.4),0 30px 80px rgba(0,0,0,0.8)} 70%{box-shadow:0 0 50px rgba(232,201,122,0.5),0 30px 80px rgba(0,0,0,0.8)} }
-
-  .stage-mythic img { border:3px solid var(--diamond) !important; box-shadow:0 0 100px rgba(168,216,234,0.6),0 0 200px rgba(201,168,76,0.3),0 0 300px rgba(168,85,247,0.2),0 30px 80px rgba(0,0,0,0.8) !important; animation:aurora-mythic 2.5s linear infinite; filter:brightness(1.1) saturate(1.3); }
-  @keyframes aurora-mythic {
-    0%  {box-shadow:0 0 100px rgba(168,216,234,0.7),0 0 200px rgba(201,168,76,0.3),0 0 300px rgba(168,85,247,0.2),0 30px 80px rgba(0,0,0,0.8)}
-    33% {box-shadow:0 0 100px rgba(201,168,76,0.7),0 0 200px rgba(168,85,247,0.3),0 0 300px rgba(168,216,234,0.2),0 30px 80px rgba(0,0,0,0.8)}
-    66% {box-shadow:0 0 100px rgba(168,85,247,0.7),0 0 200px rgba(168,216,234,0.3),0 0 300px rgba(201,168,76,0.2),0 30px 80px rgba(0,0,0,0.8)}
-    100%{box-shadow:0 0 100px rgba(168,216,234,0.7),0 0 200px rgba(201,168,76,0.3),0 0 300px rgba(168,85,247,0.2),0 30px 80px rgba(0,0,0,0.8)}
+  /* ── DORMANT ── dead, drained, desaturated */
+  .stage-dormant img {
+    filter: saturate(0) brightness(0.6) contrast(0.9);
   }
+  .stage-dormant::before {
+    inset: 0;
+    border: 4px solid #1e1a14;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,0,0,0.6);
+  }
+  .stage-dormant::after { display:none; }
+
+  /* ── AWAKENED ── first breath, copper warmth */
+  .stage-awakened img {
+    filter: saturate(0.7) brightness(0.9);
+  }
+  .stage-awakened::before {
+    inset: 0;
+    border: 4px solid #b87333;
+    box-shadow:
+      0 0 0 1px rgba(184,115,51,0.4),
+      0 0 20px rgba(184,115,51,0.35),
+      0 0 50px rgba(184,115,51,0.15),
+      inset 0 0 20px rgba(184,115,51,0.08);
+    animation: pulse-awakened 3.5s ease-in-out infinite;
+  }
+  .stage-awakened::after { display:none; }
+  @keyframes pulse-awakened {
+    0%,100% { box-shadow: 0 0 0 1px rgba(184,115,51,0.3), 0 0 18px rgba(184,115,51,0.25), 0 0 40px rgba(184,115,51,0.1), inset 0 0 14px rgba(184,115,51,0.06); }
+    50%      { box-shadow: 0 0 0 1px rgba(184,115,51,0.6), 0 0 35px rgba(184,115,51,0.55), 0 0 70px rgba(184,115,51,0.25), inset 0 0 28px rgba(184,115,51,0.12); }
+  }
+
+  /* ── GROWING ── copper strengthens, image warms */
+  .stage-growing img {
+    filter: saturate(1.1) brightness(1.0);
+  }
+  .stage-growing::before {
+    inset: 0;
+    border: 5px solid #c97a2a;
+    box-shadow:
+      0 0 0 2px rgba(201,122,42,0.5),
+      0 0 30px rgba(201,122,42,0.6),
+      0 0 80px rgba(201,122,42,0.25),
+      0 0 120px rgba(201,122,42,0.1),
+      inset 0 0 30px rgba(201,122,42,0.12);
+    animation: pulse-growing 2.8s ease-in-out infinite;
+  }
+  .stage-growing::after {
+    inset: -6px;
+    border: 1px solid rgba(201,122,42,0.3);
+    animation: pulse-growing 2.8s ease-in-out infinite reverse;
+  }
+  @keyframes pulse-growing {
+    0%,100% { opacity: 0.7; }
+    50%      { opacity: 1.0; }
+  }
+
+  /* ── ESTABLISHED ── silver composure, crisp and authoritative */
+  .stage-established img {
+    filter: saturate(1.05) brightness(1.05);
+  }
+  .stage-established::before {
+    inset: 0;
+    border: 5px solid #d0d0d0;
+    box-shadow:
+      0 0 0 2px rgba(200,200,200,0.5),
+      0 0 35px rgba(200,200,200,0.45),
+      0 0 90px rgba(200,200,200,0.18),
+      inset 0 0 25px rgba(200,200,200,0.08);
+    animation: shimmer-established 3s ease-in-out infinite;
+  }
+  .stage-established::after {
+    inset: -7px;
+    border: 1px solid rgba(200,200,200,0.25);
+    animation: shimmer-established 3s ease-in-out infinite reverse;
+  }
+  @keyframes shimmer-established {
+    0%,100% { box-shadow: 0 0 0 2px rgba(200,200,200,0.4), 0 0 30px rgba(200,200,200,0.35), 0 0 70px rgba(200,200,200,0.14), inset 0 0 20px rgba(200,200,200,0.06); }
+    50%      { box-shadow: 0 0 0 2px rgba(220,220,220,0.7), 0 0 55px rgba(220,220,220,0.6),  0 0 110px rgba(220,220,220,0.28), inset 0 0 35px rgba(220,220,220,0.12); }
+  }
+
+  /* ── RENOWNED ── gold presence, powerful pulse */
+  .stage-renowned img {
+    filter: saturate(1.15) brightness(1.08);
+  }
+  .stage-renowned::before {
+    inset: 0;
+    border: 6px solid var(--gold);
+    box-shadow:
+      0 0 0 2px rgba(201,168,76,0.6),
+      0 0 40px rgba(201,168,76,0.7),
+      0 0 100px rgba(201,168,76,0.35),
+      0 0 160px rgba(201,168,76,0.15),
+      inset 0 0 35px rgba(201,168,76,0.15);
+    animation: pulse-renowned 2.2s ease-in-out infinite;
+  }
+  .stage-renowned::after {
+    inset: -8px;
+    border: 2px solid rgba(201,168,76,0.4);
+    box-shadow: 0 0 20px rgba(201,168,76,0.2);
+    animation: pulse-renowned 2.2s ease-in-out infinite reverse;
+  }
+  @keyframes pulse-renowned {
+    0%,100% { box-shadow: 0 0 0 2px rgba(201,168,76,0.5), 0 0 30px rgba(201,168,76,0.55), 0 0 80px rgba(201,168,76,0.25),  0 0 130px rgba(201,168,76,0.1),  inset 0 0 25px rgba(201,168,76,0.1); }
+    50%      { box-shadow: 0 0 0 2px rgba(232,201,122,0.8), 0 0 60px rgba(232,201,122,0.85), 0 0 140px rgba(201,168,76,0.45), 0 0 220px rgba(201,168,76,0.2), inset 0 0 50px rgba(201,168,76,0.2); }
+  }
+
+  /* ── LEGENDARY ── blinding gold, wave bursts */
+  .stage-legendary img {
+    filter: saturate(1.25) brightness(1.12) contrast(1.05);
+  }
+  .stage-legendary::before {
+    inset: 0;
+    border: 7px solid var(--gold-light);
+    box-shadow:
+      0 0 0 3px rgba(232,201,122,0.7),
+      0 0 50px rgba(232,201,122,0.9),
+      0 0 120px rgba(201,168,76,0.55),
+      0 0 200px rgba(201,168,76,0.25),
+      0 0 300px rgba(201,168,76,0.1),
+      inset 0 0 50px rgba(232,201,122,0.2);
+    animation: burst-legendary 1.8s ease-in-out infinite;
+  }
+  .stage-legendary::after {
+    inset: -10px;
+    border: 2px solid rgba(232,201,122,0.5);
+    box-shadow: 0 0 30px rgba(232,201,122,0.3), 0 0 80px rgba(201,168,76,0.2);
+    animation: burst-legendary 1.8s ease-in-out infinite reverse;
+  }
+  @keyframes burst-legendary {
+    0%  { box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 40px rgba(232,201,122,0.7),  0 0 100px rgba(201,168,76,0.4),  0 0 180px rgba(201,168,76,0.2),  inset 0 0 40px rgba(232,201,122,0.15); }
+    35% { box-shadow: 0 0 0 3px rgba(255,235,150,0.9), 0 0 70px rgba(255,235,150,1.0),  0 0 160px rgba(232,201,122,0.7), 0 0 280px rgba(201,168,76,0.35), inset 0 0 70px rgba(255,235,150,0.3); }
+    70% { box-shadow: 0 0 0 3px rgba(232,201,122,0.5), 0 0 35px rgba(232,201,122,0.55), 0 0 90px rgba(201,168,76,0.35),  0 0 160px rgba(201,168,76,0.15), inset 0 0 35px rgba(232,201,122,0.1); }
+    100%{ box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 40px rgba(232,201,122,0.7),  0 0 100px rgba(201,168,76,0.4),  0 0 180px rgba(201,168,76,0.2),  inset 0 0 40px rgba(232,201,122,0.15); }
+  }
+
+  /* ── MYTHIC ── aurora cycling through diamond/gold/violet */
+  .stage-mythic img {
+    filter: saturate(1.35) brightness(1.15) contrast(1.08);
+  }
+  .stage-mythic::before {
+    inset: 0;
+    border: 8px solid var(--diamond);
+    animation: aurora-mythic-border 2.5s linear infinite;
+    box-shadow:
+      0 0 0 3px rgba(168,216,234,0.5),
+      0 0 60px rgba(168,216,234,0.8),
+      0 0 140px rgba(201,168,76,0.4),
+      0 0 240px rgba(168,85,247,0.25),
+      0 0 360px rgba(168,216,234,0.1),
+      inset 0 0 60px rgba(168,216,234,0.15);
+    animation: aurora-mythic 2.5s linear infinite;
+  }
+  .stage-mythic::after {
+    inset: -12px;
+    border: 3px solid rgba(168,216,234,0.4);
+    animation: aurora-mythic-outer 2.5s linear infinite reverse;
+  }
+  @keyframes aurora-mythic {
+    0%   { border-color:#a8d8ea; box-shadow: 0 0 0 3px rgba(168,216,234,0.6), 0 0 60px rgba(168,216,234,0.85), 0 0 140px rgba(201,168,76,0.4),  0 0 240px rgba(168,85,247,0.25), inset 0 0 60px rgba(168,216,234,0.18); }
+    33%  { border-color:#e8c97a; box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 60px rgba(232,201,122,0.85), 0 0 140px rgba(168,85,247,0.4),  0 0 240px rgba(168,216,234,0.25), inset 0 0 60px rgba(232,201,122,0.18); }
+    66%  { border-color:#d4a8f0; box-shadow: 0 0 0 3px rgba(212,168,240,0.6), 0 0 60px rgba(212,168,240,0.85), 0 0 140px rgba(168,216,234,0.4), 0 0 240px rgba(201,168,76,0.25),  inset 0 0 60px rgba(212,168,240,0.18); }
+    100% { border-color:#a8d8ea; box-shadow: 0 0 0 3px rgba(168,216,234,0.6), 0 0 60px rgba(168,216,234,0.85), 0 0 140px rgba(201,168,76,0.4),  0 0 240px rgba(168,85,247,0.25), inset 0 0 60px rgba(168,216,234,0.18); }
+  }
+  @keyframes aurora-mythic-outer {
+    0%   { border-color:rgba(168,216,234,0.5); box-shadow: 0 0 25px rgba(168,216,234,0.3); }
+    33%  { border-color:rgba(232,201,122,0.5); box-shadow: 0 0 25px rgba(232,201,122,0.3); }
+    66%  { border-color:rgba(212,168,240,0.5); box-shadow: 0 0 25px rgba(212,168,240,0.3); }
+    100% { border-color:rgba(168,216,234,0.5); box-shadow: 0 0 25px rgba(168,216,234,0.3); }
+  }
+
+  /* ── stage background atmosphere ── */
+  .stage-dormant-bg    { --stage-atmo: rgba(0,0,0,0); }
+  .stage-awakened-bg   { --stage-atmo: rgba(184,115,51,0.04); }
+  .stage-growing-bg    { --stage-atmo: rgba(184,115,51,0.06); }
+  .stage-established-bg{ --stage-atmo: rgba(200,200,200,0.04); }
+  .stage-renowned-bg   { --stage-atmo: rgba(201,168,76,0.06); }
+  .stage-legendary-bg  { --stage-atmo: rgba(232,201,122,0.09); }
+  .stage-mythic-bg     { --stage-atmo: rgba(168,216,234,0.07); }
 
   .card-canvas { position:absolute; inset:0; pointer-events:none; z-index:2; }
 
@@ -543,7 +699,6 @@ async function boot(evoId) {
   setLoadingSub('Fetching card from database…');
   loadMultipliers();
 
-  // Analyzer card via JSONP
   try {
     const data = await jsonpFetch(ANALYZER_API + '?action=getCardByEvoId&evoId=' + encodeURIComponent(evoId), 12000);
     if (data && data.success && data.card) analyzerCard = data.card;
@@ -551,7 +706,6 @@ async function boot(evoId) {
 
   setLoadingSub('Loading XP and interaction data…');
 
-  // Living card via JSONP
   try {
     const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(evoId), 8000);
     if (data && data.success && data.card) livingCard = data.card;
@@ -567,7 +721,6 @@ async function boot(evoId) {
   }
 
   savedOwner = loadOwner(evoId);
-
   hideLoading();
 
   const cardName = analyzerCard.card || evoId;
@@ -585,7 +738,6 @@ async function boot(evoId) {
   }
 }
 
-// ── Claim screen ──────────────────────────────────────────────
 function showClaimScreen(mode) {
   document.getElementById('loading-screen').style.display  = 'none';
   document.getElementById('dashboard').style.display       = 'none';
@@ -720,7 +872,10 @@ function buildDashboard() {
     [ac.set, ac.rarity, ac.type].filter(Boolean).join('  ·  ') || '';
 
   const artWrap = document.getElementById('card-art-wrap');
+
+  // Remove all stage classes
   STAGE_CLASS.forEach(c => artWrap.classList.remove(c));
+
   if (ac.imageUrl) {
     artWrap.innerHTML = `<img src="${esc(ac.imageUrl)}" alt="${esc(cardName)}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>No Image</div>'"><canvas class="card-canvas" id="card-canvas"></canvas>`;
   }
@@ -767,8 +922,7 @@ function buildDashboard() {
     `<div class="cas-item${f.live?' cas-live':''}"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':''}">${f.value}</div>${f.mult?`<div style="font-size:0.62rem;color:var(--green);margin-top:2px;letter-spacing:0.05em;">${f.mult}</div>`:''}</div>`
   ).join('');
 
-  // Apply stage visual class
-  STAGE_CLASS.forEach(c => artWrap.classList.remove(c));
+  // Apply stage class
   artWrap.classList.add(STAGE_CLASS[stageIdx] || 'stage-dormant');
 
   startParticles(stageIdx);
@@ -967,55 +1121,94 @@ function buildLog(interactions, daysSince) {
   }).join('');
 }
 
-// ── Particle system ───────────────────────────────────────────
+// ── Particle system — overhauled ──────────────────────────────
 let particleAnim = null;
 
 function startParticles(stageIdx) {
   if (particleAnim) { cancelAnimationFrame(particleAnim); particleAnim = null; }
   const canvas = document.getElementById('card-canvas');
   if (!canvas) return;
+
+  // Dormant & Awakened get no particles
   if (stageIdx < 2) { canvas.width = 0; canvas.height = 0; return; }
 
   const wrap = canvas.parentElement;
   canvas.width  = wrap.offsetWidth;
   canvas.height = wrap.offsetHeight;
-  const ctx     = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
 
-  const colors = {
-    2: ['rgba(184,115,51,', 'rgba(201,168,76,'],
-    3: ['rgba(192,192,192,', 'rgba(201,168,76,'],
-    4: ['rgba(201,168,76,', 'rgba(232,201,122,'],
-    5: ['rgba(232,201,122,', 'rgba(255,230,100,'],
-    6: ['rgba(168,216,234,', 'rgba(201,168,76,', 'rgba(196,181,253,'],
+  // Per-stage particle config
+  const configs = {
+    2: { count:14, colors:['rgba(201,122,42,','rgba(184,115,51,','rgba(232,160,80,'], minSize:0.8, maxSize:2.5, minSpeed:0.3, maxSpeed:0.8,  glow:8,  shape:'circle' },
+    3: { count:20, colors:['rgba(210,210,210,','rgba(192,192,192,','rgba(201,168,76,'], minSize:0.8, maxSize:3.0, minSpeed:0.4, maxSpeed:1.0,  glow:10, shape:'circle' },
+    4: { count:32, colors:['rgba(201,168,76,','rgba(232,201,122,','rgba(255,215,80,'],  minSize:1.0, maxSize:3.5, minSpeed:0.5, maxSpeed:1.2,  glow:14, shape:'star' },
+    5: { count:55, colors:['rgba(232,201,122,','rgba(255,235,150,','rgba(201,168,76,'], minSize:1.0, maxSize:4.0, minSpeed:0.6, maxSpeed:1.5,  glow:18, shape:'star' },
+    6: { count:90, colors:['rgba(168,216,234,','rgba(212,168,240,','rgba(232,201,122,','rgba(200,180,255,'], minSize:1.2, maxSize:5.0, minSpeed:0.7, maxSpeed:2.0, glow:24, shape:'star' },
   };
-  const palette = colors[Math.min(stageIdx, 6)] || colors[2];
-  const count   = [0,0,8,12,18,28,45][stageIdx] || 8;
 
-  const particles = Array.from({length: count}, () => ({
+  const cfg = configs[Math.min(stageIdx, 6)];
+
+  function randColor() { return cfg.colors[Math.floor(Math.random() * cfg.colors.length)]; }
+  function randRange(a, b) { return a + Math.random() * (b - a); }
+
+  const particles = Array.from({ length: cfg.count }, () => ({
     x:     Math.random() * canvas.width,
-    y:     canvas.height + Math.random() * 20,
-    size:  Math.random() * 2.5 + 0.5,
-    speed: Math.random() * 0.6 + 0.2,
-    alpha: Math.random() * 0.6 + 0.2,
-    color: palette[Math.floor(Math.random() * palette.length)],
-    drift: (Math.random() - 0.5) * 0.4,
+    y:     canvas.height + Math.random() * 30,
+    size:  randRange(cfg.minSize, cfg.maxSize),
+    speed: randRange(cfg.minSpeed, cfg.maxSpeed),
+    alpha: randRange(0.3, 0.9),
+    color: randColor(),
+    drift: (Math.random() - 0.5) * 0.6,
+    wobble: Math.random() * Math.PI * 2,
+    wobbleSpeed: randRange(0.01, 0.04),
   }));
+
+  function drawStar(ctx, x, y, size, alpha, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2;
+      const r = i % 2 === 0 ? size * 2 : size * 0.7;
+      ctx[i === 0 ? 'moveTo' : 'lineTo'](Math.cos(angle) * r, Math.sin(angle) * r);
+    }
+    ctx.closePath();
+    ctx.fillStyle = color + alpha + ')';
+    ctx.shadowColor = color + '0.8)';
+    ctx.shadowBlur = cfg.glow;
+    ctx.fill();
+    ctx.restore();
+  }
 
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles.forEach(p => {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = p.color + p.alpha + ')';
-      ctx.fill();
+      p.wobble += p.wobbleSpeed;
+      const wx = p.x + Math.sin(p.wobble) * 1.5;
+
+      if (cfg.shape === 'star' && p.size > 2) {
+        drawStar(ctx, wx, p.y, p.size * 0.5, p.alpha, p.color);
+      } else {
+        ctx.beginPath();
+        ctx.arc(wx, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + p.alpha + ')';
+        ctx.shadowColor = p.color + '0.9)';
+        ctx.shadowBlur  = cfg.glow;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
       p.y     -= p.speed;
-      p.x     += p.drift;
-      p.alpha -= 0.003;
-      if (p.y < -10 || p.alpha <= 0) {
-        p.y     = canvas.height + 5;
-        p.x     = Math.random() * canvas.width;
-        p.alpha = Math.random() * 0.6 + 0.2;
-        p.color = palette[Math.floor(Math.random() * palette.length)];
+      p.alpha -= 0.0025;
+
+      if (p.y < -12 || p.alpha <= 0) {
+        p.y      = canvas.height + 5;
+        p.x      = Math.random() * canvas.width;
+        p.alpha  = randRange(0.3, 0.9);
+        p.color  = randColor();
+        p.size   = randRange(cfg.minSize, cfg.maxSize);
+        p.speed  = randRange(cfg.minSpeed, cfg.maxSpeed);
+        p.wobble = Math.random() * Math.PI * 2;
       }
     });
     particleAnim = requestAnimationFrame(draw);
