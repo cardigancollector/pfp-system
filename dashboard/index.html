@@ -458,23 +458,30 @@ window.addEventListener('DOMContentLoaded', () => {
 async function boot(evoId) {
   setLoadingSub('Fetching card from database…');
 
+  // Try Analyzer API via JSONP to avoid CORS issues
   try {
-    const res  = await fetchWithTimeout(ANALYZER_API + '?action=getCards', 12000);
-    const data = await res.json();
-    if (data.success && data.cards) {
-      analyzerCard = data.cards.find(c => c.livingCardId && c.livingCardId.trim() === evoId.trim()) || null;
-    }
+    analyzerCard = await fetchAnalyzerCard(evoId);
   } catch(e) { console.warn('Analyzer API error:', e); }
-
-  if (!analyzerCard) { showError('No card with Evolution ID <strong>' + esc(evoId) + '</strong> was found.'); return; }
 
   setLoadingSub('Loading XP and interaction data…');
 
+  // Always try Living Card API
   try {
     const res  = await fetchWithTimeout(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(evoId), 8000);
     const data = await res.json();
     if (data && data.success && data.card) livingCard = data.card;
   } catch(e) { console.warn('Living Card API unavailable'); }
+
+  // If we have neither, show error
+  if (!analyzerCard && !livingCard) {
+    showError('No card with Evolution ID <strong>' + esc(evoId) + '</strong> was found.');
+    return;
+  }
+
+  // If analyzer failed but living card exists, build a stub so dashboard still renders
+  if (!analyzerCard && livingCard) {
+    analyzerCard = { card: livingCard['Card Name'] || evoId, livingCardId: evoId };
+  }
 
   savedOwner = loadOwner(evoId);
 
@@ -491,9 +498,39 @@ async function boot(evoId) {
   } else if (!claimed) {
     showClaimScreen('unclaimed');
   } else {
-    // ── FIX: card is claimed but no local owner — render dashboard in read-only mode ──
     showDashboard(false);
   }
+}
+
+// JSONP fetch to bypass CORS on Google Apps Script
+function fetchAnalyzerCard(evoId) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'pfp_cb_' + Date.now();
+    const script = document.createElement('script');
+    const timer  = setTimeout(() => {
+      delete window[cbName];
+      document.body.removeChild(script);
+      reject(new Error('timeout'));
+    }, 12000);
+
+    window[cbName] = function(data) {
+      clearTimeout(timer);
+      delete window[cbName];
+      document.body.removeChild(script);
+      if (data.success && data.cards) {
+        const match = data.cards.find(c =>
+          c.livingCardId && c.livingCardId.trim().toLowerCase() === evoId.trim().toLowerCase()
+        ) || null;
+        resolve(match);
+      } else {
+        resolve(null);
+      }
+    };
+
+    script.src = ANALYZER_API + '?action=getCards&callback=' + cbName;
+    script.onerror = () => { clearTimeout(timer); delete window[cbName]; reject(new Error('script error')); };
+    document.body.appendChild(script);
+  });
 }
 
 // ── Claim screen ──────────────────────────────────────────────
