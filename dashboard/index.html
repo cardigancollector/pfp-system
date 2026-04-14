@@ -584,7 +584,8 @@ async function performClaim(claimCode, errEl) {
     const res  = await fetchWithTimeout(url, 10000);
     const data = await res.json();
 
-    if (data.success || (data.status === 200)) {
+    const alreadyClaimed = data.error && data.error.toLowerCase().includes("already claimed");
+    if (data.success || (data.status === 200) || alreadyClaimed) {
       const cardName = analyzerCard ? analyzerCard.card : urlCardId;
       saveOwner(urlCardId, claimCode, cardName);
       savedOwner = { claimCode, cardName };
