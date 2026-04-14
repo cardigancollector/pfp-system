@@ -90,6 +90,52 @@
   .owner-art-badge::before { content:''; position:absolute; inset:-7px; border:1px solid rgba(201,168,76,0.2); pointer-events:none; z-index:1; }
   .owner-art-badge::after { content:''; position:absolute; inset:-14px; border:1px solid rgba(201,168,76,0.07); pointer-events:none; z-index:1; }
 
+  /* ── STAGE VISUAL EFFECTS ── */
+  .stage-wrap { position:relative; }
+
+  /* Dormant — flat, desaturated */
+  .stage-dormant img { filter:saturate(0.5) brightness(0.85); border:2px solid #3a3530 !important; box-shadow:none !important; }
+
+  /* Awakened — warm pulse glow */
+  .stage-awakened img { filter:saturate(0.8); border:2px solid #b87333 !important; box-shadow:0 0 30px rgba(184,115,51,0.4),0 20px 60px rgba(0,0,0,0.7) !important; animation:pulse-awakened 3s ease-in-out infinite; }
+  @keyframes pulse-awakened { 0%,100%{box-shadow:0 0 20px rgba(184,115,51,0.3),0 20px 60px rgba(0,0,0,0.7)} 50%{box-shadow:0 0 50px rgba(184,115,51,0.6),0 20px 60px rgba(0,0,0,0.7)} }
+
+  /* Growing — copper border + particles */
+  .stage-growing img { border:2px solid var(--copper) !important; box-shadow:0 0 40px rgba(184,115,51,0.5),0 25px 70px rgba(0,0,0,0.7) !important; animation:pulse-growing 2.5s ease-in-out infinite; }
+  @keyframes pulse-growing { 0%,100%{box-shadow:0 0 30px rgba(184,115,51,0.4)} 50%{box-shadow:0 0 60px rgba(184,115,51,0.7)} }
+
+  /* Established — silver shimmer */
+  .stage-established img { border:2px solid var(--silver) !important; box-shadow:0 0 50px rgba(192,192,192,0.4),0 25px 70px rgba(0,0,0,0.7) !important; animation:shimmer-established 2s ease-in-out infinite; }
+  @keyframes shimmer-established { 0%,100%{filter:brightness(1) saturate(1)} 50%{filter:brightness(1.15) saturate(1.1)} }
+
+  /* Renowned — gold border pulse */
+  .stage-renowned img { border:2px solid var(--gold) !important; box-shadow:0 0 60px rgba(201,168,76,0.6),0 0 120px rgba(201,168,76,0.2),0 30px 80px rgba(0,0,0,0.7) !important; animation:pulse-renowned 2s ease-in-out infinite; }
+  @keyframes pulse-renowned { 0%,100%{box-shadow:0 0 40px rgba(201,168,76,0.5),0 30px 80px rgba(0,0,0,0.7)} 50%{box-shadow:0 0 80px rgba(201,168,76,0.8),0 0 140px rgba(201,168,76,0.3),0 30px 80px rgba(0,0,0,0.7)} }
+
+  /* Legendary — gold + flash bursts */
+  .stage-legendary img { border:3px solid var(--gold-light) !important; box-shadow:0 0 80px rgba(232,201,122,0.7),0 0 160px rgba(201,168,76,0.3),0 30px 80px rgba(0,0,0,0.8) !important; animation:burst-legendary 1.8s ease-in-out infinite; filter:brightness(1.05) saturate(1.2); }
+  @keyframes burst-legendary { 0%,100%{box-shadow:0 0 60px rgba(232,201,122,0.6),0 30px 80px rgba(0,0,0,0.8)} 40%{box-shadow:0 0 100px rgba(232,201,122,0.9),0 0 200px rgba(201,168,76,0.4),0 30px 80px rgba(0,0,0,0.8)} 70%{box-shadow:0 0 50px rgba(232,201,122,0.5),0 30px 80px rgba(0,0,0,0.8)} }
+
+  /* Mythic — prismatic aurora */
+  .stage-mythic img { border:3px solid var(--diamond) !important; box-shadow:0 0 100px rgba(168,216,234,0.6),0 0 200px rgba(201,168,76,0.3),0 0 300px rgba(168,85,247,0.2),0 30px 80px rgba(0,0,0,0.8) !important; animation:aurora-mythic 2.5s linear infinite; filter:brightness(1.1) saturate(1.3); }
+  @keyframes aurora-mythic {
+    0%  {box-shadow:0 0 100px rgba(168,216,234,0.7),0 0 200px rgba(201,168,76,0.3),0 0 300px rgba(168,85,247,0.2),0 30px 80px rgba(0,0,0,0.8)}
+    33% {box-shadow:0 0 100px rgba(201,168,76,0.7),0 0 200px rgba(168,85,247,0.3),0 0 300px rgba(168,216,234,0.2),0 30px 80px rgba(0,0,0,0.8)}
+    66% {box-shadow:0 0 100px rgba(168,85,247,0.7),0 0 200px rgba(168,216,234,0.3),0 0 300px rgba(201,168,76,0.2),0 30px 80px rgba(0,0,0,0.8)}
+    100%{box-shadow:0 0 100px rgba(168,216,234,0.7),0 0 200px rgba(201,168,76,0.3),0 0 300px rgba(168,85,247,0.2),0 30px 80px rgba(0,0,0,0.8)}
+  }
+
+  /* Particle canvas overlay */
+  .card-canvas { position:absolute; inset:0; pointer-events:none; z-index:2; }
+
+  /* Live value display */
+  .live-value-wrap { margin-top:6px; display:flex; align-items:baseline; gap:8px; }
+  .live-value-num { font-family:'Cinzel',serif; font-size:1.1rem; color:var(--gold-light); font-weight:700; }
+  .live-value-label { font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold-dim); }
+  .live-value-mult { font-size:0.72rem; color:var(--green); letter-spacing:0.05em; }
+  .cas-live { background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.16)); border:1px solid rgba(201,168,76,0.4) !important; }
+
+
   .evo-id-pill { display:inline-flex; align-items:center; gap:8px; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.35); border-radius:4px; padding:5px 12px; margin-top:10px; font-family:monospace; font-size:0.82rem; color:#d8b4fe; letter-spacing:1px; }
   .evo-id-pill span { color:rgba(196,181,253,0.5); font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; font-family:'Cinzel',serif; }
 
@@ -321,8 +367,9 @@
           <div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-dim);padding-bottom:8px;">Global Rank</div>
         </div>
       </div>
-      <div class="owner-art-badge" id="card-art-wrap">
+      <div class="owner-art-badge stage-wrap" id="card-art-wrap">
         <div class="no-image">No Image</div>
+        <canvas class="card-canvas" id="card-canvas"></canvas>
       </div>
     </div>
 
@@ -428,6 +475,34 @@ const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflB
 const STAGES      = ['Dormant','Awakened','Growing','Established','Renowned','Legendary','Mythic'];
 const STAGE_ICONS = ['💤','🌅','🌱','🏛️','🌟','⚚','🔮'];
 const STAGE_XP    = [0, 500, 1500, 3500, 7500, 15000, 30000];
+const STAGE_MULT  = [1.00, 1.05, 1.10, 1.20, 1.35, 1.55, 2.00]; // loaded from settings, defaults here
+const STAGE_CLASS = ['stage-dormant','stage-awakened','stage-growing','stage-established','stage-renowned','stage-legendary','stage-mythic'];
+
+let settingsMultipliers = null; // loaded from API
+
+async function loadMultipliers() {
+  try {
+    const res  = await fetchWithTimeout(LIVING_API + '?action=get_settings', 6000);
+    const data = await res.json();
+    if (data.success && data.settings) {
+      const s = data.settings;
+      settingsMultipliers = [
+        parseFloat(s.multiplier_dormant)     || 1.00,
+        parseFloat(s.multiplier_awakened)    || 1.05,
+        parseFloat(s.multiplier_growing)     || 1.10,
+        parseFloat(s.multiplier_established) || 1.20,
+        parseFloat(s.multiplier_renowned)    || 1.35,
+        parseFloat(s.multiplier_legendary)   || 1.55,
+        parseFloat(s.multiplier_mythic)      || 2.00,
+      ];
+    }
+  } catch(e) { console.warn('Could not load multipliers from settings'); }
+}
+
+function getMultiplier(stageIdx) {
+  const m = settingsMultipliers || STAGE_MULT;
+  return m[Math.min(stageIdx, m.length - 1)] || 1.00;
+}
 
 function storageKey(evoId) { return 'pfp_owner_' + evoId; }
 function saveOwner(evoId, claimCode, cardName) {
@@ -457,6 +532,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 async function boot(evoId) {
   setLoadingSub('Fetching card from database…');
+  loadMultipliers();
 
   // Try Analyzer API via JSONP to avoid CORS issues
   try {
@@ -671,8 +747,10 @@ function buildDashboard() {
     [ac.set, ac.rarity, ac.type].filter(Boolean).join('  ·  ') || '';
 
   const artWrap = document.getElementById('card-art-wrap');
+  // Remove old stage classes
+  STAGE_CLASS.forEach(c => artWrap.classList.remove(c));
   if (ac.imageUrl) {
-    artWrap.innerHTML = `<img src="${esc(ac.imageUrl)}" alt="${esc(cardName)}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>No Image</div>'">`;
+    artWrap.innerHTML = `<img src="${esc(ac.imageUrl)}" alt="${esc(cardName)}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>No Image</div>'"><canvas class="card-canvas" id="card-canvas"></canvas>`;
   }
 
   const rarity     = (ac.rarity || '').toLowerCase();
@@ -681,16 +759,21 @@ function buildDashboard() {
   document.getElementById('d-grade-badge').innerHTML =
     `<span class="grade-badge grade-${gradeClass}">◆ ${ac.rarity || 'Standard'}</span>`;
 
+  const baseValue = parseFloat(ac.value) || 0;
+  const mult      = getMultiplier(stageIdx);
+  const liveValue = baseValue * mult;
+  const multLabel = mult > 1 ? `+${Math.round((mult-1)*100)}% XP boost` : 'Base value';
+
   const stripFields = [
-    { label:'Value',      value: ac.value ? '$' + parseFloat(ac.value).toFixed(2) : '—', gold:true },
-    { label:'Rank',       value: ac.rank  ? '#' + ac.rank : '—', gold:true },
-    { label:'Set',        value: ac.set        || '—' },
-    { label:'Qty Issued', value: ac.quantityIssued || '—' },
-    { label:'Foil',       value: ac.foil       || '—' },
-    { label:'Condition',  value: ac.condition  || '—' },
+    { label:'Base Value',  value: baseValue ? '$' + baseValue.toFixed(2) : '—', gold:false },
+    { label:'Live Value',  value: baseValue ? '$' + liveValue.toFixed(2) : '—', gold:true, live:true, mult: mult > 1 ? multLabel : null },
+    { label:'Rank',        value: ac.rank  ? '#' + ac.rank : '—', gold:true },
+    { label:'Set',         value: ac.set        || '—' },
+    { label:'Qty Issued',  value: ac.quantityIssued || '—' },
+    { label:'Condition',   value: ac.condition  || '—' },
   ];
   document.getElementById('card-analyzer-strip').innerHTML = stripFields.map(f =>
-    `<div class="cas-item"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':''}">${f.value}</div></div>`
+    `<div class="cas-item${f.live?' cas-live':''}"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':''}">${f.value}</div>${f.mult?`<div style="font-size:0.62rem;color:var(--green);margin-top:2px;letter-spacing:0.05em;">${f.mult}</div>`:''}</div>`
   ).join('');
 
   const xp           = parseInt(lc['Current XP'])        || 0;
@@ -711,6 +794,13 @@ function buildDashboard() {
   document.getElementById('d-stage').textContent        = stage;
   document.getElementById('d-level').textContent        = `Level ${level}`;
   document.getElementById('d-next-stage').textContent   = STAGES[stageIdx+1] || 'Mythic (Max)';
+
+  // Apply stage visual class to card art
+  STAGE_CLASS.forEach(c => artWrap.classList.remove(c));
+  artWrap.classList.add(STAGE_CLASS[stageIdx] || 'stage-dormant');
+
+  // Start particles for higher stages
+  startParticles(stageIdx);
 
   const curXP  = STAGE_XP[stageIdx]   || 0;
   const nextXP = STAGE_XP[stageIdx+1] || STAGE_XP[stageIdx];
@@ -906,6 +996,63 @@ function buildLog(interactions, daysSince) {
       <div class="log-xp ${isNeg?'neg':'pos'}">${t.xp}</div>
     </div>`;
   }).join('');
+}
+
+
+// ── Particle system ──────────────────────────────────────────
+let particleAnim = null;
+
+function startParticles(stageIdx) {
+  if (particleAnim) { cancelAnimationFrame(particleAnim); particleAnim = null; }
+  const canvas = document.getElementById('card-canvas');
+  if (!canvas) return;
+  if (stageIdx < 2) { canvas.width = 0; canvas.height = 0; return; } // no particles below GROWING
+
+  const wrap = canvas.parentElement;
+  canvas.width  = wrap.offsetWidth;
+  canvas.height = wrap.offsetHeight;
+  const ctx     = canvas.getContext('2d');
+
+  const colors = {
+    2: ['rgba(184,115,51,', 'rgba(201,168,76,'],        // growing — copper/gold
+    3: ['rgba(192,192,192,', 'rgba(201,168,76,'],        // established — silver/gold
+    4: ['rgba(201,168,76,', 'rgba(232,201,122,'],        // renowned — gold
+    5: ['rgba(232,201,122,', 'rgba(255,230,100,'],       // legendary — bright gold
+    6: ['rgba(168,216,234,', 'rgba(201,168,76,', 'rgba(196,181,253,'], // mythic — prismatic
+  };
+  const palette = colors[Math.min(stageIdx, 6)] || colors[2];
+  const count   = [0,0,8,12,18,28,45][stageIdx] || 8;
+
+  const particles = Array.from({length: count}, () => ({
+    x:     Math.random() * canvas.width,
+    y:     canvas.height + Math.random() * 20,
+    size:  Math.random() * 2.5 + 0.5,
+    speed: Math.random() * 0.6 + 0.2,
+    alpha: Math.random() * 0.6 + 0.2,
+    color: palette[Math.floor(Math.random() * palette.length)],
+    drift: (Math.random() - 0.5) * 0.4,
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color + p.alpha + ')';
+      ctx.fill();
+      p.y     -= p.speed;
+      p.x     += p.drift;
+      p.alpha -= 0.003;
+      if (p.y < -10 || p.alpha <= 0) {
+        p.y     = canvas.height + 5;
+        p.x     = Math.random() * canvas.width;
+        p.alpha = Math.random() * 0.6 + 0.2;
+        p.color = palette[Math.floor(Math.random() * palette.length)];
+      }
+    });
+    particleAnim = requestAnimationFrame(draw);
+  }
+  draw();
 }
 
 // ── Helpers ───────────────────────────────────────────────────
