@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head>F
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PfP — Living Card</title>
@@ -1015,9 +1015,9 @@ function buildDashboard() {
 
 // ── Scan ──────────────────────────────────────────────────────
 async function logScan() {
-  const cardId   = urlCardId;
-  const token    = 'OWN-' + urlCardId;
-  const btn      = document.getElementById('scan-btn');
+  const cardId  = urlCardId;
+  const token   = 'OWN-' + urlCardId;
+  const btn     = document.getElementById('scan-btn');
   const feedback = document.getElementById('scan-feedback');
   if (!cardId) return;
   btn.disabled = true;
@@ -1026,8 +1026,8 @@ async function logScan() {
   try {
     const url = LIVING_API
       + '?action=qr_scan'
-      + '&card_id='    + encodeURIComponent(cardId)
-      + '&owner_token='+ encodeURIComponent(token);
+      + '&card_id='     + encodeURIComponent(cardId)
+      + '&owner_token=' + encodeURIComponent(token);
     const data = await jsonpFetch(url, 8000);
     if (data.success || data.status === 200) {
       btn.innerHTML = '<span>✦</span> Scan Logged — +10 XP Awarded';
@@ -1038,10 +1038,18 @@ async function logScan() {
         if (livingCard) livingCard['Current XP'] = data.totalXP;
       }
     } else {
-      btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
-      feedback.textContent = data.error || 'Scan could not be logged.';
-      feedback.className = 'scan-feedback error';
-      btn.disabled = false;
+      const alreadyScanned = data.error && data.error.toLowerCase().includes('already scanned');
+      if (alreadyScanned) {
+        btn.innerHTML = '<span>✦</span> Already Scanned Today';
+        btn.disabled = true;
+        feedback.textContent = 'Come back tomorrow for your next XP reward.';
+        feedback.className = 'scan-feedback success';
+      } else {
+        btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
+        feedback.textContent = data.error || 'Scan could not be logged.';
+        feedback.className = 'scan-feedback error';
+        btn.disabled = false;
+      }
     }
   } catch(e) {
     btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
@@ -1089,10 +1097,11 @@ function applyStreakCalendar(days) {
   if (!grid) return;
   grid.innerHTML = days.map((d, i) => {
     let cls = '';
-    if (d.beforeClaim)  cls = '';
-    else if (d.scanned) cls = 'active';
-    else                cls = 'decay';
-    const label = i === days.length - 1 ? 'Today' : (days.length - 1 - i) + ' days ago';
+    const isToday = i === days.length - 1;
+    if (d.beforeClaim)       cls = '';
+    else if (d.scanned || (isToday && livingCard && parseInt(livingCard['Days Since Scan']) === 0)) cls = 'active';
+    else                     cls = 'decay';
+    const label = isToday ? 'Today' : (days.length - 1 - i) + ' days ago';
     return `<div class="streak-day ${cls}" title="${label}"></div>`;
   }).join('');
 }
