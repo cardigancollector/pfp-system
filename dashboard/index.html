@@ -966,7 +966,17 @@ function buildDashboard() {
   document.getElementById('d-percentile').textContent = '—';
   document.getElementById('d-top').textContent        = '—';
   fetchRank(urlCardId);
+  incrementView(urlCardId);
   fetchStats();
+
+  async function incrementView(cardId) {
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=increment_view&card_id=' + encodeURIComponent(cardId), 6000);
+    if (data && data.success) {
+      document.getElementById('d-views').textContent = data.views.toLocaleString();
+    }
+  } catch(e) {}
+}
 
   const healthPct = Math.max(0, Math.min(100, 100 - (daysSince * 8)));
   document.getElementById('health-pct').textContent   = healthPct + '%';
