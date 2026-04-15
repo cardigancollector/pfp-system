@@ -1071,25 +1071,43 @@ async function logScan() {
 
 // ── Milestones ────────────────────────────────────────────────
 function buildMilestones(xp, streak, interactions) {
-  const milestones = [
-    { icon:'🌅', name:'First Awakening', desc:'Reach 500 XP',         target:500,  current:xp },
-    { icon:'🔥', name:'Week Warrior',    desc:'7-day streak',          target:7,    current:streak },
-    { icon:'⚡', name:'Power User',      desc:'50 total interactions', target:50,   current:interactions },
-    { icon:'🌙', name:'Month Bound',     desc:'30-day streak',         target:30,   current:streak },
-    { icon:'🏛️', name:'Established',    desc:'Reach 3,500 XP',        target:3500, current:xp },
+  const MILESTONE_DEFS = [
+    { icon:'🌅', name:'First Awakening', desc:'Reach 500 XP',         key:'First Awakening', target:500,  current:xp },
+    { icon:'🔥', name:'Week Warrior',    desc:'7-day streak',          key:'Week Warrior',    target:7,    current:streak },
+    { icon:'⚡', name:'Power User',      desc:'50 total interactions', key:'Power User',      target:50,   current:interactions },
+    { icon:'🌙', name:'Month Bound',     desc:'30-day streak',         key:'Month Bound',     target:30,   current:streak },
+    { icon:'🏛️', name:'Established',    desc:'Reach 3,500 XP',        key:'Established',     target:3500, current:xp },
   ];
-  document.getElementById('milestone-list').innerHTML =
-    `<div class="chart-title">Milestones</div>` +
-    milestones.map(m => {
-      const done = m.current >= m.target;
-      const pct  = Math.min(100, Math.round(m.current / m.target * 100));
-      return `<div class="milestone-item">
-        <div class="m-icon">${m.icon}</div>
-        <div class="m-info"><div class="m-name">${m.name}</div><div class="m-desc">${m.desc}</div>${done?'':
-        `<div class="m-bar-track"><div class="m-bar-fill" style="width:${pct}%"></div></div>`}</div>
-        ${done?`<div class="m-done">✓</div>`:`<div class="m-xp">${m.current}/${m.target}</div>`}
-      </div>`;
-    }).join('');
+
+  // Render immediately with live-data progress, then update with sheet data
+  function render(earnedKeys) {
+    document.getElementById('milestone-list').innerHTML =
+      `<div class="chart-title">Milestones</div>` +
+      MILESTONE_DEFS.map(m => {
+        const done = earnedKeys.has(m.key) || m.current >= m.target;
+        const pct  = Math.min(100, Math.round(m.current / m.target * 100));
+        return `<div class="milestone-item">
+          <div class="m-icon">${m.icon}</div>
+          <div class="m-info">
+            <div class="m-name">${m.name}</div>
+            <div class="m-desc">${m.desc}</div>
+            ${done ? '' : `<div class="m-bar-track"><div class="m-bar-fill" style="width:${pct}%"></div></div>`}
+          </div>
+          ${done ? `<div class="m-done">✓</div>` : `<div class="m-xp">${m.current}/${m.target}</div>`}
+        </div>`;
+      }).join('');
+  }
+
+  render(new Set());
+
+  jsonpFetch(LIVING_API + '?action=get_milestones&card_id=' + encodeURIComponent(urlCardId), 8000)
+    .then(data => {
+      if (data && data.success && data.earned) {
+        const earnedKeys = new Set(data.earned.map(e => e.milestone));
+        render(earnedKeys);
+      }
+    })
+    .catch(() => {});
 }
 
 // ── Streak Calendar ───────────────────────────────────────────
