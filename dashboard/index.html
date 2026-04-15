@@ -1108,9 +1108,20 @@ function applyStreakCalendar(days) {
   grid.innerHTML = days.map((d, i) => {
     let cls = '';
     const isToday = i === days.length - 1;
-    if (d.beforeClaim)       cls = '';
-    else if (d.scanned || (isToday && livingCard && parseInt(livingCard['Days Since Scan']) === 0)) cls = 'active';
-    else                     cls = 'decay';
+    if (d.beforeClaim) {
+      cls = '';
+    } else if (d.scanned) {
+      cls = 'active';
+    } else if (isToday) {
+      cls = '';
+    } else {
+      const claimDayIdx = days.findIndex(x => !x.beforeClaim);
+      if (i === claimDayIdx) {
+        cls = '';
+      } else {
+        cls = 'decay';
+      }
+    }
     const label = isToday ? 'Today' : (days.length - 1 - i) + ' days ago';
     return `<div class="streak-day ${cls}" title="${label}"></div>`;
   }).join('');
