@@ -941,20 +941,20 @@ function buildDashboard() {
       <div class="evo-name ${i===stageIdx?'active':''}">${s}</div>
     </div>`).join('');
 
-  const rank   = Math.max(1, Math.round(1000 - (xp / 50)));
-  const topPct = Math.round((rank / 1000) * 100);
-  const ipd    = interactions > 0 && claimDate
+  const ipd = interactions > 0 && claimDate
     ? (interactions / Math.max(1, Math.floor((Date.now() - new Date(claimDate).getTime()) / 86400000))).toFixed(2) : '0.00';
-  document.getElementById('d-rank').textContent       = '#' + rank;
-  document.getElementById('d-rank-hero').textContent  = '#' + rank;
-  document.getElementById('d-percentile').textContent = `Top ${topPct}%`;
-  document.getElementById('d-top').textContent        = topPct;
   document.getElementById('d-ipd').textContent        = ipd;
   document.getElementById('d-today-xp').textContent   = daysSince <= 0 ? '+10 XP' : '0';
   document.getElementById('d-rank-note').textContent  =
     xp < 500  ? 'Interact daily to climb the ranks and awaken your card.' :
     xp < 1500 ? 'Your card is growing. Keep your streak alive for bonuses.' :
                 'Strong standing. Streak bonuses will accelerate your XP.';
+
+  document.getElementById('d-rank').textContent       = '#—';
+  document.getElementById('d-rank-hero').textContent  = '#—';
+  document.getElementById('d-percentile').textContent = '—';
+  document.getElementById('d-top').textContent        = '—';
+  fetchRank(urlCardId);
 
   const healthPct = Math.max(0, Math.min(100, 100 - (daysSince * 8)));
   document.getElementById('health-pct').textContent   = healthPct + '%';
@@ -1214,6 +1214,26 @@ function startParticles(stageIdx) {
     particleAnim = requestAnimationFrame(draw);
   }
   draw();
+}
+
+// ── Real rank fetch ───────────────────────────────────────────
+async function fetchRank(cardId) {
+  try {
+    const data = await jsonpFetch(
+      LIVING_API + '?action=get_rank&card_id=' + encodeURIComponent(cardId), 8000
+    );
+    if (data && data.success) {
+      const rank   = data.rank;
+      const total  = data.total;
+      const topPct = total > 1 ? Math.round((rank / total) * 100) : 1;
+      document.getElementById('d-rank').textContent       = '#' + rank;
+      document.getElementById('d-rank-hero').textContent  = '#' + rank;
+      document.getElementById('d-percentile').textContent = 'Top ' + topPct + '%';
+      document.getElementById('d-top').textContent        = topPct;
+    }
+  } catch(e) {
+    console.warn('Rank fetch failed:', e);
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────
