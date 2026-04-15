@@ -1121,33 +1121,57 @@ function applyStreakCalendar(days) {
 
 // ── Log ───────────────────────────────────────────────────────
 function buildLog(interactions, daysSince) {
-  const types = [
-    { icon:'📱', label:'QR Scan',               xp:'+10' },
-    { icon:'🔥', label:'Streak Bonus (7 days)', xp:'+100' },
-    { icon:'👁', label:'Public Showcase',        xp:'+25' },
-    { icon:'🤝', label:'Endorsement Received',  xp:'+30' },
-    { icon:'📱', label:'QR Scan',               xp:'+10' },
-    { icon:'⚠️', label:'Decay — 3 days idle',  xp:'−50' },
-    { icon:'📱', label:'QR Scan',               xp:'+10' },
-    { icon:'🎪', label:'Event Check-in',        xp:'+50' },
-  ];
-  const log   = document.getElementById('log-list');
-  const count = Math.min(8, Math.max(0, interactions));
-  if (count === 0) {
+  const log = document.getElementById('log-list');
+  if (interactions === 0) {
     log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet. Claim your card and scan to start earning XP.</div>';
     return;
   }
-  log.innerHTML = types.slice(0,count).map((t,i) => {
-    const daysAgo = i === 0 ? daysSince : i + Math.floor(Math.random()*3);
-    const dateStr = daysAgo <= 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`;
-    const isNeg   = t.xp.startsWith('−');
-    return `<div class="log-item" style="animation-delay:${i*0.05}s">
-      <div class="log-icon">${t.icon}</div>
-      <div class="log-type">${t.label}</div>
-      <div class="log-date">${dateStr}</div>
-      <div class="log-xp ${isNeg?'neg':'pos'}">${t.xp}</div>
-    </div>`;
-  }).join('');
+  log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">Loading log…</div>';
+  fetchLedger(urlCardId);
+}
+
+async function fetchLedger(cardId) {
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_ledger&card_id=' + encodeURIComponent(cardId), 10000);
+    if (!data || !data.success || !data.entries) return;
+    const log = document.getElementById('log-list');
+    const typeMap = {
+      'DAILY_SCAN':           { icon:'📱', label:'QR Scan' },
+      'NEW_OWNER_CLAIM':      { icon:'🎴', label:'Card Claimed' },
+      'STREAK_7':             { icon:'🔥', label:'Streak Bonus (7 days)' },
+      'STREAK_30':            { icon:'🔥', label:'Streak Bonus (30 days)' },
+      'DECAY':                { icon:'⚠️', label:'XP Decay' },
+      'DECAY_STAGE_DROP':     { icon:'🔴', label:'Stage Drop' },
+      'PUBLIC_SHOWCASE':      { icon:'👁', label:'Public Showcase' },
+      'ENDORSEMENT':          { icon:'🤝', label:'Endorsement Received' },
+      'EVENT_CHECKIN':        { icon:'🎪', label:'Event Check-in' },
+      'MILESTONE':            { icon:'🏆', label:'Milestone Reached' },
+      'NOTABLE_COLLECTOR_BONUS': { icon:'⭐', label:'Notable Collector Bonus' },
+    };
+    if (data.entries.length === 0) {
+      log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet.</div>';
+      return;
+    }
+    log.innerHTML = data.entries.map((e, i) => {
+      const t       = typeMap[e.type] || { icon:'✦', label: e.type };
+      const gained  = String(e.gained).replace('+','');
+      const lost    = Number(e.lost) || 0;
+      const isNeg   = lost > 0 && !gained;
+      const xpStr   = lost > 0 ? '−' + lost : (gained ? '+' + gained : '—');
+      const d       = new Date(e.date);
+      const now     = new Date();
+      const days    = Math.floor((now - d) / 86400000);
+      const dateStr = days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : days + ' days ago';
+      return `<div class="log-item" style="animation-delay:${i*0.05}s">
+        <div class="log-icon">${t.icon}</div>
+        <div class="log-type">${t.label}</div>
+        <div class="log-date">${dateStr}</div>
+        <div class="log-xp ${isNeg?'neg':'pos'}">${xpStr}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    console.warn('Ledger fetch failed:', e);
+  }
 }
 
 // ── Particle system — overhauled ──────────────────────────────
