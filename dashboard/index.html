@@ -1076,16 +1076,25 @@ function buildMilestones(xp, streak, interactions) {
 
 // ── Streak Calendar ───────────────────────────────────────────
 function buildStreakCalendar(streak, daysSince) {
+  // Show placeholder grid immediately, real data loaded by fetchScanHistory
   const grid = document.getElementById('streak-grid');
-  const days = [];
-  for (let i = 27; i >= 0; i--) {
+  grid.innerHTML = Array.from({length:28}, (_,i) =>
+    `<div class="streak-day" title="${i===0?'Today':i+' days ago'}"></div>`
+  ).join('');
+  fetchScanHistory(urlCardId);
+}
+
+function applyStreakCalendar(days) {
+  const grid = document.getElementById('streak-grid');
+  if (!grid) return;
+  grid.innerHTML = days.map((d, i) => {
     let cls = '';
-    if (i >= daysSince && i < daysSince + streak) cls = 'active';
-    else if (i < daysSince && i < daysSince + 2)  cls = 'partial';
-    else if (i < daysSince)                        cls = 'decay';
-    days.push(`<div class="streak-day ${cls}" title="${i===0?'Today':i+' days ago'}"></div>`);
-  }
-  grid.innerHTML = days.join('');
+    if (d.beforeClaim)  cls = '';
+    else if (d.scanned) cls = 'active';
+    else                cls = 'decay';
+    const label = i === days.length - 1 ? 'Today' : (days.length - 1 - i) + ' days ago';
+    return `<div class="streak-day ${cls}" title="${label}"></div>`;
+  }).join('');
 }
 
 // ── Charts ────────────────────────────────────────────────────
@@ -1249,6 +1258,20 @@ async function fetchStats() {
     }
   } catch(e) {
     console.warn('Stats fetch failed:', e);
+  }
+}
+
+// ── Scan history fetch ────────────────────────────────────────
+async function fetchScanHistory(cardId) {
+  try {
+    const data = await jsonpFetch(
+      LIVING_API + '?action=get_scan_history&card_id=' + encodeURIComponent(cardId), 10000
+    );
+    if (data && data.success && data.days) {
+      applyStreakCalendar(data.days);
+    }
+  } catch(e) {
+    console.warn('Scan history fetch failed:', e);
   }
 }
 // ── Helpers ───────────────────────────────────────────────────
