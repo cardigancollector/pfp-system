@@ -682,8 +682,8 @@ function getMultiplier(stageIdx) {
 }
 
 function storageKey(evoId) { return 'pfp_owner_' + evoId; }
-function saveOwner(evoId, claimCode, cardName) {
-  localStorage.setItem(storageKey(evoId), JSON.stringify({ claimCode, cardName }));
+function saveOwner(evoId, claimCode, cardName, ownerToken) {
+  localStorage.setItem(storageKey(evoId), JSON.stringify({ claimCode, cardName, ownerToken }));
 }
 function loadOwner(evoId) {
   try { return JSON.parse(localStorage.getItem(storageKey(evoId))); } catch(e) { return null; }
@@ -791,19 +791,24 @@ async function performClaim(claimCode, errEl) {
   document.getElementById('loading-screen').style.display = 'flex';
 
   try {
-    const url = LIVING_API
-      + '?action=claim_card'
-      + '&card_id='    + encodeURIComponent(urlCardId)
-      + '&claim_code=' + encodeURIComponent(claimCode)
-      + '&owner_token='+ encodeURIComponent('OWN-' + urlCardId);
-
-    const data = await jsonpFetch(url, 10000);
+    const response = await fetch(LIVING_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action:      'claim_card',
+        cardId:      urlCardId,
+        claimCode:   claimCode,
+        ownerToken:  'OWN-PLACEHOLDER'
+      })
+    });
+    const data = await response.json();
 
     const alreadyClaimed = data.error && data.error.toLowerCase().includes('already claimed');
     if (data.success || data.status === 200 || alreadyClaimed) {
-      const cardName = analyzerCard ? analyzerCard.card : urlCardId;
-      saveOwner(urlCardId, claimCode, cardName);
-      savedOwner = { claimCode, cardName };
+      const cardName   = analyzerCard ? analyzerCard.card : urlCardId;
+      const realToken  = data.ownerToken || ('OWN-' + urlCardId);
+      saveOwner(urlCardId, claimCode, cardName, realToken);
+      savedOwner = { claimCode, cardName, ownerToken: realToken };
 
       try {
         const d2 = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
@@ -1026,7 +1031,7 @@ function buildDashboard() {
 // ── Scan ──────────────────────────────────────────────────────
 async function logScan() {
   const cardId  = urlCardId;
-  const token   = 'OWN-' + urlCardId;
+  const token = (savedOwner && savedOwner.ownerToken) ? savedOwner.ownerToken : ('OWN-' + urlCardId);
   const btn     = document.getElementById('scan-btn');
   const feedback = document.getElementById('scan-feedback');
   if (!cardId) return;
