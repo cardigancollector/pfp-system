@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PfP — Living Card</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
     --gold: #c9a84c; --gold-light: #e8c97a; --gold-dim: #7a6030;
@@ -550,9 +549,22 @@
 
     <div class="section-title animate-in delay-2">Activity Analytics</div>
     <div class="two-col animate-in delay-3">
-      <div class="glass chart-wrap">
-        <div class="chart-title">XP Sources Breakdown</div>
-        <div class="chart-canvas-wrap"><canvas id="sourceChart"></canvas></div>
+      <div class="glass chart-wrap" style="display:flex;flex-direction:column;justify-content:space-between;">
+        <div class="chart-title">Global Network</div>
+        <div style="display:flex;flex-direction:column;gap:20px;flex:1;justify-content:center;">
+          <div style="border-bottom:1px solid rgba(201,168,76,0.1);padding-bottom:20px;">
+            <div style="font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Live Cards in Circulation</div>
+            <div style="font-family:'Cinzel Decorative',serif;font-size:2.8rem;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(201,168,76,0.3);" id="stat-total-live">—</div>
+          </div>
+          <div style="border-bottom:1px solid rgba(201,168,76,0.1);padding-bottom:20px;">
+            <div style="font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Highest XP Earned</div>
+            <div style="font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold-light);line-height:1;" id="stat-highest-xp">—</div>
+          </div>
+          <div>
+            <div style="font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Top Card</div>
+            <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--text);" id="stat-top-card">—</div>
+          </div>
+        </div>
       </div>
       <div class="glass rank-wrap">
         <div class="rank-number" id="d-rank">#—</div>
@@ -683,7 +695,6 @@ let livingCard   = null;
 let urlCardId    = '';
 let isOwner      = false;
 let savedOwner   = null;
-let sourceChartInstance = null;
 
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
@@ -955,6 +966,7 @@ function buildDashboard() {
   document.getElementById('d-percentile').textContent = '—';
   document.getElementById('d-top').textContent        = '—';
   fetchRank(urlCardId);
+  fetchStats();
 
   const healthPct = Math.max(0, Math.min(100, 100 - (daysSince * 8)));
   document.getElementById('health-pct').textContent   = healthPct + '%';
@@ -998,7 +1010,6 @@ function buildDashboard() {
 
   buildMilestones(xp, streak, interactions);
   buildStreakCalendar(streak, daysSince);
-  buildCharts(xp);
   buildLog(interactions, daysSince);
 }
 
@@ -1078,17 +1089,7 @@ function buildStreakCalendar(streak, daysSince) {
 }
 
 // ── Charts ────────────────────────────────────────────────────
-function buildCharts(xp) {
-  Chart.defaults.color = '#9a8a6a';
-  Chart.defaults.font.family = "'EB Garamond',serif";
-  if (sourceChartInstance) { sourceChartInstance.destroy(); sourceChartInstance = null; }
-  const xpSrc = [Math.round(xp*.35),Math.round(xp*.28),Math.round(xp*.18),Math.round(xp*.12),Math.round(xp*.07)];
-  sourceChartInstance = new Chart(document.getElementById('sourceChart'), {
-    type:'bar',
-    data: { labels:['Daily Scan','Streaks','Views','Endorse','Events'], datasets:[{ data:xpSrc, backgroundColor:['#c9a84c','#7a6030','#8b5e3c','#4a3f2a','#2a2520'], borderColor:'transparent', borderRadius:3 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ x:{grid:{display:false}}, y:{grid:{color:'rgba(201,168,76,0.05)'}} } }
-  });
-}
+
 
 // ── Log ───────────────────────────────────────────────────────
 function buildLog(interactions, daysSince) {
@@ -1236,6 +1237,20 @@ async function fetchRank(cardId) {
   }
 }
 
+
+// ── Global stats fetch ────────────────────────────────────────
+async function fetchStats() {
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_stats', 8000);
+    if (data && data.success) {
+      document.getElementById('stat-total-live').textContent  = data.totalLive.toLocaleString();
+      document.getElementById('stat-highest-xp').textContent = data.highestXP.toLocaleString() + ' XP';
+      document.getElementById('stat-top-card').textContent   = data.topCard;
+    }
+  } catch(e) {
+    console.warn('Stats fetch failed:', e);
+  }
+}
 // ── Helpers ───────────────────────────────────────────────────
 function setLoadingSub(text) { document.getElementById('loading-sub').textContent = text; }
 function hideLoading() { document.getElementById('loading-screen').style.display = 'none'; }
