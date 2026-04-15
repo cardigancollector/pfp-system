@@ -510,9 +510,6 @@
           <div style="font-family:'Cinzel Decorative',serif;font-size:5rem;font-weight:900;color:var(--gold);text-shadow:0 0 50px rgba(201,168,76,0.5);line-height:1;" id="d-rank-hero">#—</div>
           <div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-dim);padding-bottom:8px;">Global Rank</div>
         </div>
-        <div style="margin-top:14px;padding-right:24px;">
-          <canvas id="monitor-canvas" style="display:block;width:100%;height:40px;"></canvas>
-        </div>
       </div>
       <div class="owner-art-badge stage-wrap" id="card-art-wrap">
         <div class="no-image">No Image</div>
@@ -929,7 +926,6 @@ function buildDashboard() {
   artWrap.classList.add(STAGE_CLASS[stageIdx] || 'stage-dormant');
 
   startParticles(stageIdx);
-  setTimeout(() => startMonitor(stageIdx), 100);
 
   const curXP  = STAGE_XP[stageIdx]   || 0;
   const nextXP = STAGE_XP[stageIdx+1] || STAGE_XP[stageIdx];
@@ -1217,102 +1213,6 @@ function startParticles(stageIdx) {
     });
     particleAnim = requestAnimationFrame(draw);
   }
-  draw();
-}
-
-// ── Heart Monitor ─────────────────────────────────────────────
-let monitorAnim = null;
-
-function startMonitor(stageIdx) {
-  if (monitorAnim) { cancelAnimationFrame(monitorAnim); monitorAnim = null; }
-
-  const canvas = document.getElementById('monitor-canvas');
-  if (!canvas) return;
-
-  const rect = canvas.getBoundingClientRect();
-  canvas.width  = Math.round(rect.width)  || 300;
-  canvas.height = 44;
-
-  const W   = canvas.width;
-  const H   = canvas.height;
-  const ctx = canvas.getContext('2d');
-  const mid = H * 0.62; // line sits in lower half so blips go upward with room
-
-  // Build a repeating y-value lookup table at 1px resolution.
-  // Everything is mid (flat) except where a blip shape is drawn.
-  // Blip shape: sharp rise, tall spike, sharp fall, small rebound — all relative to mid.
-  // Returns Float32Array of length = cycleLen
-  function buildWaveBuffer(cycleLen, blipPositions, spikeH, rebound) {
-    const buf = new Float32Array(cycleLen).fill(mid);
-    for (const bx of blipPositions) {
-      // ECG-style: small pre-dip, sharp rise to spike, drop below, recover
-      const shape = [
-        [0,0],[1,-3],[2,-6],[3,0],          // small pre-dip
-        [4, spikeH * 0.6],                  // fast rise
-        [5, spikeH],                        // peak
-        [6, spikeH * 0.5],                  // fall
-        [7,-rebound * 0.6],                 // dip below baseline
-        [8,-rebound],                       // trough
-        [9,-rebound * 0.4],                 // recover
-        [10,0],[11,0]                       // back to flat
-      ];
-      for (const [dx, dy] of shape) {
-        const idx = (bx + dx) % cycleLen;
-        buf[idx] = mid - dy;
-      }
-    }
-    return buf;
-  }
-
-  // Stage configs: cycleLen (px), blip positions within cycle, spike height, scroll speed
-  const cfgs = [
-    { cycleLen: 200, blips: [],                      spike: 0,  rebound: 0,  speed: 0,    glow: 3,  lw: 1.2, dimAlpha: 0.3 }, // Dormant
-    { cycleLen: 260, blips: [110],                   spike: 14, rebound: 5,  speed: 0.7,  glow: 5,  lw: 1.3, dimAlpha: 0   }, // Awakened
-    { cycleLen: 240, blips: [60, 160],               spike: 17, rebound: 6,  speed: 0.9,  glow: 6,  lw: 1.4, dimAlpha: 0   }, // Growing
-    { cycleLen: 220, blips: [40, 120, 190],          spike: 20, rebound: 7,  speed: 1.2,  glow: 7,  lw: 1.5, dimAlpha: 0   }, // Established
-    { cycleLen: 200, blips: [30, 95, 155, 185],      spike: 24, rebound: 8,  speed: 1.5,  glow: 9,  lw: 1.6, dimAlpha: 0   }, // Renowned
-    { cycleLen: 190, blips: [20, 65, 110, 148, 175], spike: 28, rebound: 9,  speed: 1.9,  glow: 11, lw: 1.8, dimAlpha: 0   }, // Legendary
-    { cycleLen: 175, blips: [15, 50, 85, 118, 145, 162, 172], spike: 32, rebound: 10, speed: 2.4, glow: 14, lw: 2.0, dimAlpha: 0 }, // Mythic
-  ];
-
-  const cfg = cfgs[Math.min(stageIdx, 6)];
-  const buf = buildWaveBuffer(cfg.cycleLen, cfg.blips, cfg.spike, cfg.rebound);
-
-  let offset = 0; // fractional scroll offset into buffer
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-
-    ctx.save();
-    ctx.lineWidth   = cfg.lw;
-    ctx.lineCap     = 'round';
-    ctx.lineJoin    = 'round';
-    ctx.strokeStyle = 'rgba(46,204,113,0.92)';
-    ctx.shadowColor = 'rgba(46,204,113,0.85)';
-    ctx.shadowBlur  = cfg.glow;
-
-    ctx.beginPath();
-    for (let px = 0; px < W; px++) {
-      // Which buffer index does this screen pixel map to?
-      const bufIdx = Math.floor((px + offset) % cfg.cycleLen);
-      const y = buf[bufIdx];
-      if (px === 0) ctx.moveTo(px, y);
-      else          ctx.lineTo(px, y);
-    }
-    ctx.stroke();
-
-    // Dormant: dim the line slightly
-    if (cfg.dimAlpha > 0) {
-      ctx.fillStyle = 'rgba(14,12,9,' + cfg.dimAlpha + ')';
-      ctx.fillRect(0, 0, W, H);
-    }
-
-    ctx.restore();
-
-    offset = (offset + cfg.speed) % cfg.cycleLen;
-    monitorAnim = requestAnimationFrame(draw);
-  }
-
   draw();
 }
 
