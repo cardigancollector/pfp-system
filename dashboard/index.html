@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>F
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PfP — Living Card</title>
@@ -20,7 +20,6 @@
   .bg-layer { position:fixed; inset:0; background-image:url('pfp_bg.jpg'); background-size:cover; background-position:center top; background-attachment:fixed; z-index:0; }
   .bg-overlay { position:fixed; inset:0; background:linear-gradient(160deg,rgba(14,12,9,0.88) 0%,rgba(14,12,9,0.75) 40%,rgba(14,12,9,0.82) 100%); z-index:1; }
 
-  /* ── LOADING ── */
   #loading-screen { position:fixed; inset:0; z-index:300; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--dark); gap:24px; }
   .loading-logo { font-family:'Cinzel Decorative',serif; font-size:2.5rem; color:var(--gold); letter-spacing:0.08em; text-shadow:0 0 40px rgba(201,168,76,0.4); }
   .loading-spinner { width:48px; height:48px; border:3px solid rgba(201,168,76,0.2); border-top-color:var(--gold); border-radius:50%; animation:spin 0.9s linear infinite; }
@@ -28,12 +27,10 @@
   .loading-sub { font-size:0.72rem; color:var(--gold-dim); font-style:italic; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
-  /* ── ERROR ── */
   #error-screen { position:fixed; inset:0; z-index:300; display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--dark); gap:16px; text-align:center; padding:2rem; }
   .error-title { font-family:'Cinzel',serif; font-size:1.4rem; color:var(--gold); }
   .error-msg { color:var(--text-dim); font-size:0.9rem; max-width:440px; line-height:1.7; }
 
-  /* ── CLAIM / LOGIN SCREEN ── */
   #claim-screen { position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; padding:2rem; }
   .claim-box {
     position:relative; z-index:2; background:rgba(14,12,9,0.95);
@@ -57,21 +54,18 @@
   .claim-divider { height:1px; background:var(--glass-border); margin:24px 0; }
   .claim-hint { font-size:0.78rem; color:var(--text-dim); line-height:1.6; font-style:italic; }
 
-  /* ── READONLY BANNER ── */
   #readonly-banner { display:none; position:sticky; top:0; z-index:200; background:rgba(14,12,9,0.97); border-bottom:1px solid rgba(201,168,76,0.3); padding:10px 40px; align-items:center; justify-content:space-between; gap:16px; backdrop-filter:blur(12px); }
   #readonly-banner .banner-text { font-size:0.78rem; color:var(--text-dim); letter-spacing:0.08em; }
   #readonly-banner .banner-text strong { color:var(--gold); }
   #readonly-banner .banner-claim-btn { background:none; border:1px solid var(--gold); color:var(--gold); font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; padding:7px 18px; cursor:pointer; transition:all 0.3s; white-space:nowrap; }
   #readonly-banner .banner-claim-btn:hover { background:rgba(201,168,76,0.1); }
 
-  /* ── OWNER BANNER (logged in) ── */
   #owner-banner { display:none; position:sticky; top:0; z-index:200; background:rgba(14,12,9,0.97); border-bottom:1px solid rgba(46,204,113,0.25); padding:10px 40px; align-items:center; justify-content:space-between; gap:16px; backdrop-filter:blur(12px); }
   #owner-banner .owner-text { font-size:0.78rem; color:#8ee4b2; letter-spacing:0.08em; }
   #owner-banner .owner-text strong { color:var(--green); }
   #owner-banner .signout-btn { background:none; border:1px solid rgba(46,204,113,0.3); color:#8ee4b2; font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; padding:7px 18px; cursor:pointer; transition:all 0.3s; white-space:nowrap; }
   #owner-banner .signout-btn:hover { border-color:var(--green); color:var(--green); }
 
-  /* ── DASHBOARD ── */
   #dashboard { position:relative; z-index:2; display:none; min-height:100vh; }
   .header { position:sticky; top:0; z-index:50; background:rgba(10,9,6,0.95); border-bottom:1px solid var(--glass-border); padding:0 40px; height:64px; display:flex; align-items:center; justify-content:space-between; backdrop-filter:blur(12px); }
   .header-logo { font-family:'Cinzel Decorative',serif; font-size:1.3rem; color:var(--gold); letter-spacing:0.06em; }
@@ -87,175 +81,61 @@
   .owner-art-badge img { width:100%; height:100%; object-fit:cover; }
   .owner-art-badge .no-image { width:100%; height:100%; background:var(--dark3); border:4px solid #1a1510; display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:0.8rem; letter-spacing:0.1em; }
 
-  /* ── STAGE VISUAL EFFECTS — OVERHAULED ── */
   .stage-wrap { position:relative; }
-
-  /* shared: all stage borders sit on a pseudo that we can animate freely */
   .owner-art-badge::before,
   .owner-art-badge::after { content:''; position:absolute; pointer-events:none; z-index:3; border-radius:2px; }
 
-  /* ── DORMANT ── dead, drained, desaturated */
-  .stage-dormant img {
-    filter: saturate(0) brightness(0.6) contrast(0.9);
-  }
-  .stage-dormant::before {
-    inset: 0;
-    border: 4px solid #1e1a14;
-    box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,0,0,0.6);
-  }
+  .stage-dormant img { filter: saturate(0) brightness(0.6) contrast(0.9); }
+  .stage-dormant::before { inset: 0; border: 4px solid #1e1a14; box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,0,0,0.6); }
   .stage-dormant::after { display:none; }
 
-  /* ── AWAKENED ── first breath, copper warmth */
-  .stage-awakened img {
-    filter: saturate(0.7) brightness(0.9);
-  }
-  .stage-awakened::before {
-    inset: 0;
-    border: 4px solid #b87333;
-    box-shadow:
-      0 0 0 1px rgba(184,115,51,0.4),
-      0 0 20px rgba(184,115,51,0.35),
-      0 0 50px rgba(184,115,51,0.15),
-      inset 0 0 20px rgba(184,115,51,0.08);
-    animation: pulse-awakened 3.5s ease-in-out infinite;
-  }
+  .stage-awakened img { filter: saturate(0.7) brightness(0.9); }
+  .stage-awakened::before { inset: 0; border: 4px solid #b87333; box-shadow: 0 0 0 1px rgba(184,115,51,0.4), 0 0 20px rgba(184,115,51,0.35), 0 0 50px rgba(184,115,51,0.15), inset 0 0 20px rgba(184,115,51,0.08); animation: pulse-awakened 3.5s ease-in-out infinite; }
   .stage-awakened::after { display:none; }
   @keyframes pulse-awakened {
     0%,100% { box-shadow: 0 0 0 1px rgba(184,115,51,0.3), 0 0 18px rgba(184,115,51,0.25), 0 0 40px rgba(184,115,51,0.1), inset 0 0 14px rgba(184,115,51,0.06); }
     50%      { box-shadow: 0 0 0 1px rgba(184,115,51,0.6), 0 0 35px rgba(184,115,51,0.55), 0 0 70px rgba(184,115,51,0.25), inset 0 0 28px rgba(184,115,51,0.12); }
   }
 
-  /* ── GROWING ── copper strengthens, image warms */
-  .stage-growing img {
-    filter: saturate(1.1) brightness(1.0);
-  }
-  .stage-growing::before {
-    inset: 0;
-    border: 5px solid #c97a2a;
-    box-shadow:
-      0 0 0 2px rgba(201,122,42,0.5),
-      0 0 30px rgba(201,122,42,0.6),
-      0 0 80px rgba(201,122,42,0.25),
-      0 0 120px rgba(201,122,42,0.1),
-      inset 0 0 30px rgba(201,122,42,0.12);
-    animation: pulse-growing 2.8s ease-in-out infinite;
-  }
-  .stage-growing::after {
-    inset: -6px;
-    border: 1px solid rgba(201,122,42,0.3);
-    animation: pulse-growing 2.8s ease-in-out infinite reverse;
-  }
-  @keyframes pulse-growing {
-    0%,100% { opacity: 0.7; }
-    50%      { opacity: 1.0; }
-  }
+  .stage-growing img { filter: saturate(1.1) brightness(1.0); }
+  .stage-growing::before { inset: 0; border: 5px solid #c97a2a; box-shadow: 0 0 0 2px rgba(201,122,42,0.5), 0 0 30px rgba(201,122,42,0.6), 0 0 80px rgba(201,122,42,0.25), 0 0 120px rgba(201,122,42,0.1), inset 0 0 30px rgba(201,122,42,0.12); animation: pulse-growing 2.8s ease-in-out infinite; }
+  .stage-growing::after { inset: -6px; border: 1px solid rgba(201,122,42,0.3); animation: pulse-growing 2.8s ease-in-out infinite reverse; }
+  @keyframes pulse-growing { 0%,100% { opacity: 0.7; } 50% { opacity: 1.0; } }
 
-  /* ── ESTABLISHED ── silver composure, crisp and authoritative */
-  .stage-established img {
-    filter: saturate(1.05) brightness(1.05);
-  }
-  .stage-established::before {
-    inset: 0;
-    border: 5px solid #d0d0d0;
-    box-shadow:
-      0 0 0 2px rgba(200,200,200,0.5),
-      0 0 35px rgba(200,200,200,0.45),
-      0 0 90px rgba(200,200,200,0.18),
-      inset 0 0 25px rgba(200,200,200,0.08);
-    animation: shimmer-established 3s ease-in-out infinite;
-  }
-  .stage-established::after {
-    inset: -7px;
-    border: 1px solid rgba(200,200,200,0.25);
-    animation: shimmer-established 3s ease-in-out infinite reverse;
-  }
+  .stage-established img { filter: saturate(1.05) brightness(1.05); }
+  .stage-established::before { inset: 0; border: 5px solid #d0d0d0; box-shadow: 0 0 0 2px rgba(200,200,200,0.5), 0 0 35px rgba(200,200,200,0.45), 0 0 90px rgba(200,200,200,0.18), inset 0 0 25px rgba(200,200,200,0.08); animation: shimmer-established 3s ease-in-out infinite; }
+  .stage-established::after { inset: -7px; border: 1px solid rgba(200,200,200,0.25); animation: shimmer-established 3s ease-in-out infinite reverse; }
   @keyframes shimmer-established {
     0%,100% { box-shadow: 0 0 0 2px rgba(200,200,200,0.4), 0 0 30px rgba(200,200,200,0.35), 0 0 70px rgba(200,200,200,0.14), inset 0 0 20px rgba(200,200,200,0.06); }
-    50%      { box-shadow: 0 0 0 2px rgba(220,220,220,0.7), 0 0 55px rgba(220,220,220,0.6),  0 0 110px rgba(220,220,220,0.28), inset 0 0 35px rgba(220,220,220,0.12); }
+    50%      { box-shadow: 0 0 0 2px rgba(220,220,220,0.7), 0 0 55px rgba(220,220,220,0.6), 0 0 110px rgba(220,220,220,0.28), inset 0 0 35px rgba(220,220,220,0.12); }
   }
 
-  /* ── RENOWNED ── gold presence, powerful pulse */
-  .stage-renowned img {
-    filter: saturate(1.15) brightness(1.08);
-  }
-  .stage-renowned::before {
-    inset: 0;
-    border: 6px solid var(--gold);
-    box-shadow:
-      0 0 0 2px rgba(201,168,76,0.6),
-      0 0 40px rgba(201,168,76,0.7),
-      0 0 100px rgba(201,168,76,0.35),
-      0 0 160px rgba(201,168,76,0.15),
-      inset 0 0 35px rgba(201,168,76,0.15);
-    animation: pulse-renowned 2.2s ease-in-out infinite;
-  }
-  .stage-renowned::after {
-    inset: -8px;
-    border: 2px solid rgba(201,168,76,0.4);
-    box-shadow: 0 0 20px rgba(201,168,76,0.2);
-    animation: pulse-renowned 2.2s ease-in-out infinite reverse;
-  }
+  .stage-renowned img { filter: saturate(1.15) brightness(1.08); }
+  .stage-renowned::before { inset: 0; border: 6px solid var(--gold); box-shadow: 0 0 0 2px rgba(201,168,76,0.6), 0 0 40px rgba(201,168,76,0.7), 0 0 100px rgba(201,168,76,0.35), 0 0 160px rgba(201,168,76,0.15), inset 0 0 35px rgba(201,168,76,0.15); animation: pulse-renowned 2.2s ease-in-out infinite; }
+  .stage-renowned::after { inset: -8px; border: 2px solid rgba(201,168,76,0.4); box-shadow: 0 0 20px rgba(201,168,76,0.2); animation: pulse-renowned 2.2s ease-in-out infinite reverse; }
   @keyframes pulse-renowned {
-    0%,100% { box-shadow: 0 0 0 2px rgba(201,168,76,0.5), 0 0 30px rgba(201,168,76,0.55), 0 0 80px rgba(201,168,76,0.25),  0 0 130px rgba(201,168,76,0.1),  inset 0 0 25px rgba(201,168,76,0.1); }
+    0%,100% { box-shadow: 0 0 0 2px rgba(201,168,76,0.5), 0 0 30px rgba(201,168,76,0.55), 0 0 80px rgba(201,168,76,0.25), 0 0 130px rgba(201,168,76,0.1), inset 0 0 25px rgba(201,168,76,0.1); }
     50%      { box-shadow: 0 0 0 2px rgba(232,201,122,0.8), 0 0 60px rgba(232,201,122,0.85), 0 0 140px rgba(201,168,76,0.45), 0 0 220px rgba(201,168,76,0.2), inset 0 0 50px rgba(201,168,76,0.2); }
   }
 
-  /* ── LEGENDARY ── blinding gold, wave bursts */
-  .stage-legendary img {
-    filter: saturate(1.25) brightness(1.12) contrast(1.05);
-  }
-  .stage-legendary::before {
-    inset: 0;
-    border: 7px solid var(--gold-light);
-    box-shadow:
-      0 0 0 3px rgba(232,201,122,0.7),
-      0 0 50px rgba(232,201,122,0.9),
-      0 0 120px rgba(201,168,76,0.55),
-      0 0 200px rgba(201,168,76,0.25),
-      0 0 300px rgba(201,168,76,0.1),
-      inset 0 0 50px rgba(232,201,122,0.2);
-    animation: burst-legendary 1.8s ease-in-out infinite;
-  }
-  .stage-legendary::after {
-    inset: -10px;
-    border: 2px solid rgba(232,201,122,0.5);
-    box-shadow: 0 0 30px rgba(232,201,122,0.3), 0 0 80px rgba(201,168,76,0.2);
-    animation: burst-legendary 1.8s ease-in-out infinite reverse;
-  }
+  .stage-legendary img { filter: saturate(1.25) brightness(1.12) contrast(1.05); }
+  .stage-legendary::before { inset: 0; border: 7px solid var(--gold-light); box-shadow: 0 0 0 3px rgba(232,201,122,0.7), 0 0 50px rgba(232,201,122,0.9), 0 0 120px rgba(201,168,76,0.55), 0 0 200px rgba(201,168,76,0.25), 0 0 300px rgba(201,168,76,0.1), inset 0 0 50px rgba(232,201,122,0.2); animation: burst-legendary 1.8s ease-in-out infinite; }
+  .stage-legendary::after { inset: -10px; border: 2px solid rgba(232,201,122,0.5); box-shadow: 0 0 30px rgba(232,201,122,0.3), 0 0 80px rgba(201,168,76,0.2); animation: burst-legendary 1.8s ease-in-out infinite reverse; }
   @keyframes burst-legendary {
-    0%  { box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 40px rgba(232,201,122,0.7),  0 0 100px rgba(201,168,76,0.4),  0 0 180px rgba(201,168,76,0.2),  inset 0 0 40px rgba(232,201,122,0.15); }
-    35% { box-shadow: 0 0 0 3px rgba(255,235,150,0.9), 0 0 70px rgba(255,235,150,1.0),  0 0 160px rgba(232,201,122,0.7), 0 0 280px rgba(201,168,76,0.35), inset 0 0 70px rgba(255,235,150,0.3); }
-    70% { box-shadow: 0 0 0 3px rgba(232,201,122,0.5), 0 0 35px rgba(232,201,122,0.55), 0 0 90px rgba(201,168,76,0.35),  0 0 160px rgba(201,168,76,0.15), inset 0 0 35px rgba(232,201,122,0.1); }
-    100%{ box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 40px rgba(232,201,122,0.7),  0 0 100px rgba(201,168,76,0.4),  0 0 180px rgba(201,168,76,0.2),  inset 0 0 40px rgba(232,201,122,0.15); }
+    0%   { box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 40px rgba(232,201,122,0.7), 0 0 100px rgba(201,168,76,0.4), 0 0 180px rgba(201,168,76,0.2), inset 0 0 40px rgba(232,201,122,0.15); }
+    35%  { box-shadow: 0 0 0 3px rgba(255,235,150,0.9), 0 0 70px rgba(255,235,150,1.0), 0 0 160px rgba(232,201,122,0.7), 0 0 280px rgba(201,168,76,0.35), inset 0 0 70px rgba(255,235,150,0.3); }
+    70%  { box-shadow: 0 0 0 3px rgba(232,201,122,0.5), 0 0 35px rgba(232,201,122,0.55), 0 0 90px rgba(201,168,76,0.35), 0 0 160px rgba(201,168,76,0.15), inset 0 0 35px rgba(232,201,122,0.1); }
+    100% { box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 40px rgba(232,201,122,0.7), 0 0 100px rgba(201,168,76,0.4), 0 0 180px rgba(201,168,76,0.2), inset 0 0 40px rgba(232,201,122,0.15); }
   }
 
-  /* ── MYTHIC ── aurora cycling through diamond/gold/violet */
-  .stage-mythic img {
-    filter: saturate(1.35) brightness(1.15) contrast(1.08);
-  }
-  .stage-mythic::before {
-    inset: 0;
-    border: 8px solid var(--diamond);
-    animation: aurora-mythic-border 2.5s linear infinite;
-    box-shadow:
-      0 0 0 3px rgba(168,216,234,0.5),
-      0 0 60px rgba(168,216,234,0.8),
-      0 0 140px rgba(201,168,76,0.4),
-      0 0 240px rgba(168,85,247,0.25),
-      0 0 360px rgba(168,216,234,0.1),
-      inset 0 0 60px rgba(168,216,234,0.15);
-    animation: aurora-mythic 2.5s linear infinite;
-  }
-  .stage-mythic::after {
-    inset: -12px;
-    border: 3px solid rgba(168,216,234,0.4);
-    animation: aurora-mythic-outer 2.5s linear infinite reverse;
-  }
+  .stage-mythic img { filter: saturate(1.35) brightness(1.15) contrast(1.08); }
+  .stage-mythic::before { inset: 0; border: 8px solid var(--diamond); animation: aurora-mythic 2.5s linear infinite; }
+  .stage-mythic::after { inset: -12px; border: 3px solid rgba(168,216,234,0.4); animation: aurora-mythic-outer 2.5s linear infinite reverse; }
   @keyframes aurora-mythic {
-    0%   { border-color:#a8d8ea; box-shadow: 0 0 0 3px rgba(168,216,234,0.6), 0 0 60px rgba(168,216,234,0.85), 0 0 140px rgba(201,168,76,0.4),  0 0 240px rgba(168,85,247,0.25), inset 0 0 60px rgba(168,216,234,0.18); }
-    33%  { border-color:#e8c97a; box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 60px rgba(232,201,122,0.85), 0 0 140px rgba(168,85,247,0.4),  0 0 240px rgba(168,216,234,0.25), inset 0 0 60px rgba(232,201,122,0.18); }
-    66%  { border-color:#d4a8f0; box-shadow: 0 0 0 3px rgba(212,168,240,0.6), 0 0 60px rgba(212,168,240,0.85), 0 0 140px rgba(168,216,234,0.4), 0 0 240px rgba(201,168,76,0.25),  inset 0 0 60px rgba(212,168,240,0.18); }
-    100% { border-color:#a8d8ea; box-shadow: 0 0 0 3px rgba(168,216,234,0.6), 0 0 60px rgba(168,216,234,0.85), 0 0 140px rgba(201,168,76,0.4),  0 0 240px rgba(168,85,247,0.25), inset 0 0 60px rgba(168,216,234,0.18); }
+    0%   { border-color:#a8d8ea; box-shadow: 0 0 0 3px rgba(168,216,234,0.6), 0 0 60px rgba(168,216,234,0.85), 0 0 140px rgba(201,168,76,0.4), 0 0 240px rgba(168,85,247,0.25), inset 0 0 60px rgba(168,216,234,0.18); }
+    33%  { border-color:#e8c97a; box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 60px rgba(232,201,122,0.85), 0 0 140px rgba(168,85,247,0.4), 0 0 240px rgba(168,216,234,0.25), inset 0 0 60px rgba(232,201,122,0.18); }
+    66%  { border-color:#d4a8f0; box-shadow: 0 0 0 3px rgba(212,168,240,0.6), 0 0 60px rgba(212,168,240,0.85), 0 0 140px rgba(168,216,234,0.4), 0 0 240px rgba(201,168,76,0.25), inset 0 0 60px rgba(212,168,240,0.18); }
+    100% { border-color:#a8d8ea; box-shadow: 0 0 0 3px rgba(168,216,234,0.6), 0 0 60px rgba(168,216,234,0.85), 0 0 140px rgba(201,168,76,0.4), 0 0 240px rgba(168,85,247,0.25), inset 0 0 60px rgba(168,216,234,0.18); }
   }
   @keyframes aurora-mythic-outer {
     0%   { border-color:rgba(168,216,234,0.5); box-shadow: 0 0 25px rgba(168,216,234,0.3); }
@@ -263,15 +143,6 @@
     66%  { border-color:rgba(212,168,240,0.5); box-shadow: 0 0 25px rgba(212,168,240,0.3); }
     100% { border-color:rgba(168,216,234,0.5); box-shadow: 0 0 25px rgba(168,216,234,0.3); }
   }
-
-  /* ── stage background atmosphere ── */
-  .stage-dormant-bg    { --stage-atmo: rgba(0,0,0,0); }
-  .stage-awakened-bg   { --stage-atmo: rgba(184,115,51,0.04); }
-  .stage-growing-bg    { --stage-atmo: rgba(184,115,51,0.06); }
-  .stage-established-bg{ --stage-atmo: rgba(200,200,200,0.04); }
-  .stage-renowned-bg   { --stage-atmo: rgba(201,168,76,0.06); }
-  .stage-legendary-bg  { --stage-atmo: rgba(232,201,122,0.09); }
-  .stage-mythic-bg     { --stage-atmo: rgba(168,216,234,0.07); }
 
   .card-canvas { position:absolute; inset:0; pointer-events:none; z-index:2; }
 
@@ -332,7 +203,6 @@
   .two-col { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px; }
   .chart-wrap { padding:24px; }
   .chart-title { font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:16px; }
-  .chart-canvas-wrap { position:relative; height:200px; }
 
   .streak-grid { display:grid; grid-template-columns:repeat(14,1fr); gap:4px; margin-top:8px; }
   .streak-day { aspect-ratio:1; border-radius:2px; background:var(--charcoal); transition:background 0.3s; }
@@ -418,7 +288,6 @@
 <div class="bg-layer"></div>
 <div class="bg-overlay"></div>
 
-<!-- ── LOADING ── -->
 <div id="loading-screen">
   <div class="loading-logo">PfP</div>
   <div class="loading-spinner"></div>
@@ -426,13 +295,11 @@
   <div class="loading-sub" id="loading-sub">Connecting to database…</div>
 </div>
 
-<!-- ── ERROR ── -->
 <div id="error-screen">
   <div class="error-title">Card Not Found</div>
   <div class="error-msg" id="error-msg">No card with that Evolution ID could be found.</div>
 </div>
 
-<!-- ── CLAIM / LOGIN SCREEN ── -->
 <div id="claim-screen">
   <div class="claim-box">
     <div class="claim-logo">PfP</div>
@@ -477,19 +344,16 @@
   </div>
 </div>
 
-<!-- ── READ-ONLY BANNER ── -->
 <div id="readonly-banner">
   <div class="banner-text">Viewing <strong id="banner-card-name">this card</strong> in read-only mode &nbsp;·&nbsp; Claim this card to earn XP</div>
   <button class="banner-claim-btn" onclick="showClaimScreen('readonly')">Owner Login / Claim</button>
 </div>
 
-<!-- ── OWNER BANNER ── -->
 <div id="owner-banner">
   <div class="owner-text">✓ Logged in as owner of <strong id="owner-banner-name">—</strong></div>
   <button class="signout-btn" onclick="doSignOut()">Sign Out</button>
 </div>
 
-<!-- ── DASHBOARD ── -->
 <div id="dashboard">
   <header class="header">
     <div class="header-logo">PfP</div>
@@ -636,21 +500,16 @@ const STAGE_CLASS = ['stage-dormant','stage-awakened','stage-growing','stage-est
 
 let settingsMultipliers = null;
 
-// ── JSONP helper ──────────────────────────────────────────────
 function jsonpFetch(url, timeout) {
   return new Promise((resolve, reject) => {
     const cbName = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
     const script = document.createElement('script');
-    const timer  = setTimeout(() => {
-      cleanup(); reject(new Error('timeout'));
-    }, timeout || 12000);
-
+    const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 12000);
     function cleanup() {
       clearTimeout(timer);
       delete window[cbName];
       if (document.body.contains(script)) document.body.removeChild(script);
     }
-
     window[cbName] = function(data) { cleanup(); resolve(data); };
     script.onerror = () => { cleanup(); reject(new Error('script error')); };
     script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
@@ -673,7 +532,7 @@ async function loadMultipliers() {
         parseFloat(s.multiplier_mythic)      || 2.00,
       ];
     }
-  } catch(e) { console.warn('Could not load multipliers from settings, using defaults'); }
+  } catch(e) {}
 }
 
 function getMultiplier(stageIdx) {
@@ -854,7 +713,7 @@ function showDashboard(asOwner) {
     document.getElementById('banner-card-name').textContent  = cardName;
   }
 
-  buildDashboard();
+  buildDashboard(asOwner);
 }
 
 function doSignOut() {
@@ -864,11 +723,10 @@ function doSignOut() {
   document.getElementById('owner-banner').style.display    = 'none';
   document.getElementById('readonly-banner').style.display = 'flex';
   document.getElementById('banner-card-name').textContent  = analyzerCard ? analyzerCard.card : urlCardId;
-  buildDashboard();
+  buildDashboard(false);
 }
 
-// ── Build dashboard ───────────────────────────────────────────
-function buildDashboard() {
+function buildDashboard(asOwner) {
   const ac = analyzerCard || {};
   const lc = livingCard   || {};
 
@@ -884,8 +742,6 @@ function buildDashboard() {
     [ac.set, ac.rarity, ac.type].filter(Boolean).join('  ·  ') || '';
 
   const artWrap = document.getElementById('card-art-wrap');
-
-  // Remove all stage classes
   STAGE_CLASS.forEach(c => artWrap.classList.remove(c));
 
   if (ac.imageUrl) {
@@ -917,7 +773,6 @@ function buildDashboard() {
   document.getElementById('d-level').textContent        = `Level ${level}`;
   document.getElementById('d-next-stage').textContent   = STAGES[stageIdx+1] || 'Mythic (Max)';
 
-  // Analyzer strip
   const baseValue = parseFloat(ac.value) || 0;
   const mult      = getMultiplier(stageIdx);
   const liveValue = baseValue * mult;
@@ -934,9 +789,7 @@ function buildDashboard() {
     `<div class="cas-item${f.live?' cas-live':''}"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':''}">${f.value}</div>${f.mult?`<div style="font-size:0.62rem;color:var(--green);margin-top:2px;letter-spacing:0.05em;">${f.mult}</div>`:''}</div>`
   ).join('');
 
-  // Apply stage class
   artWrap.classList.add(STAGE_CLASS[stageIdx] || 'stage-dormant');
-
   startParticles(stageIdx);
 
   const curXP  = STAGE_XP[stageIdx]   || 0;
@@ -988,8 +841,9 @@ function buildDashboard() {
   else if (daysSince <= 7) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −50 XP decay zone</div>`;
   else                     decayEl.innerHTML = `<div class="decay-warning">🔴 ${daysSince} days idle — stage drop risk! Scan now</div>`;
 
+  // ── SCAN AREA — uses asOwner parameter, not the global ──
   const scanArea = document.getElementById('scan-area');
-  if (isOwner) {
+  if (asOwner) {
     scanArea.innerHTML = `<button class="scan-btn" id="scan-btn" onclick="logScan()"><span>📱</span> Log Today's Scan — +10 XP</button>`;
   } else {
     scanArea.innerHTML = `<div class="scan-locked glass" onclick="showClaimScreen('readonly')">🔒 &nbsp; Claim this card to earn XP &nbsp;·&nbsp; <span style="color:var(--gold);text-decoration:underline;cursor:pointer;">Enter Claim Code</span></div>`;
@@ -1015,7 +869,6 @@ function buildDashboard() {
   buildLog(interactions, daysSince);
 }
 
-// ── View counter with daily localStorage guard ────────────────
 async function incrementView(cardId) {
   const key   = 'pfp_viewed_' + cardId;
   const today = new Date().toISOString().slice(0, 10);
@@ -1029,11 +882,10 @@ async function incrementView(cardId) {
   } catch(e) {}
 }
 
-// ── Scan ──────────────────────────────────────────────────────
 async function logScan() {
-  const cardId  = urlCardId;
-  const token = (savedOwner && savedOwner.ownerToken) ? savedOwner.ownerToken : ('OWN-' + urlCardId);
-  const btn     = document.getElementById('scan-btn');
+  const cardId   = urlCardId;
+  const token    = (savedOwner && savedOwner.ownerToken) ? savedOwner.ownerToken : ('OWN-' + urlCardId);
+  const btn      = document.getElementById('scan-btn');
   const feedback = document.getElementById('scan-feedback');
   if (!cardId) return;
   btn.disabled = true;
@@ -1075,7 +927,6 @@ async function logScan() {
   }
 }
 
-// ── Milestones ────────────────────────────────────────────────
 function buildMilestones(xp, streak, interactions) {
   const MILESTONE_DEFS = [
     { icon:'🌅', name:'First Awakening', desc:'Reach 500 XP',         key:'First Awakening', target:500,  current:xp },
@@ -1108,14 +959,12 @@ function buildMilestones(xp, streak, interactions) {
   jsonpFetch(LIVING_API + '?action=get_milestones&card_id=' + encodeURIComponent(urlCardId), 8000)
     .then(data => {
       if (data && data.success && data.earned) {
-        const earnedKeys = new Set(data.earned.map(e => e.milestone));
-        render(earnedKeys);
+        render(new Set(data.earned.map(e => e.milestone)));
       }
     })
     .catch(() => {});
 }
 
-// ── Streak Calendar ───────────────────────────────────────────
 function buildStreakCalendar(streak, daysSince) {
   const grid = document.getElementById('streak-grid');
   grid.innerHTML = Array.from({length:28}, (_,i) =>
@@ -1138,18 +987,13 @@ function applyStreakCalendar(days) {
       cls = '';
     } else {
       const claimDayIdx = days.findIndex(x => !x.beforeClaim);
-      if (i === claimDayIdx) {
-        cls = '';
-      } else {
-        cls = 'decay';
-      }
+      cls = i === claimDayIdx ? '' : 'decay';
     }
     const label = isToday ? 'Today' : (days.length - 1 - i) + ' days ago';
     return `<div class="streak-day ${cls}" title="${label}"></div>`;
   }).join('');
 }
 
-// ── Log ───────────────────────────────────────────────────────
 function buildLog(interactions, daysSince) {
   const log = document.getElementById('log-list');
   if (interactions === 0) {
@@ -1166,16 +1010,16 @@ async function fetchLedger(cardId) {
     if (!data || !data.success || !data.entries) return;
     const log = document.getElementById('log-list');
     const typeMap = {
-      'DAILY_SCAN':           { icon:'📱', label:'QR Scan' },
-      'NEW_OWNER_CLAIM':      { icon:'🎴', label:'Card Claimed' },
-      'STREAK_7':             { icon:'🔥', label:'Streak Bonus (7 days)' },
-      'STREAK_30':            { icon:'🔥', label:'Streak Bonus (30 days)' },
-      'DECAY':                { icon:'⚠️', label:'XP Decay' },
-      'DECAY_STAGE_DROP':     { icon:'🔴', label:'Stage Drop' },
-      'PUBLIC_SHOWCASE':      { icon:'👁', label:'Public Showcase' },
-      'ENDORSEMENT':          { icon:'🤝', label:'Endorsement Received' },
-      'EVENT_CHECKIN':        { icon:'🎪', label:'Event Check-in' },
-      'MILESTONE':            { icon:'🏆', label:'Milestone Reached' },
+      'DAILY_SCAN':              { icon:'📱', label:'QR Scan' },
+      'NEW_OWNER_CLAIM':         { icon:'🎴', label:'Card Claimed' },
+      'STREAK_7':                { icon:'🔥', label:'Streak Bonus (7 days)' },
+      'STREAK_30':               { icon:'🔥', label:'Streak Bonus (30 days)' },
+      'DECAY':                   { icon:'⚠️', label:'XP Decay' },
+      'DECAY_STAGE_DROP':        { icon:'🔴', label:'Stage Drop' },
+      'PUBLIC_SHOWCASE':         { icon:'👁', label:'Public Showcase' },
+      'ENDORSEMENT':             { icon:'🤝', label:'Endorsement Received' },
+      'EVENT_CHECKIN':           { icon:'🎪', label:'Event Check-in' },
+      'MILESTONE':               { icon:'🏆', label:'Milestone Reached' },
       'NOTABLE_COLLECTOR_BONUS': { icon:'⭐', label:'Notable Collector Bonus' },
     };
     if (data.entries.length === 0) {
@@ -1183,14 +1027,14 @@ async function fetchLedger(cardId) {
       return;
     }
     log.innerHTML = data.entries.map((e, i) => {
-      const t       = typeMap[e.type] || { icon:'✦', label: e.type };
-      const gained  = String(e.gained).replace('+','');
-      const lost    = Number(e.lost) || 0;
-      const isNeg   = lost > 0 && !gained;
-      const xpStr   = lost > 0 ? '−' + lost : (gained ? '+' + gained : '—');
-      const d       = new Date(e.date);
-      const now     = new Date();
-      const days    = Math.floor((now - d) / 86400000);
+      const t      = typeMap[e.type] || { icon:'✦', label: e.type };
+      const gained = String(e.gained).replace('+','');
+      const lost   = Number(e.lost) || 0;
+      const isNeg  = lost > 0 && !gained;
+      const xpStr  = lost > 0 ? '−' + lost : (gained ? '+' + gained : '—');
+      const d      = new Date(e.date);
+      const now    = new Date();
+      const days   = Math.floor((now - d) / 86400000);
       const dateStr = days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : days + ' days ago';
       return `<div class="log-item" style="animation-delay:${i*0.05}s">
         <div class="log-icon">${t.icon}</div>
@@ -1204,14 +1048,12 @@ async function fetchLedger(cardId) {
   }
 }
 
-// ── Particle system ───────────────────────────────────────────
 let particleAnim = null;
 
 function startParticles(stageIdx) {
   if (particleAnim) { cancelAnimationFrame(particleAnim); particleAnim = null; }
   const canvas = document.getElementById('card-canvas');
   if (!canvas) return;
-
   if (stageIdx < 2) { canvas.width = 0; canvas.height = 0; return; }
 
   const wrap = canvas.parentElement;
@@ -1228,14 +1070,13 @@ function startParticles(stageIdx) {
   };
 
   const cfg = configs[Math.min(stageIdx, 6)];
-
   function randColor() { return cfg.colors[Math.floor(Math.random() * cfg.colors.length)]; }
   function randRange(a, b) { return a + Math.random() * (b - a); }
 
   const particles = Array.from({ length: cfg.count }, () => ({
-    x:     Math.random() * canvas.width,
-    y:     canvas.height + Math.random() * 30,
-    size:  randRange(cfg.minSize, cfg.maxSize),
+    x: Math.random() * canvas.width,
+    y: canvas.height + Math.random() * 30,
+    size: randRange(cfg.minSize, cfg.maxSize),
     speed: randRange(cfg.minSpeed, cfg.maxSpeed),
     alpha: randRange(0.3, 0.9),
     color: randColor(),
@@ -1266,7 +1107,6 @@ function startParticles(stageIdx) {
     particles.forEach(p => {
       p.wobble += p.wobbleSpeed;
       const wx = p.x + Math.sin(p.wobble) * 1.5;
-
       if (cfg.shape === 'star' && p.size > 2) {
         drawStar(ctx, wx, p.y, p.size * 0.5, p.alpha, p.color);
       } else {
@@ -1278,10 +1118,8 @@ function startParticles(stageIdx) {
         ctx.fill();
         ctx.shadowBlur = 0;
       }
-
       p.y     -= p.speed;
       p.alpha -= 0.0025;
-
       if (p.y < -12 || p.alpha <= 0) {
         p.y      = canvas.height + 5;
         p.x      = Math.random() * canvas.width;
@@ -1297,12 +1135,9 @@ function startParticles(stageIdx) {
   draw();
 }
 
-// ── Real rank fetch ───────────────────────────────────────────
 async function fetchRank(cardId) {
   try {
-    const data = await jsonpFetch(
-      LIVING_API + '?action=get_rank&card_id=' + encodeURIComponent(cardId), 8000
-    );
+    const data = await jsonpFetch(LIVING_API + '?action=get_rank&card_id=' + encodeURIComponent(cardId), 8000);
     if (data && data.success) {
       const rank   = data.rank;
       const total  = data.total;
@@ -1312,12 +1147,9 @@ async function fetchRank(cardId) {
       document.getElementById('d-percentile').textContent = 'Top ' + topPct + '%';
       document.getElementById('d-top').textContent        = topPct;
     }
-  } catch(e) {
-    console.warn('Rank fetch failed:', e);
-  }
+  } catch(e) {}
 }
 
-// ── Global stats fetch ────────────────────────────────────────
 async function fetchStats() {
   try {
     const data = await jsonpFetch(LIVING_API + '?action=get_stats', 8000);
@@ -1326,26 +1158,16 @@ async function fetchStats() {
       document.getElementById('stat-highest-xp').textContent = data.highestXP.toLocaleString() + ' XP';
       document.getElementById('stat-top-card').textContent   = data.topCard;
     }
-  } catch(e) {
-    console.warn('Stats fetch failed:', e);
-  }
+  } catch(e) {}
 }
 
-// ── Scan history fetch ────────────────────────────────────────
 async function fetchScanHistory(cardId) {
   try {
-    const data = await jsonpFetch(
-      LIVING_API + '?action=get_scan_history&card_id=' + encodeURIComponent(cardId), 10000
-    );
-    if (data && data.success && data.days) {
-      applyStreakCalendar(data.days);
-    }
-  } catch(e) {
-    console.warn('Scan history fetch failed:', e);
-  }
+    const data = await jsonpFetch(LIVING_API + '?action=get_scan_history&card_id=' + encodeURIComponent(cardId), 10000);
+    if (data && data.success && data.days) applyStreakCalendar(data.days);
+  } catch(e) {}
 }
 
-// ── Helpers ───────────────────────────────────────────────────
 function setLoadingSub(text) { document.getElementById('loading-sub').textContent = text; }
 function hideLoading() { document.getElementById('loading-screen').style.display = 'none'; }
 function showError(msg) {
