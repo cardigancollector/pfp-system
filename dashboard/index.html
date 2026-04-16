@@ -1015,14 +1015,15 @@ function buildDashboard() {
   buildLog(interactions, daysSince);
 }
 
-// ── View counter with session guard ──────────────────────────
+// ── View counter with daily localStorage guard ────────────────
 async function incrementView(cardId) {
-  const sessionKey = 'pfp_viewed_' + cardId;
-  if (sessionStorage.getItem(sessionKey)) return;
+  const key   = 'pfp_viewed_' + cardId;
+  const today = new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem(key) === today) return;
+  localStorage.setItem(key, today);
   try {
     const data = await jsonpFetch(LIVING_API + '?action=increment_view&card_id=' + encodeURIComponent(cardId), 6000);
     if (data && data.success) {
-      sessionStorage.setItem(sessionKey, '1');
       document.getElementById('d-views').textContent = data.views.toLocaleString();
     }
   } catch(e) {}
