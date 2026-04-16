@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>PfP — Living Card</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
@@ -46,7 +49,6 @@
   .claim-input-wrap { position:relative; margin-bottom:16px; }
   .claim-input { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-bottom:1px solid var(--gold-dim); color:var(--text); font-family:'EB Garamond',serif; font-size:1.1rem; padding:12px 16px; outline:none; transition:border-color 0.3s,background 0.3s; letter-spacing:1px; text-align:center; }
   .claim-input:focus { border-color:var(--gold); background:rgba(201,168,76,0.05); }
-  .claim-input.readonly-field { background:rgba(201,168,76,0.04); color:var(--gold-dim); font-size:0.85rem; cursor:default; }
   .claim-btn { width:100%; margin-top:8px; padding:14px; background:linear-gradient(135deg,var(--gold-dim),var(--gold)); border:none; color:var(--dark); font-family:'Cinzel',serif; font-size:0.85rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; }
   .claim-btn:hover { background:linear-gradient(135deg,var(--gold),var(--gold-light)); }
   .claim-btn:disabled { opacity:0.5; cursor:not-allowed; }
@@ -512,7 +514,7 @@ function jsonpFetch(url, timeout) {
     }
     window[cbName] = function(data) { cleanup(); resolve(data); };
     script.onerror = () => { cleanup(); reject(new Error('script error')); };
-    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName + '&_=' + Date.now();
     document.body.appendChild(script);
   });
 }
@@ -608,6 +610,13 @@ async function boot(evoId) {
   }
 }
 
+async function fetchFreshLivingCard() {
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
+    if (data && data.success && data.card) livingCard = data.card;
+  } catch(e) { console.warn('Fresh fetch failed:', e); }
+}
+
 function showClaimScreen(mode) {
   document.getElementById('loading-screen').style.display  = 'none';
   document.getElementById('dashboard').style.display       = 'none';
@@ -665,10 +674,8 @@ async function performClaim(claimCode, errEl) {
       saveOwner(urlCardId, claimCode, cardName, realToken);
       savedOwner = { claimCode, cardName, ownerToken: realToken };
 
-      try {
-        const d2 = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
-        if (d2 && d2.success && d2.card) livingCard = d2.card;
-      } catch(e) {}
+      setLoadingSub('Loading your card data…');
+      await fetchFreshLivingCard();
 
       hideLoading();
       showDashboard(true);
@@ -684,9 +691,15 @@ async function performClaim(claimCode, errEl) {
   }
 }
 
-function enterAsSavedOwner() {
+async function enterAsSavedOwner() {
+  document.getElementById('claim-screen').style.display   = 'none';
+  document.getElementById('loading-screen').style.display = 'flex';
+  setLoadingSub('Loading your card data…');
+
+  await fetchFreshLivingCard();
+
+  hideLoading();
   isOwner = true;
-  document.getElementById('claim-screen').style.display = 'none';
   showDashboard(true);
 }
 
@@ -841,7 +854,6 @@ function buildDashboard(asOwner) {
   else if (daysSince <= 7) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −50 XP decay zone</div>`;
   else                     decayEl.innerHTML = `<div class="decay-warning">🔴 ${daysSince} days idle — stage drop risk! Scan now</div>`;
 
-  // ── SCAN AREA — uses asOwner parameter, not the global ──
   const scanArea = document.getElementById('scan-area');
   if (asOwner) {
     scanArea.innerHTML = `<button class="scan-btn" id="scan-btn" onclick="logScan()"><span>📱</span> Log Today's Scan — +10 XP</button>`;
@@ -884,10 +896,14 @@ async function incrementView(cardId) {
 
 async function logScan() {
   const cardId   = urlCardId;
-  const token    = (savedOwner && savedOwner.ownerToken) ? savedOwner.ownerToken : ('OWN-' + urlCardId);
+  const token    = (savedOwner && savedOwner.ownerToken) ? savedOwner.ownerToken : null;
   const btn      = document.getElementById('scan-btn');
   const feedback = document.getElementById('scan-feedback');
-  if (!cardId) return;
+  if (!cardId || !token) {
+    feedback.textContent = 'Owner token missing — try signing out and claiming again.';
+    feedback.className = 'scan-feedback error';
+    return;
+  }
   btn.disabled = true;
   btn.innerHTML = '<span>⏳</span> Logging scan...';
   feedback.textContent = '';
