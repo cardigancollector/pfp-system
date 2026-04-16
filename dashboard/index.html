@@ -970,15 +970,6 @@ function buildDashboard() {
   incrementView(urlCardId);
   fetchStats();
 
-  async function incrementView(cardId) {
-  try {
-    const data = await jsonpFetch(LIVING_API + '?action=increment_view&card_id=' + encodeURIComponent(cardId), 6000);
-    if (data && data.success) {
-      document.getElementById('d-views').textContent = data.views.toLocaleString();
-    }
-  } catch(e) {}
-}
-
   const healthPct = Math.max(0, Math.min(100, 100 - (daysSince * 8)));
   document.getElementById('health-pct').textContent   = healthPct + '%';
   document.getElementById('d-last').textContent       = lastDate ? lastDate.toLocaleDateString() : '—';
@@ -1022,6 +1013,19 @@ function buildDashboard() {
   buildMilestones(xp, streak, interactions);
   buildStreakCalendar(streak, daysSince);
   buildLog(interactions, daysSince);
+}
+
+// ── View counter with session guard ──────────────────────────
+async function incrementView(cardId) {
+  const sessionKey = 'pfp_viewed_' + cardId;
+  if (sessionStorage.getItem(sessionKey)) return;
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=increment_view&card_id=' + encodeURIComponent(cardId), 6000);
+    if (data && data.success) {
+      sessionStorage.setItem(sessionKey, '1');
+      document.getElementById('d-views').textContent = data.views.toLocaleString();
+    }
+  } catch(e) {}
 }
 
 // ── Scan ──────────────────────────────────────────────────────
@@ -1080,7 +1084,6 @@ function buildMilestones(xp, streak, interactions) {
     { icon:'🏛️', name:'Established',    desc:'Reach 3,500 XP',        key:'Established',     target:3500, current:xp },
   ];
 
-  // Render immediately with live-data progress, then update with sheet data
   function render(earnedKeys) {
     document.getElementById('milestone-list').innerHTML =
       `<div class="chart-title">Milestones</div>` +
@@ -1113,7 +1116,6 @@ function buildMilestones(xp, streak, interactions) {
 
 // ── Streak Calendar ───────────────────────────────────────────
 function buildStreakCalendar(streak, daysSince) {
-  // Show placeholder grid immediately, real data loaded by fetchScanHistory
   const grid = document.getElementById('streak-grid');
   grid.innerHTML = Array.from({length:28}, (_,i) =>
     `<div class="streak-day" title="${i===0?'Today':i+' days ago'}"></div>`
@@ -1145,9 +1147,6 @@ function applyStreakCalendar(days) {
     return `<div class="streak-day ${cls}" title="${label}"></div>`;
   }).join('');
 }
-
-// ── Charts ────────────────────────────────────────────────────
-
 
 // ── Log ───────────────────────────────────────────────────────
 function buildLog(interactions, daysSince) {
@@ -1204,7 +1203,7 @@ async function fetchLedger(cardId) {
   }
 }
 
-// ── Particle system — overhauled ──────────────────────────────
+// ── Particle system ───────────────────────────────────────────
 let particleAnim = null;
 
 function startParticles(stageIdx) {
@@ -1212,7 +1211,6 @@ function startParticles(stageIdx) {
   const canvas = document.getElementById('card-canvas');
   if (!canvas) return;
 
-  // Dormant & Awakened get no particles
   if (stageIdx < 2) { canvas.width = 0; canvas.height = 0; return; }
 
   const wrap = canvas.parentElement;
@@ -1220,7 +1218,6 @@ function startParticles(stageIdx) {
   canvas.height = wrap.offsetHeight;
   const ctx = canvas.getContext('2d');
 
-  // Per-stage particle config
   const configs = {
     2: { count:14, colors:['rgba(201,122,42,','rgba(184,115,51,','rgba(232,160,80,'], minSize:0.8, maxSize:2.5, minSpeed:0.3, maxSpeed:0.8,  glow:8,  shape:'circle' },
     3: { count:20, colors:['rgba(210,210,210,','rgba(192,192,192,','rgba(201,168,76,'], minSize:0.8, maxSize:3.0, minSpeed:0.4, maxSpeed:1.0,  glow:10, shape:'circle' },
@@ -1319,7 +1316,6 @@ async function fetchRank(cardId) {
   }
 }
 
-
 // ── Global stats fetch ────────────────────────────────────────
 async function fetchStats() {
   try {
@@ -1347,6 +1343,7 @@ async function fetchScanHistory(cardId) {
     console.warn('Scan history fetch failed:', e);
   }
 }
+
 // ── Helpers ───────────────────────────────────────────────────
 function setLoadingSub(text) { document.getElementById('loading-sub').textContent = text; }
 function hideLoading() { document.getElementById('loading-screen').style.display = 'none'; }
