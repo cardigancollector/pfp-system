@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Oracle — PfP Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-bright: #f0d080;
+    --gold-dim: #7a6128;
+    --stone: #1a1610;
+    --stone-mid: #2a2218;
+    --stone-light: #3d3226;
+    --stone-pale: #544838;
+    --rune-glow: rgba(201,168,76,0.35);
+    --cream: #e8dfc4;
+    --ash: #8a7d66;
+    --ember: #c44d1a;
+    --reveal: #4a8f6e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--stone);
+    color: var(--cream);
+    font-family: 'EB Garamond', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Stone texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  /* Candlelight vignette */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(10,8,4,0.7) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Floating dust particles */
+  .dust {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .dust-particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0;
+    animation: drift linear infinite;
+  }
+
+  @keyframes drift {
+    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10% { opacity: 0.4; }
+    90% { opacity: 0.2; }
+    100% { transform: translateY(-10vh) translateX(var(--drift-x)); opacity: 0; }
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 2;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* Header */
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--stone-light);
+  }
+
+  .back-link {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--ash);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover { color: var(--gold); }
+
+  .site-logo {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+  }
+
+  /* Oracle title block */
+  .oracle-crown {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .rune-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    color: var(--gold-dim);
+    font-size: 18px;
+    letter-spacing: 0.3em;
+  }
+
+  .rune-divider::before,
+  .rune-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold-dim), transparent);
+    max-width: 120px;
+  }
+
+  .oracle-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(36px, 8vw, 60px);
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 40px var(--rune-glow), 0 2px 4px rgba(0,0,0,0.8);
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+
+  .oracle-subtitle {
+    font-style: italic;
+    color: var(--ash);
+    font-size: 16px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Card identity strip */
+  .card-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    background: var(--stone-mid);
+    border: 1px solid var(--stone-light);
+    border-radius: 4px;
+    padding: 14px 24px;
+    margin-bottom: 36px;
+    animation: fadeDown 0.8s 0.15s ease both;
+  }
+
+  .card-strip-name {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+  }
+
+  .card-strip-stat {
+    font-size: 13px;
+    color: var(--ash);
+  }
+
+  .card-strip-stat span {
+    color: var(--cream);
+    font-weight: 500;
+  }
+
+  .dot { color: var(--stone-pale); }
+
+  /* Main tablet */
+  .tablet {
+    background: var(--stone-mid);
+    border: 2px solid var(--stone-light);
+    border-radius: 6px;
+    padding: 40px 36px;
+    position: relative;
+    animation: fadeDown 0.8s 0.25s ease both;
+    box-shadow:
+      inset 0 1px 0 rgba(201,168,76,0.08),
+      0 20px 60px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(201,168,76,0.05);
+  }
+
+  .tablet::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(201,168,76,0.06);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
+  /* Corner runes */
+  .corner-rune {
+    position: absolute;
+    font-size: 20px;
+    color: var(--gold-dim);
+    opacity: 0.4;
+    line-height: 1;
+  }
+  .corner-rune.tl { top: 12px; left: 14px; }
+  .corner-rune.tr { top: 12px; right: 14px; }
+  .corner-rune.bl { bottom: 12px; left: 14px; }
+  .corner-rune.br { bottom: 12px; right: 14px; }
+
+  /* Loading state */
+  .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .oracle-eye {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 24px;
+    position: relative;
+  }
+
+  .oracle-eye-ring {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--gold-dim);
+    position: absolute;
+    animation: pulse-ring 2s ease-in-out infinite;
+  }
+
+  .oracle-eye-ring:nth-child(2) { animation-delay: 0.5s; opacity: 0.5; transform: scale(1.3); }
+  .oracle-eye-ring:nth-child(3) { animation-delay: 1s; opacity: 0.25; transform: scale(1.6); }
+
+  @keyframes pulse-ring {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 0.2; transform: scale(1.1); }
+  }
+
+  .oracle-eye-inner {
+    width: 24px;
+    height: 24px;
+    background: var(--gold);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px var(--gold), 0 0 40px var(--rune-glow);
+    animation: flicker 3s ease-in-out infinite;
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    45% { opacity: 0.8; }
+    50% { opacity: 0.6; }
+    55% { opacity: 0.9; }
+  }
+
+  .loading-text {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--ash);
+    text-transform: uppercase;
+    animation: breathe 2s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* Prophecy question */
+  .prophecy-block { display: none; }
+  .prophecy-block.active { display: block; }
+
+  .prophecy-label {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .prophecy-question {
+    font-size: clamp(18px, 3vw, 24px);
+    font-style: italic;
+    color: var(--cream);
+    text-align: center;
+    line-height: 1.6;
+    margin-bottom: 36px;
+    padding: 0 16px;
+  }
+
+  /* Path choices */
+  .paths-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .path-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--stone);
+    border: 1px solid var(--stone-light);
+    border-radius: 4px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .path-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--rune-glow) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .path-btn:hover::before { opacity: 1; }
+  .path-btn:hover { border-color: var(--gold-dim); }
+
+  .path-rune {
+    font-size: 22px;
+    flex-shrink: 0;
+    width: 36px;
+    text-align: center;
+    color: var(--gold-dim);
+    transition: color 0.25s;
+    line-height: 1;
+  }
+
+  .path-btn:hover .path-rune { color: var(--gold); }
+
+  .path-text {
+    font-size: 15px;
+    color: var(--ash);
+    line-height: 1.4;
+    transition: color 0.25s;
+    position: relative;
+    z-index: 1;
+  }
+
+  .path-btn:hover .path-text { color: var(--cream); }
+
+  /* Chosen state */
+  .path-btn.chosen {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.08);
+    cursor: default;
+  }
+  .path-btn.chosen .path-rune { color: var(--gold); }
+  .path-btn.chosen .path-text { color: var(--cream); }
+  .path-btn.chosen::before { opacity: 1; }
+
+  /* Revealed correct */
+  .path-btn.correct {
+    border-color: var(--reveal);
+    background: rgba(74,143,110,0.1);
+  }
+  .path-btn.correct .path-rune { color: var(--reveal); }
+
+  /* Revealed wrong */
+  .path-btn.wrong {
+    border-color: var(--stone-light);
+    opacity: 0.45;
+  }
+
+  .path-badge {
+    margin-left: auto;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    padding: 3px 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .badge-chosen {
+    background: rgba(201,168,76,0.15);
+    color: var(--gold);
+    border: 1px solid var(--gold-dim);
+  }
+
+  .badge-correct {
+    background: rgba(74,143,110,0.15);
+    color: var(--reveal);
+    border: 1px solid var(--reveal);
+  }
+
+  /* XP award bar */
+  .xp-award {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    background: rgba(201,168,76,0.06);
+    border: 1px solid var(--gold-dim);
+    border-radius: 4px;
+    margin-top: 16px;
+    animation: fadeDown 0.5s ease both;
+  }
+
+  .xp-award.visible { display: block; }
+
+  .xp-number {
+    font-family: 'Cinzel', serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 30px var(--rune-glow);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .xp-label {
+    font-size: 13px;
+    color: var(--ash);
+    letter-spacing: 0.08em;
+  }
+
+  /* Countdown */
+  .countdown-block {
+    text-align: center;
+    padding: 16px 0 0;
+  }
+
+  .countdown-label {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .countdown-timer {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    color: var(--ash);
+    letter-spacing: 0.1em;
+  }
+
+  /* Locked state */
+  .locked-state { display: none; }
+  .locked-state.active { display: block; }
+
+  .locked-msg {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .locked-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+    display: block;
+    opacity: 0.5;
+  }
+
+  .locked-title {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    color: var(--gold-dim);
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+  }
+
+  .locked-sub {
+    font-size: 14px;
+    color: var(--ash);
+    font-style: italic;
+  }
+
+  /* Error state */
+  .error-state { display: none; text-align: center; padding: 40px 20px; }
+  .error-state.active { display: block; }
+  .error-text {
+    font-style: italic;
+    color: var(--ash);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* No token notice */
+  .no-token-bar {
+    display: none;
+    background: rgba(196,77,26,0.12);
+    border: 1px solid rgba(196,77,26,0.3);
+    border-radius: 4px;
+    padding: 12px 18px;
+    text-align: center;
+    font-size: 13px;
+    color: #d0836a;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  /* Footer nav */
+  .game-nav {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+  }
+
+  .game-nav a {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--ash);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    padding: 6px 0;
+    border-bottom: 1px solid transparent;
+  }
+
+  .game-nav a:hover { color: var(--gold); border-color: var(--gold-dim); }
+  .game-nav a.active-game { color: var(--gold); border-color: var(--gold); }
+
+  @media (max-width: 520px) {
+    .wrapper { padding: 24px 16px 60px; }
+    .tablet { padding: 28px 20px; }
+    .card-strip { flex-direction: column; gap: 8px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="dust" id="dustContainer"></div>
+
+<div class="wrapper">
+
+  <header class="site-header">
+    <a href="../index.html" class="back-link">← XP Gaming</a>
+    <span class="site-logo">PfP Cards</span>
+  </header>
+
+  <div class="oracle-crown">
+    <div class="rune-divider">ᚱ ᚢ ᚾ ᛖ</div>
+    <h1 class="oracle-title">THE ORACLE</h1>
+    <p class="oracle-subtitle">Five paths. One fate. The Oracle decides.</p>
+  </div>
+
+  <div class="card-strip" id="cardStrip" style="display:none">
+    <span class="card-strip-name" id="cardStripName">—</span>
+    <span class="dot">·</span>
+    <span class="card-strip-stat">Stage <span id="cardStripStage">—</span></span>
+    <span class="dot">·</span>
+    <span class="card-strip-stat">XP <span id="cardStripXP">—</span></span>
+  </div>
+
+  <div class="no-token-bar" id="noTokenBar">
+    No owner token detected — your fate will be read but no XP will be awarded.
+  </div>
+
+  <div class="tablet">
+    <span class="corner-rune tl">ᚠ</span>
+    <span class="corner-rune tr">ᚹ</span>
+    <span class="corner-rune bl">ᛏ</span>
+    <span class="corner-rune br">ᛗ</span>
+
+    <!-- Loading -->
+    <div class="loading-state" id="loadingState">
+      <div class="oracle-eye">
+        <div class="oracle-eye-ring"></div>
+        <div class="oracle-eye-ring"></div>
+        <div class="oracle-eye-ring"></div>
+        <div class="oracle-eye-inner"></div>
+      </div>
+      <p class="loading-text" id="loadingText">The Oracle stirs…</p>
+    </div>
+
+    <!-- Prophecy -->
+    <div class="prophecy-block" id="prophecyBlock">
+      <p class="prophecy-label">Today's Fate Reading</p>
+      <p class="prophecy-question" id="prophecyQuestion">—</p>
+      <div class="paths-grid" id="pathsGrid"></div>
+      <div class="xp-award" id="xpAward">
+        <span class="xp-number" id="xpNumber">—</span>
+        <span class="xp-label">XP awarded by the Oracle</span>
+      </div>
+      <div class="countdown-block" id="countdownBlock" style="display:none">
+        <p class="countdown-label">Fate revealed in</p>
+        <p class="countdown-timer" id="countdownTimer">—</p>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-state" id="errorState">
+      <p class="error-text">The Oracle's flame has flickered out.<br>Return when the embers glow again.</p>
+    </div>
+
+  </div>
+
+  <nav class="game-nav">
+    <a href="../vault/index.html">The Vault</a>
+    <a href="index.html" class="active-game">The Oracle</a>
+    <a href="../forge/index.html">The Forge</a>
+    <a href="../gauntlet/index.html">The Gauntlet</a>
+    <a href="../duel/index.html">The Duel</a>
+    <a href="../heist/index.html">The Heist</a>
+  </nav>
+
+</div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+
+const RUNES = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛞ','ᛟ'];
+
+const params = new URLSearchParams(window.location.search);
+const cardId = params.get('card_id') || '';
+const token = params.get('token') || '';
+
+const todayKey = () => {
+  const d = new Date();
+  return `oracle_${cardId}_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+};
+
+function getStoredReading() {
+  try { return JSON.parse(localStorage.getItem(todayKey())); } catch { return null; }
+}
+
+function storeReading(data) {
+  localStorage.setItem(todayKey(), JSON.stringify(data));
+}
+
+function setLoading(msg) {
+  document.getElementById('loadingState').style.display = '';
+  document.getElementById('loadingText').textContent = msg;
+  document.getElementById('prophecyBlock').classList.remove('active');
+  document.getElementById('errorState').classList.remove('active');
+}
+
+function showError() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('errorState').classList.add('active');
+}
+
+function showProphecy() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('prophecyBlock').classList.add('active');
+}
+
+function buildDust() {
+  const container = document.getElementById('dustContainer');
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'dust-particle';
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      --drift-x: ${(Math.random() - 0.5) * 80}px;
+      animation-duration: ${6 + Math.random() * 14}s;
+      animation-delay: ${Math.random() * 12}s;
+      opacity: 0;
+      width: ${1 + Math.random() * 2}px;
+      height: ${1 + Math.random() * 2}px;
+    `;
+    container.appendChild(p);
+  }
+}
+
+function randomXP() {
+  return Math.floor(Math.random() * 46) + 5;
+}
+
+function seededRandom(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+function todayDateSeed() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+function pickCorrectPath(numPaths) {
+  const rand = seededRandom(todayDateSeed() + cardId.split('').reduce((a, c) => a + c.charCodeAt(0), 0));
+  return Math.floor(rand() * numPaths);
+}
+
+function getCountdown(chosenAt) {
+  const revealAt = chosenAt + 24 * 60 * 60 * 1000;
+  const remaining = revealAt - Date.now();
+  if (remaining <= 0) return null;
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  return `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+}
+
+function renderReading(reading, choiceIndex) {
+  showProphecy();
+  document.getElementById('prophecyQuestion').textContent = reading.question;
+  const grid = document.getElementById('pathsGrid');
+  grid.innerHTML = '';
+
+  const correctIndex = pickCorrectPath(reading.paths.length);
+  const now = Date.now();
+  const stored = getStoredReading();
+  const isRevealed = stored && (now - stored.chosenAt) >= 24 * 60 * 60 * 1000;
+
+  reading.paths.forEach((path, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'path-btn';
+    const rune = RUNES[i % RUNES.length];
+
+    let badgeHtml = '';
+    if (choiceIndex !== null && i === choiceIndex) {
+      btn.classList.add('chosen');
+      badgeHtml = `<span class="path-badge badge-chosen">Your Path</span>`;
+    }
+    if (isRevealed) {
+      if (i === correctIndex) {
+        btn.classList.add('correct');
+        badgeHtml = `<span class="path-badge badge-correct">Fate's Path</span>`;
+      } else if (i !== choiceIndex) {
+        btn.classList.add('wrong');
+      }
+    }
+
+    btn.innerHTML = `
+      <span class="path-rune">${rune}</span>
+      <span class="path-text">${path}</span>
+      ${badgeHtml}
+    `;
+
+    if (choiceIndex === null) {
+      btn.addEventListener('click', () => choosePath(i, reading));
+    } else {
+      btn.style.cursor = 'default';
+    }
+
+    grid.appendChild(btn);
+  });
+
+  if (stored) {
+    if (stored.xpAwarded) {
+      document.getElementById('xpNumber').textContent = `+${stored.xpAwarded} XP`;
+      document.getElementById('xpAward').classList.add('visible');
+    }
+    if (!isRevealed) {
+      startCountdown(stored.chosenAt);
+    }
+  }
+}
+
+function startCountdown(chosenAt) {
+  const block = document.getElementById('countdownBlock');
+  const timer = document.getElementById('countdownTimer');
+  block.style.display = '';
+
+  function tick() {
+    const t = getCountdown(chosenAt);
+    if (!t) {
+      timer.textContent = 'Fate is revealed — return to see your path.';
+      clearInterval(interval);
+    } else {
+      timer.textContent = t;
+    }
+  }
+
+  tick();
+  const interval = setInterval(tick, 1000);
+}
+
+async function choosePath(index, reading) {
+  const btns = document.querySelectorAll('.path-btn');
+  btns.forEach(b => { b.style.cursor = 'default'; b.replaceWith(b.cloneNode(true)); });
+
+  const xp = randomXP();
+  const chosenAt = Date.now();
+
+  storeReading({ chosenAt, choiceIndex: index, question: reading.question, paths: reading.paths, xpAwarded: xp });
+
+  renderReading(reading, index);
+
+  if (token && cardId) {
+    try {
+      await fetch(`${API}?action=logGamingXP&card_id=${encodeURIComponent(cardId)}&token=${encodeURIComponent(token)}&game=oracle&xp=${xp}`);
+    } catch {}
+  }
+
+  document.getElementById('xpNumber').textContent = `+${xp} XP`;
+  document.getElementById('xpAward').classList.add('visible');
+  startCountdown(chosenAt);
+}
+
+async function fetchCardData() {
+  const res = await fetch(`${API}?action=getCard&card_id=${encodeURIComponent(cardId)}`);
+  const json = await res.json();
+  if (json.success && json.card) return json.card;
+  return null;
+}
+
+async function generateReading(card) {
+  const cardName = card ? card.card_name || cardId : cardId;
+  const stage = card ? card.evolution_stage || 'Unknown' : 'Unknown';
+  const xp = card ? card.current_xp || 0 : 0;
+  const streak = card ? card.streak || 0 : 0;
+
+  const prompt = `You are The Oracle, an ancient mystical entity that reads the fates of collectible cards.
+
+Card Name: ${cardName}
+Evolution Stage: ${stage}
+Current XP: ${xp}
+Streak: ${streak} days
+
+Write a single cryptic fate reading question for this card — something about its destiny, power, legacy, or path ahead. Then write exactly 5 short possible fate paths (answers), each 4–10 words long. The question should feel mystical and specific to this card's current state.
+
+Respond ONLY with valid JSON, no markdown:
+{"question":"...","paths":["...","...","...","...","..."]}`;
+
+  const res = await fetch(ANTHROPIC_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  const data = await res.json();
+  const text = data.content?.map(b => b.text || '').join('') || '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+async function init() {
+  buildDust();
+
+  if (!cardId) {
+    showError();
+    return;
+  }
+
+  if (!token) {
+    document.getElementById('noTokenBar').style.display = '';
+  }
+
+  const stored = getStoredReading();
+
+  if (stored) {
+    setLoading('The Oracle remembers…');
+    let card = null;
+    try { card = await fetchCardData(); } catch {}
+
+    if (card) {
+      document.getElementById('cardStrip').style.display = '';
+      document.getElementById('cardStripName').textContent = card.card_name || cardId;
+      document.getElementById('cardStripStage').textContent = card.evolution_stage || '—';
+      document.getElementById('cardStripXP').textContent = card.current_xp || '0';
+    }
+
+    renderReading({ question: stored.question, paths: stored.paths }, stored.choiceIndex);
+    return;
+  }
+
+  setLoading('The Oracle stirs…');
+
+  let card = null;
+  try {
+    card = await fetchCardData();
+    if (card) {
+      document.getElementById('cardStrip').style.display = '';
+      document.getElementById('cardStripName').textContent = card.card_name || cardId;
+      document.getElementById('cardStripStage').textContent = card.evolution_stage || '—';
+      document.getElementById('cardStripXP').textContent = card.current_xp || '0';
+    }
+  } catch {}
+
+  setLoading('The Oracle speaks…');
+
+  try {
+    const reading = await generateReading(card);
+    renderReading(reading, null);
+  } catch {
+    showError();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
