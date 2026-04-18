@@ -1210,7 +1210,7 @@ function showGamingBtn(asOwner) {
   const btn = document.getElementById('gaming-hub-btn');
   if (!btn) return;
   if (asOwner && urlCardId && savedOwner && savedOwner.ownerToken) {
-    const url = 'xp-gaming/index.html?card_id=' + encodeURIComponent(urlCardId) + '&owner_token=' + encodeURIComponent(savedOwner.ownerToken);
+    const url = '../xp-gaming/index.html?card_id=' + encodeURIComponent(urlCardId) + '&owner_token=' + encodeURIComponent(savedOwner.ownerToken);
     btn.href = url;
     btn.classList.add('visible');
   } else {
