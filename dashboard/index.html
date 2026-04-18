@@ -272,6 +272,9 @@
   .delay-4 { animation-delay:0.4s; }
   .delay-5 { animation-delay:0.5s; }
 
+  .gaming-hub-btn { display:none; width:100%; margin-top:10px; padding:14px 24px; background:linear-gradient(135deg,rgba(46,204,113,0.06),rgba(46,204,113,0.12)); border:1px solid rgba(46,204,113,0.35); color:#2ecc71; font-family:'Cinzel',serif; font-size:0.82rem; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; text-align:center; text-decoration:none; }
+  .gaming-hub-btn:hover { background:linear-gradient(135deg,rgba(46,204,113,0.12),rgba(46,204,113,0.22)); box-shadow:0 0 30px rgba(46,204,113,0.1); border-color:#2ecc71; }
+  .gaming-hub-btn.visible { display:flex; align-items:center; justify-content:center; gap:10px; }
   @media (max-width:900px) {
     .stat-grid { grid-template-columns:repeat(2,1fr); }
     .two-col { grid-template-columns:1fr; }
@@ -388,6 +391,8 @@
       <div id="scan-area"></div>
       <div class="scan-feedback" id="scan-feedback"></div>
     </div>
+
+    <a class="gaming-hub-btn" id="gaming-hub-btn" href="#">🎮 &nbsp; Enter XP Gaming Hub</a>
 
     <div class="section-title animate-in delay-1">At a Glance</div>
     <div class="stat-grid animate-in delay-1">
@@ -728,6 +733,7 @@ function showDashboard(asOwner) {
   }
 
   buildDashboard(asOwner);
+  showGamingBtn(asOwner);
 }
 
 function doSignOut() {
@@ -1198,6 +1204,18 @@ function showError(msg) {
 }
 function esc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showGamingBtn(asOwner) {
+  const btn = document.getElementById('gaming-hub-btn');
+  if (!btn) return;
+  if (asOwner && urlCardId && savedOwner && savedOwner.ownerToken) {
+    const url = 'xp-gaming/index.html?card_id=' + encodeURIComponent(urlCardId) + '&owner_token=' + encodeURIComponent(savedOwner.ownerToken);
+    btn.href = url;
+    btn.classList.add('visible');
+  } else {
+    btn.classList.remove('visible');
+  }
 }
 
 document.addEventListener('keydown', e => {
