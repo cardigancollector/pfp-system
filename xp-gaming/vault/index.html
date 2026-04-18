@@ -409,6 +409,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (CARD_ID)     localStorage.setItem('pfp_gaming_card',  CARD_ID);
   if (OWNER_TOKEN) localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
 
+  const imageUrl  = localStorage.getItem('pfp_gaming_image') || '';
+  if (imageUrl) {
+    document.getElementById('card-name-display').style.backgroundImage = 'none';
+  }
+
   // Load Gaming XP balance from API
   if (CARD_ID) {
     try {
