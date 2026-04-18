@@ -297,8 +297,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   CARD_ID     = params.get('card_id')     || params.get('cardId')     || localStorage.getItem('pfp_gaming_card')  || '';
   OWNER_TOKEN = params.get('owner_token') || params.get('ownerToken') || localStorage.getItem('pfp_gaming_token') || '';
 
+  const IMAGE_URL = params.get('image_url') || localStorage.getItem('pfp_gaming_image') || '';
   if (CARD_ID)     localStorage.setItem('pfp_gaming_card',  CARD_ID);
   if (OWNER_TOKEN) localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
+  if (IMAGE_URL)   localStorage.setItem('pfp_gaming_image', IMAGE_URL);
 
   // Wire back button
   document.getElementById('back-btn').onclick = () => {
@@ -331,12 +333,20 @@ function renderPlayer() {
   const cardName = lc['Card Name'] || CARD_ID || '—';
   const stage    = lc['Evolution Stage'] || 'Awakened';
   const level    = parseInt(lc['Current Level']) || 1;
-  const gamingXP = parseInt(lc['Gaming XP']) || 0;
+  const gamingXP  = parseInt(lc['Gaming XP']) || 0;
+  const imageUrl  = localStorage.getItem('pfp_gaming_image') || '';
 
   document.getElementById('player-name').textContent  = cardName;
   document.getElementById('player-stage').textContent = stage + ' · Level ' + level;
   document.getElementById('stage-badge').textContent  = stage;
   document.getElementById('xp-balance').textContent   = gamingXP.toLocaleString();
+
+  if (imageUrl) {
+    const img = document.getElementById('card-img');
+    img.src = imageUrl;
+    img.style.display = 'block';
+    document.getElementById('card-placeholder').style.display = 'none';
+  }
 
   const stats = getGamingStats();
   const net   = stats.gamingNet;
