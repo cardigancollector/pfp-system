@@ -35,7 +35,6 @@
   .mote { position:absolute; border-radius:50%; opacity:0; animation:mote-drift linear infinite; }
   @keyframes mote-drift { 0%{transform:translateY(100vh) translateX(0) scale(0);opacity:0;} 8%{opacity:1;} 92%{opacity:0.4;} 100%{transform:translateY(-30px) translateX(var(--dx)) scale(0.2);opacity:0;} }
 
-  /* HEADER */
   .header { position:relative; z-index:10; padding:18px 40px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(46,180,90,0.12); background:rgba(4,26,10,0.97); backdrop-filter:blur(24px); }
   .header-left { display:flex; align-items:center; gap:16px; }
   .back-btn { background:none; border:1px solid rgba(46,180,90,0.2); color:var(--text-dim); font-family:'Cinzel',serif; font-size:0.68rem; letter-spacing:0.2em; text-transform:uppercase; padding:8px 16px; cursor:pointer; transition:all 0.3s; }
@@ -43,10 +42,8 @@
   .header-brand { font-family:'Cinzel Decorative',serif; font-size:1.3rem; color:var(--gold); letter-spacing:0.08em; text-shadow:0 0 30px rgba(201,168,76,0.2); }
   .header-sub { font-size:0.65rem; color:var(--text-dim); letter-spacing:0.25em; text-transform:uppercase; margin-top:2px; }
 
-  /* MAIN */
   .main { position:relative; z-index:5; max-width:1200px; margin:0 auto; padding:40px 32px 80px; }
 
-  /* PLAYER PANEL */
   .player-panel { display:grid; grid-template-columns:220px 1fr; gap:28px; margin-bottom:40px; background:rgba(7,31,13,0.7); border:1px solid rgba(46,180,90,0.15); border-top:2px solid rgba(201,168,76,0.3); padding:28px; backdrop-filter:blur(16px); }
 
   .card-art-wrap { position:relative; width:100%; aspect-ratio:3/4; background:linear-gradient(145deg,#0d2a14,#071508); border:2px solid rgba(46,180,90,0.2); display:flex; align-items:center; justify-content:center; overflow:hidden; }
@@ -77,11 +74,9 @@
   .daily-limit-track { height:4px; background:rgba(46,180,90,0.1); border-radius:2px; overflow:hidden; }
   .daily-limit-fill { height:100%; background:linear-gradient(90deg,var(--green-dim),var(--green-bright)); border-radius:2px; transition:width 1s ease; }
 
-  /* SECTION TITLE */
   .section-title { font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.4em; text-transform:uppercase; color:var(--green-dim); margin-bottom:18px; display:flex; align-items:center; gap:14px; }
   .section-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,rgba(46,180,90,0.2),transparent); }
 
-  /* STATS STRIP */
   .stats-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:36px; }
   .sstat { background:rgba(7,31,13,0.6); border:1px solid rgba(46,180,90,0.1); border-top:1px solid rgba(201,168,76,0.2); padding:16px 18px; }
   .sstat-label { font-size:0.58rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
@@ -90,7 +85,6 @@
   .sstat-val.red   { color:var(--red-bright); }
   .sstat-sub { font-size:0.72rem; color:var(--text-dim); font-style:italic; margin-top:3px; }
 
-  /* GAMES GRID */
   .games-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:36px; }
 
   .game-card { position:relative; border:1px solid rgba(46,180,90,0.12); background:rgba(7,31,13,0.65); backdrop-filter:blur(12px); overflow:hidden; transition:all 0.35s; cursor:pointer; text-decoration:none; color:inherit; display:block; }
@@ -124,10 +118,8 @@
   .game-card-arrow { position:absolute; right:16px; bottom:16px; font-size:1rem; color:rgba(201,168,76,0.3); transition:all 0.3s; }
   .game-card:hover .game-card-arrow { color:var(--gold); transform:translateX(4px); }
 
-  /* PUZZLE SECTION */
   .puzzle-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:36px; }
 
-  /* RECENT ACTIVITY */
   .activity-wrap { background:rgba(4,20,8,0.8); border:1px solid rgba(46,180,90,0.1); border-top:1px solid rgba(46,180,90,0.2); backdrop-filter:blur(16px); }
   .activity-header { padding:14px 24px; border-bottom:1px solid rgba(46,180,90,0.08); display:flex; justify-content:space-between; align-items:center; font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--green-dim); }
   .activity-list { display:flex; flex-direction:column; }
@@ -178,7 +170,6 @@
 
 <div class="main">
 
-  <!-- PLAYER PANEL -->
   <div class="player-panel">
     <div>
       <div class="card-art-wrap" id="card-art-wrap">
@@ -223,7 +214,6 @@
     </div>
   </div>
 
-  <!-- STATS STRIP -->
   <div class="section-title">All-Time Gaming Stats</div>
   <div class="stats-strip">
     <div class="sstat">
@@ -248,7 +238,6 @@
     </div>
   </div>
 
-  <!-- CHANCE GAMES -->
   <div class="section-title">Games of Chance</div>
   <div class="games-grid">
 
@@ -266,20 +255,6 @@
       </div>
       <div class="game-card-arrow">→</div>
     </a>
-
-    <div class="game-card soon">
-      <div class="game-card-bg">🔮</div>
-      <div class="game-card-inner">
-        <div class="game-status soon-badge">Coming Soon</div>
-        <div class="game-name">The Oracle</div>
-        <div class="game-tagline">Three face-down cards. One multiplier, one neutral, one decay. Choose wisely.</div>
-        <div class="game-stats-row">
-          <div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Win Rate</div><div class="gstat-val dim">—</div></div>
-        </div>
-      </div>
-    </div>
 
     <div class="game-card soon">
       <div class="game-card-bg">⚙️</div>
@@ -339,7 +314,6 @@
 
   </div>
 
-  <!-- PUZZLE GAMES -->
   <div class="section-title">Games of Skill</div>
   <div class="puzzle-grid">
 
@@ -387,7 +361,6 @@
 
   </div>
 
-  <!-- RECENT ACTIVITY -->
   <div class="section-title">Recent Activity</div>
   <div class="activity-wrap">
     <div class="activity-header">
@@ -402,7 +375,6 @@
 </div>
 
 <script>
-// ── FAKE PLAYER DATA (replace with live API when connecting) ──
 const PLAYER = {
   xp:        2500,
   cardName:  'Bitcoin',
@@ -413,7 +385,6 @@ const PLAYER = {
 
 const DAILY_LIMIT = 1000;
 
-// ── SESSION STORAGE for cross-page stats ──
 function getGamingStats() {
   try { return JSON.parse(sessionStorage.getItem('pfp_gaming_stats') || 'null') || defaultStats(); }
   catch(e) { return defaultStats(); }
@@ -482,7 +453,7 @@ function renderStats() {
   document.getElementById('activity-net').style.color = allNet > 0 ? 'var(--win)' : allNet < 0 ? 'var(--red-bright)' : 'var(--green-dim)';
 
   if (stats.ledger && stats.ledger.length > 0) {
-    const iconMap = { 'The Vault':'🃏', 'The Oracle':'🔮', 'The Forge':'⚙️', 'The Gauntlet':'🎲', 'The Maze':'🌀', 'Sudoku':'🔢', 'The Puzzle':'🧩' };
+    const iconMap = { 'The Vault':'🃏', 'The Forge':'⚙️', 'The Gauntlet':'🎲', 'The Maze':'🌀', 'Sudoku':'🔢', 'The Puzzle':'🧩' };
     document.getElementById('activity-list').innerHTML = stats.ledger.slice(0,8).map(e => {
       const cls = e.xp > 0 ? 'pos' : e.xp < 0 ? 'neg' : '';
       const xpStr = e.xp > 0 ? '+'+e.xp.toLocaleString() : e.xp.toLocaleString();
