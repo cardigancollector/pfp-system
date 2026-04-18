@@ -42,10 +42,14 @@
   .header-brand { font-family:'Cinzel Decorative',serif; font-size:1.3rem; color:var(--gold); letter-spacing:0.08em; text-shadow:0 0 30px rgba(201,168,76,0.2); }
   .header-sub { font-size:0.65rem; color:var(--text-dim); letter-spacing:0.25em; text-transform:uppercase; margin-top:2px; }
 
+  .loading-overlay { position:fixed; inset:0; z-index:50; background:var(--green-deep); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; }
+  .loading-spinner { width:40px; height:40px; border:3px solid rgba(46,180,90,0.2); border-top-color:var(--green-bright); border-radius:50%; animation:spin 0.9s linear infinite; }
+  .loading-text { font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--text-dim); }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
   .main { position:relative; z-index:5; max-width:1200px; margin:0 auto; padding:40px 32px 80px; }
 
   .player-panel { display:grid; grid-template-columns:220px 1fr; gap:28px; margin-bottom:40px; background:rgba(7,31,13,0.7); border:1px solid rgba(46,180,90,0.15); border-top:2px solid rgba(201,168,76,0.3); padding:28px; backdrop-filter:blur(16px); }
-
   .card-art-wrap { position:relative; width:100%; aspect-ratio:3/4; background:linear-gradient(145deg,#0d2a14,#071508); border:2px solid rgba(46,180,90,0.2); display:flex; align-items:center; justify-content:center; overflow:hidden; }
   .card-art-wrap img { width:100%; height:100%; object-fit:cover; }
   .card-art-placeholder { font-family:'Cinzel Decorative',serif; font-size:1.6rem; color:rgba(46,180,90,0.15); text-align:center; }
@@ -55,12 +59,10 @@
   .player-greeting { font-size:0.62rem; letter-spacing:0.4em; text-transform:uppercase; color:var(--green-dim); }
   .player-name { font-family:'Cinzel',serif; font-size:2rem; color:var(--text); font-weight:700; line-height:1; margin-top:4px; }
   .player-stage { font-size:0.85rem; color:var(--text-dim); font-style:italic; margin-top:2px; }
-
   .xp-big { margin-top:4px; }
   .xp-big-label { font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; }
   .xp-big-num { font-family:'Cinzel Decorative',serif; font-size:3.2rem; color:var(--gold); line-height:1; text-shadow:0 0 40px rgba(201,168,76,0.25); }
   .xp-big-unit { font-family:'Cinzel',serif; font-size:0.9rem; color:var(--gold-dim); margin-left:6px; }
-
   .player-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:4px; }
   .pstat { background:rgba(46,180,90,0.05); border:1px solid rgba(46,180,90,0.12); padding:12px 14px; }
   .pstat-label { font-size:0.58rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; }
@@ -68,7 +70,6 @@
   .pstat-val.pos { color:var(--win); }
   .pstat-val.neg { color:var(--red-bright); }
   .pstat-val.gold { color:var(--gold); }
-
   .daily-limit-wrap { margin-top:4px; }
   .daily-limit-label { display:flex; justify-content:space-between; font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
   .daily-limit-track { height:4px; background:rgba(46,180,90,0.1); border-radius:2px; overflow:hidden; }
@@ -86,26 +87,20 @@
   .sstat-sub { font-size:0.72rem; color:var(--text-dim); font-style:italic; margin-top:3px; }
 
   .games-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:36px; }
-
   .game-card { position:relative; border:1px solid rgba(46,180,90,0.12); background:rgba(7,31,13,0.65); backdrop-filter:blur(12px); overflow:hidden; transition:all 0.35s; cursor:pointer; text-decoration:none; color:inherit; display:block; }
   .game-card:hover { border-color:rgba(46,180,90,0.35); transform:translateY(-3px); box-shadow:0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(46,180,90,0.08); }
   .game-card.live { border-top:2px solid var(--gold); }
-  .game-card.soon { opacity:0.65; cursor:default; }
-  .game-card.soon:hover { transform:none; box-shadow:none; border-color:rgba(46,180,90,0.12); }
-
+  .game-card.soon { opacity:0.65; cursor:default; pointer-events:none; }
   .game-card-bg { position:absolute; inset:0; opacity:0.06; font-size:8rem; display:flex; align-items:center; justify-content:center; pointer-events:none; filter:blur(2px); }
   .game-card-inner { position:relative; z-index:2; padding:22px 20px 18px; }
-
   .game-status { display:inline-flex; align-items:center; gap:6px; font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.2em; text-transform:uppercase; margin-bottom:10px; }
   .game-status.live-badge { color:var(--win); }
   .game-status.live-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--win); box-shadow:0 0 6px var(--win); animation:pulse-dot 2s ease-in-out infinite; }
   @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
   .game-status.soon-badge { color:var(--text-dim); }
   .game-status.soon-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--text-dim); }
-
   .game-name { font-family:'Cinzel Decorative',serif; font-size:1.25rem; color:var(--gold); line-height:1.1; margin-bottom:5px; }
   .game-tagline { font-size:0.82rem; color:var(--text-dim); font-style:italic; margin-bottom:14px; line-height:1.4; }
-
   .game-stats-row { display:flex; gap:16px; padding-top:12px; border-top:1px solid rgba(46,180,90,0.08); }
   .gstat { flex:1; }
   .gstat-label { font-size:0.55rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--text-dim); margin-bottom:3px; }
@@ -114,7 +109,6 @@
   .gstat-val.neg  { color:var(--red-bright); }
   .gstat-val.neu  { color:var(--gold-dim); }
   .gstat-val.dim  { color:var(--text-dim); }
-
   .game-card-arrow { position:absolute; right:16px; bottom:16px; font-size:1rem; color:rgba(201,168,76,0.3); transition:all 0.3s; }
   .game-card:hover .game-card-arrow { color:var(--gold); transform:translateX(4px); }
 
@@ -158,9 +152,14 @@
 <div class="bg-grid"></div>
 <div class="motes" id="motes"></div>
 
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading Card Data</div>
+</div>
+
 <header class="header">
   <div class="header-left">
-    <button class="back-btn" onclick="history.back()">← Dashboard</button>
+    <button class="back-btn" id="back-btn">← Dashboard</button>
     <div>
       <div class="header-brand">XP Gaming</div>
       <div class="header-sub">Risk · Reward · Evolve</div>
@@ -181,26 +180,17 @@
     <div class="player-info">
       <div>
         <div class="player-greeting">XP Gaming · Player Profile</div>
-        <div class="player-name" id="player-name">Bitcoin</div>
-        <div class="player-stage" id="player-stage">Awakened · Level 2</div>
+        <div class="player-name" id="player-name">—</div>
+        <div class="player-stage" id="player-stage">—</div>
       </div>
       <div class="xp-big">
-        <div class="xp-big-label">Available XP Balance</div>
-        <div><span class="xp-big-num" id="xp-balance">2,500</span><span class="xp-big-unit">XP</span></div>
+        <div class="xp-big-label">Gaming XP Balance</div>
+        <div><span class="xp-big-num" id="xp-balance">—</span><span class="xp-big-unit">XP</span></div>
       </div>
       <div class="player-stats-row">
-        <div class="pstat">
-          <div class="pstat-label">Gaming Net</div>
-          <div class="pstat-val pos" id="gaming-net">+0</div>
-        </div>
-        <div class="pstat">
-          <div class="pstat-label">Rounds Played</div>
-          <div class="pstat-val gold" id="rounds-played">0</div>
-        </div>
-        <div class="pstat">
-          <div class="pstat-label">Today's Games</div>
-          <div class="pstat-val gold" id="today-games">0</div>
-        </div>
+        <div class="pstat"><div class="pstat-label">Gaming Net</div><div class="pstat-val pos" id="gaming-net">+0</div></div>
+        <div class="pstat"><div class="pstat-label">Rounds Played</div><div class="pstat-val gold" id="rounds-played">0</div></div>
+        <div class="pstat"><div class="pstat-label">Today's Games</div><div class="pstat-val gold" id="today-games">0</div></div>
       </div>
       <div class="daily-limit-wrap">
         <div class="daily-limit-label">
@@ -216,37 +206,21 @@
 
   <div class="section-title">All-Time Gaming Stats</div>
   <div class="stats-strip">
-    <div class="sstat">
-      <div class="sstat-label">Biggest Win</div>
-      <div class="sstat-val green" id="biggest-win">—</div>
-      <div class="sstat-sub" id="biggest-win-game">—</div>
-    </div>
-    <div class="sstat">
-      <div class="sstat-label">Biggest Loss</div>
-      <div class="sstat-val red" id="biggest-loss">—</div>
-      <div class="sstat-sub" id="biggest-loss-game">—</div>
-    </div>
-    <div class="sstat">
-      <div class="sstat-label">Luckiest Game</div>
-      <div class="sstat-val gold" id="luckiest-game">—</div>
-      <div class="sstat-sub" id="luckiest-rate">—</div>
-    </div>
-    <div class="sstat">
-      <div class="sstat-label">Total Rounds</div>
-      <div class="sstat-val gold" id="total-rounds">0</div>
-      <div class="sstat-sub">across all games</div>
-    </div>
+    <div class="sstat"><div class="sstat-label">Biggest Win</div><div class="sstat-val green" id="biggest-win">—</div><div class="sstat-sub" id="biggest-win-game">—</div></div>
+    <div class="sstat"><div class="sstat-label">Biggest Loss</div><div class="sstat-val red" id="biggest-loss">—</div><div class="sstat-sub" id="biggest-loss-game">—</div></div>
+    <div class="sstat"><div class="sstat-label">Luckiest Game</div><div class="sstat-val gold" id="luckiest-game">—</div><div class="sstat-sub" id="luckiest-rate">—</div></div>
+    <div class="sstat"><div class="sstat-label">Total Rounds</div><div class="sstat-val gold" id="total-rounds">0</div><div class="sstat-sub">across all games</div></div>
   </div>
 
   <div class="section-title">Games of Chance</div>
   <div class="games-grid">
 
-    <a class="game-card live" href="vault/index.html">
+    <a class="game-card live" id="vault-link" href="vault/index.html">
       <div class="game-card-bg">🃏</div>
       <div class="game-card-inner">
         <div class="game-status live-badge">Live Now</div>
         <div class="game-name">The Vault</div>
-        <div class="game-tagline">Draw a card. Guess higher or lower. Risk everything or walk away.</div>
+        <div class="game-tagline">Draw a value. Guess higher or lower. Risk everything or walk away.</div>
         <div class="game-stats-row">
           <div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val neu" id="vault-net">±0</div></div>
           <div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim" id="vault-rounds">0</div></div>
@@ -256,109 +230,18 @@
       <div class="game-card-arrow">→</div>
     </a>
 
-    <div class="game-card soon">
-      <div class="game-card-bg">⚙️</div>
-      <div class="game-card-inner">
-        <div class="game-status soon-badge">Coming Soon</div>
-        <div class="game-name">The Forge</div>
-        <div class="game-tagline">Spin three symbols. Match them and multiply. Rare combinations unlock cosmetics.</div>
-        <div class="game-stats-row">
-          <div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Win Rate</div><div class="gstat-val dim">—</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="game-card soon">
-      <div class="game-card-bg">🎲</div>
-      <div class="game-card-inner">
-        <div class="game-status soon-badge">Coming Soon</div>
-        <div class="game-name">The Gauntlet</div>
-        <div class="game-tagline">Pick a number. Roll the die. Hit exactly and win 5x. One off either side wins 1.5x.</div>
-        <div class="game-stats-row">
-          <div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Win Rate</div><div class="gstat-val dim">—</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="game-card soon">
-      <div class="game-card-bg">⚔️</div>
-      <div class="game-card-inner">
-        <div class="game-status soon-badge">Coming Soon</div>
-        <div class="game-name">The Duel</div>
-        <div class="game-tagline">Challenge another card owner. Lock in a wager. A neutral event decides the winner.</div>
-        <div class="game-stats-row">
-          <div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Win Rate</div><div class="gstat-val dim">—</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="game-card soon">
-      <div class="game-card-bg">🏴‍☠️</div>
-      <div class="game-card-inner">
-        <div class="game-status soon-badge">Coming Soon</div>
-        <div class="game-name">The Heist</div>
-        <div class="game-tagline">Multi-stage risk. Walk away with what you've earned — or push deeper for more.</div>
-        <div class="game-stats-row">
-          <div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Win Rate</div><div class="gstat-val dim">—</div></div>
-        </div>
-      </div>
-    </div>
+    <div class="game-card soon"><div class="game-card-bg">⚙️</div><div class="game-card-inner"><div class="game-status soon-badge">Coming Soon</div><div class="game-name">The Forge</div><div class="game-tagline">Spin three symbols. Match them and multiply. Rare combinations unlock cosmetics.</div><div class="game-stats-row"><div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Win Rate</div><div class="gstat-val dim">—</div></div></div></div></div>
+    <div class="game-card soon"><div class="game-card-bg">🎲</div><div class="game-card-inner"><div class="game-status soon-badge">Coming Soon</div><div class="game-name">The Gauntlet</div><div class="game-tagline">Pick a number. Roll the die. Hit exactly and win 5x. One off either side wins 1.5x.</div><div class="game-stats-row"><div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Win Rate</div><div class="gstat-val dim">—</div></div></div></div></div>
+    <div class="game-card soon"><div class="game-card-bg">⚔️</div><div class="game-card-inner"><div class="game-status soon-badge">Coming Soon</div><div class="game-name">The Duel</div><div class="game-tagline">Challenge another card owner. Lock in a wager. A neutral event decides the winner.</div><div class="game-stats-row"><div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Win Rate</div><div class="gstat-val dim">—</div></div></div></div></div>
+    <div class="game-card soon"><div class="game-card-bg">🏴‍☠️</div><div class="game-card-inner"><div class="game-status soon-badge">Coming Soon</div><div class="game-name">The Heist</div><div class="game-tagline">Multi-stage risk. Walk away with what you've earned — or push deeper for more.</div><div class="game-stats-row"><div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Win Rate</div><div class="gstat-val dim">—</div></div></div></div></div>
 
   </div>
 
   <div class="section-title">Games of Skill</div>
   <div class="puzzle-grid">
-
-    <div class="game-card soon">
-      <div class="game-card-bg">🧩</div>
-      <div class="game-card-inner">
-        <div class="game-status soon-badge">Coming Soon</div>
-        <div class="game-name">The Puzzle</div>
-        <div class="game-tagline">Solve it before the timer runs out. The faster you finish, the more XP you earn.</div>
-        <div class="game-stats-row">
-          <div class="gstat"><div class="gstat-label">Best Time</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Solved</div><div class="gstat-val dim">—</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="game-card soon">
-      <div class="game-card-bg">🔢</div>
-      <div class="game-card-inner">
-        <div class="game-status soon-badge">Coming Soon</div>
-        <div class="game-name">Sudoku</div>
-        <div class="game-tagline">Complete the grid. Difficulty multiplies your XP reward. Errors cost you.</div>
-        <div class="game-stats-row">
-          <div class="gstat"><div class="gstat-label">Best Time</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Solved</div><div class="gstat-val dim">—</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="game-card soon">
-      <div class="game-card-bg">🌀</div>
-      <div class="game-card-inner">
-        <div class="game-status soon-badge">Coming Soon</div>
-        <div class="game-name">The Maze</div>
-        <div class="game-tagline">Navigate the chamber before the egg timer expires. Every second costs XP.</div>
-        <div class="game-stats-row">
-          <div class="gstat"><div class="gstat-label">Best Time</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Escaped</div><div class="gstat-val dim">—</div></div>
-        </div>
-      </div>
-    </div>
-
+    <div class="game-card soon"><div class="game-card-bg">🧩</div><div class="game-card-inner"><div class="game-status soon-badge">Coming Soon</div><div class="game-name">The Puzzle</div><div class="game-tagline">Solve it before the timer runs out. The faster you finish, the more XP you earn.</div><div class="game-stats-row"><div class="gstat"><div class="gstat-label">Best Time</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Solved</div><div class="gstat-val dim">—</div></div></div></div></div>
+    <div class="game-card soon"><div class="game-card-bg">🔢</div><div class="game-card-inner"><div class="game-status soon-badge">Coming Soon</div><div class="game-name">Sudoku</div><div class="game-tagline">Complete the grid. Difficulty multiplies your XP reward. Errors cost you.</div><div class="game-stats-row"><div class="gstat"><div class="gstat-label">Best Time</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Solved</div><div class="gstat-val dim">—</div></div></div></div></div>
+    <div class="game-card soon"><div class="game-card-bg">🌀</div><div class="game-card-inner"><div class="game-status soon-badge">Coming Soon</div><div class="game-name">The Maze</div><div class="game-tagline">Navigate the chamber before the egg timer expires. Every second costs XP.</div><div class="game-stats-row"><div class="gstat"><div class="gstat-label">Best Time</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim">—</div></div><div class="gstat"><div class="gstat-label">Escaped</div><div class="gstat-val dim">—</div></div></div></div></div>
   </div>
 
   <div class="section-title">Recent Activity</div>
@@ -375,15 +258,29 @@
 </div>
 
 <script>
-const PLAYER = {
-  xp:        2500,
-  cardName:  'Bitcoin',
-  stage:     'Awakened',
-  level:     2,
-  cardImage: null
-};
-
+const API         = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 const DAILY_LIMIT = 1000;
+
+let CARD_ID     = '';
+let OWNER_TOKEN = '';
+let CARD_DATA   = null;
+
+function jsonpFetch(url, timeout) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+    const script = document.createElement('script');
+    const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 12000);
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (document.body.contains(script)) document.body.removeChild(script);
+    }
+    window[cbName] = function(data) { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('script error')); };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName + '&_=' + Date.now();
+    document.body.appendChild(script);
+  });
+}
 
 function getGamingStats() {
   try { return JSON.parse(sessionStorage.getItem('pfp_gaming_stats') || 'null') || defaultStats(); }
@@ -393,24 +290,53 @@ function defaultStats() {
   return { vaultNet:0, vaultRounds:0, vaultWins:0, biggestWin:0, biggestWinGame:'—', biggestLoss:0, biggestLossGame:'—', totalRounds:0, todayRisked:0, todayGames:0, gamingNet:0, ledger:[] };
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   spawnMotes();
+
+  const params = new URLSearchParams(window.location.search);
+  CARD_ID     = params.get('card_id')     || params.get('cardId')     || localStorage.getItem('pfp_gaming_card')  || '';
+  OWNER_TOKEN = params.get('owner_token') || params.get('ownerToken') || localStorage.getItem('pfp_gaming_token') || '';
+
+  if (CARD_ID)     localStorage.setItem('pfp_gaming_card',  CARD_ID);
+  if (OWNER_TOKEN) localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
+
+  // Wire back button
+  document.getElementById('back-btn').onclick = () => {
+    window.location.href = CARD_ID
+      ? '../index.html?card_id=' + encodeURIComponent(CARD_ID)
+      : '../index.html';
+  };
+
+  // Wire Vault link with identity
+  const vaultLink = document.getElementById('vault-link');
+  if (vaultLink && CARD_ID && OWNER_TOKEN) {
+    vaultLink.href = 'vault/index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
+  }
+
+  // Load card from API
+  if (CARD_ID) {
+    try {
+      const data = await jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 10000);
+      if (data && data.success && data.card) CARD_DATA = data.card;
+    } catch(e) { console.warn('get_card failed:', e); }
+  }
+
+  document.getElementById('loading-overlay').style.display = 'none';
   renderPlayer();
   renderStats();
 });
 
 function renderPlayer() {
-  document.getElementById('player-name').textContent    = PLAYER.cardName;
-  document.getElementById('player-stage').textContent   = PLAYER.stage + ' · Level ' + PLAYER.level;
-  document.getElementById('stage-badge').textContent    = PLAYER.stage;
-  document.getElementById('xp-balance').textContent     = PLAYER.xp.toLocaleString();
+  const lc       = CARD_DATA || {};
+  const cardName = lc['Card Name'] || CARD_ID || '—';
+  const stage    = lc['Evolution Stage'] || 'Awakened';
+  const level    = parseInt(lc['Current Level']) || 1;
+  const gamingXP = parseInt(lc['Gaming XP']) || 0;
 
-  if (PLAYER.cardImage) {
-    const img = document.getElementById('card-img');
-    img.src = PLAYER.cardImage;
-    img.style.display = 'block';
-    document.getElementById('card-placeholder').style.display = 'none';
-  }
+  document.getElementById('player-name').textContent  = cardName;
+  document.getElementById('player-stage').textContent = stage + ' · Level ' + level;
+  document.getElementById('stage-badge').textContent  = stage;
+  document.getElementById('xp-balance').textContent   = gamingXP.toLocaleString();
 
   const stats = getGamingStats();
   const net   = stats.gamingNet;
@@ -430,23 +356,21 @@ function renderPlayer() {
 }
 
 function renderStats() {
-  const stats = getGamingStats();
-
-  document.getElementById('biggest-win').textContent      = stats.biggestWin  > 0 ? '+' + stats.biggestWin.toLocaleString() + ' XP'  : '—';
-  document.getElementById('biggest-win-game').textContent = stats.biggestWinGame;
-  document.getElementById('biggest-loss').textContent     = stats.biggestLoss > 0 ? '−' + stats.biggestLoss.toLocaleString() + ' XP' : '—';
-  document.getElementById('biggest-loss-game').textContent= stats.biggestLossGame;
-  document.getElementById('total-rounds').textContent     = stats.totalRounds.toLocaleString();
-
+  const stats     = getGamingStats();
   const vaultRate = stats.vaultRounds > 0 ? Math.round((stats.vaultWins / stats.vaultRounds) * 100) + '%' : '—';
-  document.getElementById('luckiest-game').textContent    = stats.vaultRounds > 0 ? 'The Vault' : '—';
-  document.getElementById('luckiest-rate').textContent    = stats.vaultRounds > 0 ? vaultRate + ' win rate' : 'Play a game to see';
 
-  document.getElementById('vault-net').textContent    = (stats.vaultNet >= 0 ? '+' : '') + stats.vaultNet.toLocaleString();
-  document.getElementById('vault-net').className      = 'gstat-val ' + (stats.vaultNet > 0 ? 'pos' : stats.vaultNet < 0 ? 'neg' : 'neu');
-  document.getElementById('vault-rounds').textContent = stats.vaultRounds.toLocaleString();
-  document.getElementById('vault-rate').textContent   = vaultRate;
-  document.getElementById('vault-rate').className     = 'gstat-val ' + (stats.vaultRounds > 0 ? 'pos' : 'dim');
+  document.getElementById('biggest-win').textContent       = stats.biggestWin  > 0 ? '+' + stats.biggestWin.toLocaleString()  + ' XP' : '—';
+  document.getElementById('biggest-win-game').textContent  = stats.biggestWinGame;
+  document.getElementById('biggest-loss').textContent      = stats.biggestLoss > 0 ? '−' + stats.biggestLoss.toLocaleString() + ' XP' : '—';
+  document.getElementById('biggest-loss-game').textContent = stats.biggestLossGame;
+  document.getElementById('total-rounds').textContent      = stats.totalRounds.toLocaleString();
+  document.getElementById('luckiest-game').textContent     = stats.vaultRounds > 0 ? 'The Vault' : '—';
+  document.getElementById('luckiest-rate').textContent     = stats.vaultRounds > 0 ? vaultRate + ' win rate' : 'Play a game to see';
+  document.getElementById('vault-net').textContent         = (stats.vaultNet >= 0 ? '+' : '') + stats.vaultNet.toLocaleString();
+  document.getElementById('vault-net').className           = 'gstat-val ' + (stats.vaultNet > 0 ? 'pos' : stats.vaultNet < 0 ? 'neg' : 'neu');
+  document.getElementById('vault-rounds').textContent      = stats.vaultRounds.toLocaleString();
+  document.getElementById('vault-rate').textContent        = vaultRate;
+  document.getElementById('vault-rate').className          = 'gstat-val ' + (stats.vaultRounds > 0 ? 'pos' : 'dim');
 
   const allNet = stats.gamingNet;
   document.getElementById('activity-net').textContent = (allNet >= 0 ? '+' : '') + allNet.toLocaleString() + ' XP all time';
@@ -455,7 +379,7 @@ function renderStats() {
   if (stats.ledger && stats.ledger.length > 0) {
     const iconMap = { 'The Vault':'🃏', 'The Forge':'⚙️', 'The Gauntlet':'🎲', 'The Maze':'🌀', 'Sudoku':'🔢', 'The Puzzle':'🧩' };
     document.getElementById('activity-list').innerHTML = stats.ledger.slice(0,8).map(e => {
-      const cls = e.xp > 0 ? 'pos' : e.xp < 0 ? 'neg' : '';
+      const cls   = e.xp > 0 ? 'pos' : e.xp < 0 ? 'neg' : '';
       const xpStr = e.xp > 0 ? '+'+e.xp.toLocaleString() : e.xp.toLocaleString();
       return `<div class="activity-item">
         <div class="activity-icon">${iconMap[e.game]||'✦'}</div>
