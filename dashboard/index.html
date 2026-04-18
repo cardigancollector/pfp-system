@@ -169,7 +169,7 @@
   .glass { background:var(--glass); border:1px solid var(--glass-border); backdrop-filter:blur(16px); transition:border-color 0.3s,box-shadow 0.3s; }
   .glass:hover { border-color:var(--glass-border-hover); box-shadow:0 0 30px rgba(201,168,76,0.06); }
 
-  .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+  .stat-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:32px; }
   .stat-card { padding:22px 20px 18px; position:relative; overflow:hidden; }
   .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0.5; }
   .stat-label { font-size:0.65rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
@@ -391,7 +391,8 @@
 
     <div class="section-title animate-in delay-1">At a Glance</div>
     <div class="stat-grid animate-in delay-1">
-      <div class="glass stat-card"><div class="stat-icon">✦</div><div class="stat-label">Current XP</div><div class="stat-value" id="d-xp">—</div><div class="stat-sub" id="d-xp-sub"></div></div>
+     <div class="glass stat-card"><div class="stat-icon">✦</div><div class="stat-label">Current XP</div><div class="stat-value" id="d-xp">—</div><div class="stat-sub" id="d-xp-sub"></div></div>
+      <div class="glass stat-card"><div class="stat-icon">🎮</div><div class="stat-label">Gaming XP</div><div class="stat-value" id="d-gaming-xp">—</div><div class="stat-sub">vault balance</div></div>
       <div class="glass stat-card"><div class="stat-icon">🔥</div><div class="stat-label">Streak</div><div class="stat-value" id="d-streak">—</div><div class="stat-sub">consecutive days</div></div>
       <div class="glass stat-card"><div class="stat-icon">👁</div><div class="stat-label">Page Views</div><div class="stat-value" id="d-views">—</div><div class="stat-sub">total profile visits</div></div>
       <div class="glass stat-card"><div class="stat-icon">⚡</div><div class="stat-label">Interactions</div><div class="stat-value" id="d-interactions">—</div><div class="stat-sub">all time</div></div>
@@ -768,6 +769,7 @@ function buildDashboard(asOwner) {
     `<span class="grade-badge grade-${gradeClass}">◆ ${ac.rarity || 'Standard'}</span>`;
 
   const xp           = parseInt(lc['Current XP'])        || 0;
+  const gamingXP     = parseInt(lc['Gaming XP'])         || 0;
   const streak       = parseInt(lc['Streak (days)'])      || 0;
   const views        = parseInt(lc['Page Views'])         || 0;
   const interactions = parseInt(lc['Total Interactions']) || 0;
@@ -779,6 +781,7 @@ function buildDashboard(asOwner) {
   const daysSince    = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / 86400000) : 99;
 
   document.getElementById('d-xp').textContent           = xp.toLocaleString();
+  document.getElementById('d-gaming-xp').textContent    = gamingXP.toLocaleString();
   document.getElementById('d-streak').textContent       = streak;
   document.getElementById('d-views').textContent        = views.toLocaleString();
   document.getElementById('d-interactions').textContent = interactions;
@@ -1037,6 +1040,7 @@ async function fetchLedger(cardId) {
       'EVENT_CHECKIN':           { icon:'🎪', label:'Event Check-in' },
       'MILESTONE':               { icon:'🏆', label:'Milestone Reached' },
       'NOTABLE_COLLECTOR_BONUS': { icon:'⭐', label:'Notable Collector Bonus' },
+      'GAMING_XP':               { icon:'🎮', label:'Gaming' },
     };
     if (data.entries.length === 0) {
       log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet.</div>';
