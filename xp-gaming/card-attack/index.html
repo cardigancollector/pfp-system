@@ -962,11 +962,21 @@ function nextWave() {
 
 function gameOver() {
   state = 'dead';
+  const xpEarned = Math.floor(score / 100);
   document.getElementById('final-score').textContent = score.toLocaleString();
   document.getElementById('final-wave').textContent = `Reached Wave ${wave}`;
   document.getElementById('overlay-dead').style.display = 'flex';
-  sessionStorage.setItem('pfp_gaming_stats', JSON.stringify({ game: 'card-attack', score, wave, xp: Math.floor(score / 100) }));
-  logGamingXP(Math.floor(score / 100));
+  sessionStorage.setItem('pfp_gaming_stats', JSON.stringify({ game: 'card-attack', score, wave, xp: xpEarned }));
+
+  const currentRemaining = parseInt(sessionStorage.getItem('pfp_daily_xp_remaining'));
+  if (!isNaN(currentRemaining)) {
+    const newRemaining = Math.max(0, currentRemaining - xpEarned);
+    sessionStorage.setItem('pfp_daily_xp_remaining', newRemaining);
+    const el = document.getElementById('hud-daily-remaining');
+    if (el) el.textContent = newRemaining;
+  }
+
+  logGamingXP(xpEarned);
 }
 
 // ── BUTTONS ───────────────────────────────────────────────────
