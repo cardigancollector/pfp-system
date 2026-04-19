@@ -200,7 +200,7 @@
     <div class="sstat"><div class="sstat-label">Total Rounds</div><div class="sstat-val gold" id="total-rounds">0</div><div class="sstat-sub">across all games</div></div>
   </div>
 
-  <div class="section-title">Games of Chance</div>
+  <div class="section-title">Games</div>
   <div class="games-grid">
 
     <a class="game-card live" id="vault-link" href="vault/index.html">
@@ -213,6 +213,21 @@
           <div class="gstat"><div class="gstat-label">Net XP</div><div class="gstat-val neu" id="vault-net">±0</div></div>
           <div class="gstat"><div class="gstat-label">Rounds</div><div class="gstat-val dim" id="vault-rounds">0</div></div>
           <div class="gstat"><div class="gstat-label">Win Rate</div><div class="gstat-val dim" id="vault-rate">—</div></div>
+        </div>
+      </div>
+      <div class="game-card-arrow">→</div>
+    </a>
+
+    <a class="game-card live" id="card-attack-link" href="card-attack/index.html">
+      <div class="game-card-bg">🚀</div>
+      <div class="game-card-inner">
+        <div class="game-status live-badge">Live Now</div>
+        <div class="game-name">Card Attack</div>
+        <div class="game-tagline">Destroy the invaders before they reach you. Survive the waves and earn XP.</div>
+        <div class="game-stats-row">
+          <div class="gstat"><div class="gstat-label">Best Score</div><div class="gstat-val dim">—</div></div>
+          <div class="gstat"><div class="gstat-label">Best Wave</div><div class="gstat-val dim">—</div></div>
+          <div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim">—</div></div>
         </div>
       </div>
       <div class="game-card-arrow">→</div>
@@ -298,6 +313,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const vaultLink = document.getElementById('vault-link');
   if (vaultLink && CARD_ID && OWNER_TOKEN) {
     vaultLink.href = 'vault/index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
+  }
+
+  const cardAttackLink = document.getElementById('card-attack-link');
+  if (cardAttackLink && CARD_ID && OWNER_TOKEN) {
+    cardAttackLink.href = 'card-attack/index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
   }
 
   if (CARD_ID) {
