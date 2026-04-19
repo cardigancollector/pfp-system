@@ -63,17 +63,13 @@
   .xp-big-label { font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; }
   .xp-big-num { font-family:'Cinzel Decorative',serif; font-size:3.2rem; color:var(--gold); line-height:1; text-shadow:0 0 40px rgba(201,168,76,0.25); }
   .xp-big-unit { font-family:'Cinzel',serif; font-size:0.9rem; color:var(--gold-dim); margin-left:6px; }
-  .player-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:4px; }
+  .player-stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:4px; }
   .pstat { background:rgba(46,180,90,0.05); border:1px solid rgba(46,180,90,0.12); padding:12px 14px; }
   .pstat-label { font-size:0.58rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; }
   .pstat-val { font-family:'Cinzel',serif; font-size:1.1rem; color:var(--text); }
   .pstat-val.pos { color:var(--win); }
   .pstat-val.neg { color:var(--red-bright); }
   .pstat-val.gold { color:var(--gold); }
-  .daily-limit-wrap { margin-top:4px; }
-  .daily-limit-label { display:flex; justify-content:space-between; font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
-  .daily-limit-track { height:4px; background:rgba(46,180,90,0.1); border-radius:2px; overflow:hidden; }
-  .daily-limit-fill { height:100%; background:linear-gradient(90deg,var(--green-dim),var(--green-bright)); border-radius:2px; transition:width 1s ease; }
 
   .section-title { font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.4em; text-transform:uppercase; color:var(--green-dim); margin-bottom:18px; display:flex; align-items:center; gap:14px; }
   .section-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,rgba(46,180,90,0.2),transparent); }
@@ -191,15 +187,7 @@
         <div class="pstat"><div class="pstat-label">Gaming Net</div><div class="pstat-val pos" id="gaming-net">+0</div></div>
         <div class="pstat"><div class="pstat-label">Rounds Played</div><div class="pstat-val gold" id="rounds-played">0</div></div>
         <div class="pstat"><div class="pstat-label">Today's Games</div><div class="pstat-val gold" id="today-games">0</div></div>
-      </div>
-      <div class="daily-limit-wrap">
-        <div class="daily-limit-label">
-          <span>Daily XP Risk Limit</span>
-          <span id="daily-limit-text">0 / 1,000 XP risked today</span>
-        </div>
-        <div class="daily-limit-track">
-          <div class="daily-limit-fill" id="daily-limit-fill" style="width:0%"></div>
-        </div>
+        <div class="pstat"><div class="pstat-label">Daily XP Left</div><div class="pstat-val gold" id="daily-xp-left">—</div></div>
       </div>
     </div>
   </div>
@@ -258,8 +246,7 @@
 </div>
 
 <script>
-const API         = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
-const DAILY_LIMIT = 1000;
+const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 
 let CARD_ID     = '';
 let OWNER_TOKEN = '';
@@ -287,7 +274,7 @@ function getGamingStats() {
   catch(e) { return defaultStats(); }
 }
 function defaultStats() {
-  return { vaultNet:0, vaultRounds:0, vaultWins:0, biggestWin:0, biggestWinGame:'—', biggestLoss:0, biggestLossGame:'—', totalRounds:0, todayRisked:0, todayGames:0, gamingNet:0, ledger:[] };
+  return { vaultNet:0, vaultRounds:0, vaultWins:0, biggestWin:0, biggestWinGame:'—', biggestLoss:0, biggestLossGame:'—', totalRounds:0, todayGames:0, gamingNet:0, ledger:[] };
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -302,24 +289,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (OWNER_TOKEN) localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
   if (IMAGE_URL)   localStorage.setItem('pfp_gaming_image', IMAGE_URL);
 
-  // Wire back button
   document.getElementById('back-btn').onclick = () => {
     window.location.href = CARD_ID
       ? '../index.html?card_id=' + encodeURIComponent(CARD_ID)
       : '../index.html';
   };
 
-  // Wire Vault link with identity
   const vaultLink = document.getElementById('vault-link');
   if (vaultLink && CARD_ID && OWNER_TOKEN) {
     vaultLink.href = 'vault/index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
   }
 
-  // Load card from API
   if (CARD_ID) {
     try {
       const data = await jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 10000);
-      if (data && data.success && data.card) CARD_DATA = data.card;
+      if (data && data.success && data.card) {
+        CARD_DATA = data.card;
+        const xpToday   = parseInt(data.card['Gaming XP Today']) || 0;
+        const remaining = Math.max(0, 100 - xpToday);
+        sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
+      }
     } catch(e) { console.warn('get_card failed:', e); }
   }
 
@@ -333,8 +322,8 @@ function renderPlayer() {
   const cardName = lc['Card Name'] || CARD_ID || '—';
   const stage    = lc['Evolution Stage'] || 'Awakened';
   const level    = parseInt(lc['Current Level']) || 1;
-  const gamingXP  = parseInt(lc['Gaming XP']) || 0;
-  const imageUrl  = localStorage.getItem('pfp_gaming_image') || '';
+  const gamingXP = parseInt(lc['Gaming XP']) || 0;
+  const imageUrl = localStorage.getItem('pfp_gaming_image') || '';
 
   document.getElementById('player-name').textContent  = cardName;
   document.getElementById('player-stage').textContent = stage + ' · Level ' + level;
@@ -355,14 +344,13 @@ function renderPlayer() {
   document.getElementById('rounds-played').textContent = stats.totalRounds.toLocaleString();
   document.getElementById('today-games').textContent   = stats.todayGames.toLocaleString();
 
-  const limitPct = Math.min(100, Math.round((stats.todayRisked / DAILY_LIMIT) * 100));
-  document.getElementById('daily-limit-fill').style.width = limitPct + '%';
-  document.getElementById('daily-limit-fill').style.background =
-    limitPct > 80 ? 'linear-gradient(90deg,#c0392b,#e74c3c)' :
-    limitPct > 50 ? 'linear-gradient(90deg,#c9a84c,#e8c97a)' :
-    'linear-gradient(90deg,var(--green-dim),var(--green-bright))';
-  document.getElementById('daily-limit-text').textContent =
-    stats.todayRisked.toLocaleString() + ' / ' + DAILY_LIMIT.toLocaleString() + ' XP risked today';
+  const cachedRemaining = sessionStorage.getItem('pfp_daily_xp_remaining');
+  const dailyXpLeft = cachedRemaining !== null ? parseInt(cachedRemaining) : '—';
+  const dailyEl = document.getElementById('daily-xp-left');
+  dailyEl.textContent = dailyXpLeft;
+  if (typeof dailyXpLeft === 'number') {
+    dailyEl.className = 'pstat-val ' + (dailyXpLeft <= 0 ? 'neg' : dailyXpLeft < 25 ? 'pos' : 'gold');
+  }
 }
 
 function renderStats() {
