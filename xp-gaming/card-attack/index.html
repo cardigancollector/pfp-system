@@ -63,7 +63,31 @@
 
   /* HUD */
   /* Game title */
-  #game-title {
+  #title-bar {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 4px;
+  }
+
+  .back-btn {
+    background: none;
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .back-btn:hover { border-color: var(--gold); box-shadow: 0 0 12px rgba(201,168,76,0.3); }
     font-family: 'Cinzel Decorative', serif;
     font-size: clamp(1.6rem, 4vw, 2.8rem);
     font-weight: 900;
@@ -231,7 +255,10 @@
 
 <canvas id="starfield"></canvas>
 
-<div id="game-title">CARD ATTACK</div>
+<div id="title-bar">
+  <a class="back-btn" id="back-btn" href="../index.html">← Dashboard</a>
+  <div id="game-title">CARD ATTACK</div>
+</div>
 <div class="wave-badge" id="hud-wave">Wave 1</div>
 
 <div id="game-row">
@@ -310,6 +337,12 @@ function toggleSound() {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('sound-btn').addEventListener('click', toggleSound);
+
+  const backBtn = document.getElementById('back-btn');
+  if (backBtn && cardId) {
+    backBtn.href = '../index.html?card_id=' + encodeURIComponent(cardId) + (ownerToken ? '&owner_token=' + encodeURIComponent(ownerToken) : '');
+  }
+
   loadGamingXP();
 });
 
