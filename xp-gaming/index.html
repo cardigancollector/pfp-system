@@ -292,6 +292,27 @@ function defaultStats() {
   return { vaultNet:0, vaultRounds:0, vaultWins:0, biggestWin:0, biggestWinGame:'—', biggestLoss:0, biggestLossGame:'—', totalRounds:0, todayGames:0, gamingNet:0, ledger:[] };
 }
 
+function getGamingStats() {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem('pfp_gaming_stats') || 'null');
+    const def = defaultStats();
+    if (!raw) return def;
+    return {
+      vaultNet:         raw.vaultNet         ?? 0,
+      vaultRounds:      raw.vaultRounds      ?? 0,
+      vaultWins:        raw.vaultWins        ?? 0,
+      biggestWin:       raw.biggestWin       ?? 0,
+      biggestWinGame:   raw.biggestWinGame   ?? '—',
+      biggestLoss:      raw.biggestLoss      ?? 0,
+      biggestLossGame:  raw.biggestLossGame  ?? '—',
+      totalRounds:      raw.totalRounds      ?? 0,
+      todayGames:       raw.todayGames       ?? 0,
+      gamingNet:        raw.gamingNet        ?? 0,
+      ledger:           raw.ledger           ?? []
+    };
+  } catch(e) { return defaultStats(); }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   spawnMotes();
 
