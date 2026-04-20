@@ -569,14 +569,16 @@ function cashOut() {
       + '&owner_token=' + encodeURIComponent(OWNER_TOKEN)
       + '&xp_amount='   + sessionDelta;
     jsonpFetch(url, 10000)
-      .then(data => {
-        if (data && data.success) {
-          balance = data.gamingXP;
-          updateBalanceDisplay();
-          document.getElementById('xp-display').textContent = balance.toLocaleString();
-        }
-      })
-      .catch(e => console.warn('logGamingXP failed:', e));
+  .then(data => {
+    if (data && data.success) {
+      balance = data.gamingXP;
+      updateBalanceDisplay();
+      document.getElementById('xp-display').textContent = balance.toLocaleString();
+      const remaining = Math.max(0, data.remaining ?? (100 - (data.xpToday || 0)));
+      sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
+    }
+  })
+  .catch(e => console.warn('logGamingXP failed:', e));
   }
 
   // Write session stats to sessionStorage for hub to read
