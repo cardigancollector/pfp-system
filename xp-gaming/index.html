@@ -284,25 +284,56 @@ function jsonpFetch(url, timeout) {
   });
 }
 
+function defaultStats() {
+  return { vaultNet:0, vaultRounds:0, vaultWins:0, biggestWin:0, biggestWinGame:'—', biggestLoss:0, biggestLossGame:'—', totalRounds:0, todayGames:0, gamingNet:0, ledger:[] };
+}
+
 function getGamingStats() {
   try {
     const raw = JSON.parse(sessionStorage.getItem('pfp_gaming_stats') || 'null');
-    const def = defaultStats();
-    if (!raw) return def;
+    if (!raw) return defaultStats();
+    const d = defaultStats();
     return {
-      vaultNet:         raw.vaultNet         ?? 0,
-      vaultRounds:      raw.vaultRounds      ?? 0,
-      vaultWins:        raw.vaultWins        ?? 0,
-      biggestWin:       raw.biggestWin       ?? 0,
-      biggestWinGame:   raw.biggestWinGame   ?? '—',
-      biggestLoss:      raw.biggestLoss      ?? 0,
-      biggestLossGame:  raw.biggestLossGame  ?? '—',
-      totalRounds:      raw.totalRounds      ?? 0,
-      todayGames:       raw.todayGames       ?? 0,
-      gamingNet:        raw.gamingNet        ?? 0,
-      ledger:           raw.ledger           ?? []
+      vaultNet:        raw.vaultNet        != null ? raw.vaultNet        : d.vaultNet,
+      vaultRounds:     raw.vaultRounds     != null ? raw.vaultRounds     : d.vaultRounds,
+      vaultWins:       raw.vaultWins       != null ? raw.vaultWins       : d.vaultWins,
+      biggestWin:      raw.biggestWin      != null ? raw.biggestWin      : d.biggestWin,
+      biggestWinGame:  raw.biggestWinGame  != null ? raw.biggestWinGame  : d.biggestWinGame,
+      biggestLoss:     raw.biggestLoss     != null ? raw.biggestLoss     : d.biggestLoss,
+      biggestLossGame: raw.biggestLossGame != null ? raw.biggestLossGame : d.biggestLossGame,
+      totalRounds:     raw.totalRounds     != null ? raw.totalRounds     : d.totalRounds,
+      todayGames:      raw.todayGames      != null ? raw.todayGames      : d.todayGames,
+      gamingNet:       raw.gamingNet       != null ? raw.gamingNet       : d.gamingNet,
+      ledger:          Array.isArray(raw.ledger)   ? raw.ledger          : d.ledger
     };
   } catch(e) { return defaultStats(); }
+}
+
+function updateDailyXp(remaining) {
+  const dailyEl = document.getElementById('daily-xp-left');
+  if (!dailyEl) return;
+  dailyEl.textContent = remaining;
+  dailyEl.className = 'pstat-val ' + (remaining <= 0 ? 'neg' : remaining < 25 ? 'pos' : 'gold');
+}
+
+async function fetchAndRefresh() {
+  if (!CARD_ID) return;
+  try {
+    const data = await jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 8000);
+    if (data && data.success && data.card) {
+      CARD_DATA = data.card;
+      const xpToday   = parseInt(data.card['Gaming XP Today']) || 0;
+      const remaining = Math.max(0, 100 - xpToday);
+      const gamingXP  = parseInt(data.card['Gaming XP']) || 0;
+      sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
+      const balanceEl = document.getElementById('xp-balance');
+      if (balanceEl) balanceEl.textContent = gamingXP.toLocaleString();
+      updateDailyXp(remaining);
+    }
+  } catch(e) {
+    const cached = sessionStorage.getItem('pfp_daily_xp_remaining');
+    if (cached !== null) updateDailyXp(parseInt(cached));
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -311,16 +342,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   CARD_ID     = params.get('card_id')     || params.get('cardId')     || localStorage.getItem('pfp_gaming_card')  || '';
   OWNER_TOKEN = params.get('owner_token') || params.get('ownerToken') || localStorage.getItem('pfp_gaming_token') || '';
-
   const IMAGE_URL = params.get('image_url') || localStorage.getItem('pfp_gaming_image') || '';
+
   if (CARD_ID)     localStorage.setItem('pfp_gaming_card',  CARD_ID);
   if (OWNER_TOKEN) localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
   if (IMAGE_URL)   localStorage.setItem('pfp_gaming_image', IMAGE_URL);
 
   document.getElementById('back-btn').onclick = () => {
-    window.location.href = CARD_ID
-      ? '../index.html?card_id=' + encodeURIComponent(CARD_ID)
-      : '../index.html';
+    window.location.href = CARD_ID ? '../index.html?card_id=' + encodeURIComponent(CARD_ID) : '../index.html';
   };
 
   const vaultLink = document.getElementById('vault-link');
@@ -333,49 +362,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     cardAttackLink.href = 'card-attack/index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
   }
 
-  if (CARD_ID) {
-    try {
-      const data = await jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 10000);
-      if (data && data.success && data.card) {
-        CARD_DATA = data.card;
-        const xpToday   = parseInt(data.card['Gaming XP Today']) || 0;
-        const remaining = Math.max(0, 100 - xpToday);
-        sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
-      }
-    } catch(e) { console.warn('get_card failed:', e); }
-  }
+  await fetchAndRefresh();
 
   document.getElementById('loading-overlay').style.display = 'none';
   renderPlayer();
   renderStats();
 
-  document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState === 'visible' && CARD_ID) {
-      const dailyEl = document.getElementById('daily-xp-left');
-      const balanceEl = document.getElementById('xp-balance');
-      try {
-        const data = await jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 8000);
-        if (data && data.success && data.card) {
-          const xpToday   = parseInt(data.card['Gaming XP Today']) || 0;
-          const remaining = Math.max(0, 100 - xpToday);
-          const gamingXP  = parseInt(data.card['Gaming XP']) || 0;
-          sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
-          if (balanceEl) balanceEl.textContent = gamingXP.toLocaleString();
-          if (dailyEl) {
-            dailyEl.textContent = remaining;
-            dailyEl.className = 'pstat-val ' + (remaining <= 0 ? 'neg' : remaining < 25 ? 'pos' : 'gold');
-          }
-        }
-      } catch(e) {
-        const cached = sessionStorage.getItem('pfp_daily_xp_remaining');
-        if (cached !== null && dailyEl) {
-          const remaining = parseInt(cached);
-          dailyEl.textContent = remaining;
-          dailyEl.className = 'pstat-val ' + (remaining <= 0 ? 'neg' : remaining < 25 ? 'pos' : 'gold');
-        }
-      }
-    }
-});
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') fetchAndRefresh();
+  });
 
 }); // closes DOMContentLoaded
 
@@ -400,19 +395,14 @@ function renderPlayer() {
   }
 
   const stats = getGamingStats();
-  const net   = stats.gamingNet || 0;
+  const net   = stats.gamingNet;
   document.getElementById('gaming-net').textContent    = (net >= 0 ? '+' : '') + net.toLocaleString();
   document.getElementById('gaming-net').className      = 'pstat-val ' + (net > 0 ? 'pos' : net < 0 ? 'neg' : 'gold');
-  document.getElementById('rounds-played').textContent = (stats.totalRounds || 0).toLocaleString();
-  document.getElementById('today-games').textContent   = (stats.todayGames  || 0).toLocaleString();
+  document.getElementById('rounds-played').textContent = stats.totalRounds.toLocaleString();
+  document.getElementById('today-games').textContent   = stats.todayGames.toLocaleString();
 
-  const cachedRemaining = sessionStorage.getItem('pfp_daily_xp_remaining');
-  const dailyXpLeft = cachedRemaining !== null ? parseInt(cachedRemaining) : '—';
-  const dailyEl = document.getElementById('daily-xp-left');
-  dailyEl.textContent = dailyXpLeft;
-  if (typeof dailyXpLeft === 'number') {
-    dailyEl.className = 'pstat-val ' + (dailyXpLeft <= 0 ? 'neg' : dailyXpLeft < 25 ? 'pos' : 'gold');
-  }
+  const cached = sessionStorage.getItem('pfp_daily_xp_remaining');
+  if (cached !== null) updateDailyXp(parseInt(cached));
 }
 
 function renderStats() {
