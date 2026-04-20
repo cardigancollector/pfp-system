@@ -562,7 +562,7 @@ function cashOut() {
   setPhase('bet');
 
   // Write session delta back to API
-  if (CARD_ID && OWNER_TOKEN && sessionDelta !== 0) {
+  if (CARD_ID && OWNER_TOKEN && sessionDelta > 0) {
     const url = API
       + '?action=logGamingXP'
       + '&card_id='     + encodeURIComponent(CARD_ID)
