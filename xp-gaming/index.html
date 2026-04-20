@@ -335,6 +335,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('loading-overlay').style.display = 'none';
   renderPlayer();
   renderStats();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      const cachedRemaining = sessionStorage.getItem('pfp_daily_xp_remaining');
+      const dailyXpLeft = cachedRemaining !== null ? parseInt(cachedRemaining) : null;
+      const dailyEl = document.getElementById('daily-xp-left');
+      if (dailyEl && dailyXpLeft !== null) {
+        dailyEl.textContent = dailyXpLeft;
+        dailyEl.className = 'pstat-val ' + (dailyXpLeft <= 0 ? 'neg' : dailyXpLeft < 25 ? 'pos' : 'gold');
+      }
+    }
+  });
 });
 
 function renderPlayer() {
