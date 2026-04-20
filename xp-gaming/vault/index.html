@@ -499,6 +499,13 @@ function choose(dir) {
   }, 280);
 }
 
+function updateSliderMax() {
+  const slider = document.getElementById('bet-slider');
+  const max = Math.min(10, balance);
+  slider.max = max;
+  if (bet > max) updateBet(max);
+}
+
 function resolve(dir, rev) {
   const a = anchorVal;
   let outcome;
