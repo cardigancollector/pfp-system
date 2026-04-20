@@ -387,7 +387,7 @@ function renderPlayer() {
   }
 
   const stats = getGamingStats();
-  const net   = stats.gamingNet;
+  const net   = stats.gamingNet || 0;
   document.getElementById('gaming-net').textContent    = (net >= 0 ? '+' : '') + net.toLocaleString();
   document.getElementById('gaming-net').className      = 'pstat-val ' + (net > 0 ? 'pos' : net < 0 ? 'neg' : 'gold');
   document.getElementById('rounds-played').textContent = stats.totalRounds.toLocaleString();
