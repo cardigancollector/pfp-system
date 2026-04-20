@@ -390,8 +390,8 @@ function renderPlayer() {
   const net   = stats.gamingNet || 0;
   document.getElementById('gaming-net').textContent    = (net >= 0 ? '+' : '') + net.toLocaleString();
   document.getElementById('gaming-net').className      = 'pstat-val ' + (net > 0 ? 'pos' : net < 0 ? 'neg' : 'gold');
-  document.getElementById('rounds-played').textContent = stats.totalRounds.toLocaleString();
-  document.getElementById('today-games').textContent   = stats.todayGames.toLocaleString();
+  document.getElementById('rounds-played').textContent = (stats.totalRounds || 0).toLocaleString();
+  document.getElementById('today-games').textContent   = (stats.todayGames  || 0).toLocaleString();
 
   const cachedRemaining = sessionStorage.getItem('pfp_daily_xp_remaining');
   const dailyXpLeft = cachedRemaining !== null ? parseInt(cachedRemaining) : '—';
