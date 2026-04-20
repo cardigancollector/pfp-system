@@ -336,18 +336,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderPlayer();
   renderStats();
 
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      const cachedRemaining = sessionStorage.getItem('pfp_daily_xp_remaining');
-      const dailyXpLeft = cachedRemaining !== null ? parseInt(cachedRemaining) : null;
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && CARD_ID) {
       const dailyEl = document.getElementById('daily-xp-left');
-      if (dailyEl && dailyXpLeft !== null) {
-        dailyEl.textContent = dailyXpLeft;
-        dailyEl.className = 'pstat-val ' + (dailyXpLeft <= 0 ? 'neg' : dailyXpLeft < 25 ? 'pos' : 'gold');
+      const balanceEl = document.getElementById('xp-balance');
+      try {
+        const data = await jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 8000);
+        if (data && data.success && data.card) {
+          const xpToday   = parseInt(data.card['Gaming XP Today']) || 0;
+          const remaining = Math.max(0, 100 - xpToday);
+          const gamingXP  = parseInt(data.card['Gaming XP']) || 0;
+          sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
+          if (balanceEl) balanceEl.textContent = gamingXP.toLocaleString();
+          if (dailyEl) {
+            dailyEl.textContent = remaining;
+            dailyEl.className = 'pstat-val ' + (remaining <= 0 ? 'neg' : remaining < 25 ? 'pos' : 'gold');
+          }
+        }
+      } catch(e) {
+        const cached = sessionStorage.getItem('pfp_daily_xp_remaining');
+        if (cached !== null && dailyEl) {
+          const remaining = parseInt(cached);
+          dailyEl.textContent = remaining;
+          dailyEl.className = 'pstat-val ' + (remaining <= 0 ? 'neg' : remaining < 25 ? 'pos' : 'gold');
+        }
       }
     }
   });
-});
 
 function renderPlayer() {
   const lc       = CARD_DATA || {};
