@@ -285,14 +285,6 @@ function jsonpFetch(url, timeout) {
 }
 
 function getGamingStats() {
-  try { return JSON.parse(sessionStorage.getItem('pfp_gaming_stats') || 'null') || defaultStats(); }
-  catch(e) { return defaultStats(); }
-}
-function defaultStats() {
-  return { vaultNet:0, vaultRounds:0, vaultWins:0, biggestWin:0, biggestWinGame:'—', biggestLoss:0, biggestLossGame:'—', totalRounds:0, todayGames:0, gamingNet:0, ledger:[] };
-}
-
-function getGamingStats() {
   try {
     const raw = JSON.parse(sessionStorage.getItem('pfp_gaming_stats') || 'null');
     const def = defaultStats();
