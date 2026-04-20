@@ -310,10 +310,10 @@ function getGamingStats() {
 }
 
 function updateDailyXp(remaining) {
-  const dailyEl = document.getElementById('daily-xp-left');
-  if (!dailyEl) return;
-  dailyEl.textContent = remaining;
-  dailyEl.className = 'pstat-val ' + (remaining <= 0 ? 'neg' : remaining < 25 ? 'pos' : 'gold');
+  const el = document.getElementById('daily-xp-left');
+  if (!el) return;
+  el.textContent = remaining;
+  el.className = 'pstat-val ' + (remaining <= 0 ? 'neg' : remaining < 25 ? 'pos' : 'gold');
 }
 
 async function fetchAndRefresh() {
@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (document.visibilityState === 'visible') fetchAndRefresh();
   });
 
-}); // closes DOMContentLoaded
+});
 
 function renderPlayer() {
   const lc       = CARD_DATA || {};
