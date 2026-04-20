@@ -316,8 +316,17 @@ function updateDailyXp(remaining) {
   el.className = 'pstat-val ' + (remaining <= 0 ? 'neg' : remaining < 25 ? 'pos' : 'gold');
 }
 
-async function fetchAndRefresh() {
+async function fetchAndRefresh(forceApi = false) {
   if (!CARD_ID) return;
+
+  const cached = sessionStorage.getItem('pfp_daily_xp_remaining');
+
+  // If returning from a game and we have a cached value, trust it
+  if (!forceApi && cached !== null) {
+    updateDailyXp(parseInt(cached));
+    return;
+  }
+
   try {
     const data = await jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 8000);
     if (data && data.success && data.card) {
@@ -331,7 +340,6 @@ async function fetchAndRefresh() {
       updateDailyXp(remaining);
     }
   } catch(e) {
-    const cached = sessionStorage.getItem('pfp_daily_xp_remaining');
     if (cached !== null) updateDailyXp(parseInt(cached));
   }
 }
@@ -362,15 +370,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     cardAttackLink.href = 'card-attack/index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
   }
 
-  await fetchAndRefresh();
+  await fetchAndRefresh(true);
 
   document.getElementById('loading-overlay').style.display = 'none';
   renderPlayer();
   renderStats();
 
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') fetchAndRefresh();
-  });
+  if (document.visibilityState === 'visible') fetchAndRefresh(false);
+});
 
 });
 
