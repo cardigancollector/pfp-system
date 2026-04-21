@@ -225,9 +225,9 @@
         <div class="game-name">Card Attack</div>
         <div class="game-tagline">Destroy the invaders before they reach you. Survive the waves and earn XP.</div>
         <div class="game-stats-row">
-          <div class="gstat"><div class="gstat-label">Best Score</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">Best Wave</div><div class="gstat-val dim">—</div></div>
-          <div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim">—</div></div>
+          <div class="gstat"><div class="gstat-label">Best Score</div><div class="gstat-val dim" id="ca-best-score">—</div></div>
+          <div class="gstat"><div class="gstat-label">Best Wave</div><div class="gstat-val dim" id="ca-best-wave">—</div></div>
+          <div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim" id="ca-xp-earned">—</div></div>
         </div>
       </div>
       <div class="game-card-arrow">→</div>
@@ -266,6 +266,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5C
 let CARD_ID     = '';
 let OWNER_TOKEN = '';
 let CARD_DATA   = null;
+let GAMING_DATA = null;
 
 function jsonpFetch(url, timeout) {
   return new Promise((resolve, reject) => {
@@ -284,31 +285,6 @@ function jsonpFetch(url, timeout) {
   });
 }
 
-function defaultStats() {
-  return { vaultNet:0, vaultRounds:0, vaultWins:0, biggestWin:0, biggestWinGame:'—', biggestLoss:0, biggestLossGame:'—', totalRounds:0, todayGames:0, gamingNet:0, ledger:[] };
-}
-
-function getGamingStats() {
-  try {
-    const raw = JSON.parse(sessionStorage.getItem('pfp_gaming_stats') || 'null');
-    if (!raw) return defaultStats();
-    const d = defaultStats();
-    return {
-      vaultNet:        raw.vaultNet        != null ? raw.vaultNet        : d.vaultNet,
-      vaultRounds:     raw.vaultRounds     != null ? raw.vaultRounds     : d.vaultRounds,
-      vaultWins:       raw.vaultWins       != null ? raw.vaultWins       : d.vaultWins,
-      biggestWin:      raw.biggestWin      != null ? raw.biggestWin      : d.biggestWin,
-      biggestWinGame:  raw.biggestWinGame  != null ? raw.biggestWinGame  : d.biggestWinGame,
-      biggestLoss:     raw.biggestLoss     != null ? raw.biggestLoss     : d.biggestLoss,
-      biggestLossGame: raw.biggestLossGame != null ? raw.biggestLossGame : d.biggestLossGame,
-      totalRounds:     raw.totalRounds     != null ? raw.totalRounds     : d.totalRounds,
-      todayGames:      raw.todayGames      != null ? raw.todayGames      : d.todayGames,
-      gamingNet:       raw.gamingNet       != null ? raw.gamingNet       : d.gamingNet,
-      ledger:          Array.isArray(raw.ledger)   ? raw.ledger          : d.ledger
-    };
-  } catch(e) { return defaultStats(); }
-}
-
 function updateDailyXp(remaining) {
   const el = document.getElementById('daily-xp-left');
   if (!el) return;
@@ -316,32 +292,41 @@ function updateDailyXp(remaining) {
   el.className = 'pstat-val ' + (remaining <= 0 ? 'neg' : remaining < 25 ? 'pos' : 'gold');
 }
 
-async function fetchAndRefresh(forceApi = false) {
+async function loadAllData() {
   if (!CARD_ID) return;
 
-  const cached = sessionStorage.getItem('pfp_daily_xp_remaining');
-
-  // If returning from a game and we have a cached value, trust it
-  if (!forceApi && cached !== null) {
-    updateDailyXp(parseInt(cached));
-    return;
-  }
-
   try {
-    const data = await jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 8000);
-    if (data && data.success && data.card) {
-      CARD_DATA = data.card;
-      const xpToday   = parseInt(data.card['Gaming XP Today']) || 0;
-      const remaining = Math.max(0, 100 - xpToday);
-      const gamingXP  = parseInt(data.card['Gaming XP']) || 0;
+    const [cardResp, gamingResp] = await Promise.all([
+      jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 10000),
+      jsonpFetch(API + '?action=getGamingData&card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN), 10000)
+    ]);
+
+    if (cardResp && cardResp.success && cardResp.card) {
+      CARD_DATA = cardResp.card;
+    }
+
+    if (gamingResp && gamingResp.success && gamingResp.gaming) {
+      GAMING_DATA = gamingResp.gaming;
+      const remaining = parseInt(GAMING_DATA['Daily Remaining']) || 0;
       sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
-      const balanceEl = document.getElementById('xp-balance');
-      if (balanceEl) balanceEl.textContent = gamingXP.toLocaleString();
-      updateDailyXp(remaining);
     }
   } catch(e) {
-    if (cached !== null) updateDailyXp(parseInt(cached));
+    // silently continue with whatever data we have
   }
+}
+
+async function refreshGamingData() {
+  if (!CARD_ID) return;
+  try {
+    const resp = await jsonpFetch(API + '?action=getGamingData&card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN), 10000);
+    if (resp && resp.success && resp.gaming) {
+      GAMING_DATA = resp.gaming;
+      const remaining = parseInt(GAMING_DATA['Daily Remaining']) || 0;
+      sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
+      renderPlayer();
+      renderStats();
+    }
+  } catch(e) {}
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -370,25 +355,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     cardAttackLink.href = 'card-attack/index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
   }
 
-  await fetchAndRefresh(true);
+  await loadAllData();
 
   document.getElementById('loading-overlay').style.display = 'none';
   renderPlayer();
   renderStats();
 
   document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') fetchAndRefresh(false);
-});
-
+    if (document.visibilityState === 'visible') refreshGamingData();
+  });
 });
 
 function renderPlayer() {
-  const lc       = CARD_DATA || {};
+  const lc       = CARD_DATA  || {};
+  const gd       = GAMING_DATA || {};
   const cardName = lc['Card Name'] || CARD_ID || '—';
   const stage    = lc['Evolution Stage'] || 'Awakened';
   const level    = parseInt(lc['Current Level']) || 1;
-  const gamingXP = parseInt(lc['Gaming XP']) || 0;
-  const imageUrl = localStorage.getItem('pfp_gaming_image') || '';
+  const gamingXP = parseInt(gd['Gaming XP']) || 0;
+  const remaining = parseInt(gd['Daily Remaining']);
+  const vaultNet  = parseInt(gd['Vault Net XP']) || 0;
+  const vaultRounds = parseInt(gd['Vault Rounds']) || 0;
+  const caRounds  = parseInt(gd['Card Attack Rounds']) || 0;
+  const totalRounds = vaultRounds + caRounds;
+  const imageUrl  = localStorage.getItem('pfp_gaming_image') || '';
 
   document.getElementById('player-name').textContent  = cardName;
   document.getElementById('player-stage').textContent = stage + ' · Level ' + level;
@@ -402,51 +392,54 @@ function renderPlayer() {
     document.getElementById('card-placeholder').style.display = 'none';
   }
 
-  const stats = getGamingStats();
-  const net   = stats.gamingNet;
-  document.getElementById('gaming-net').textContent    = (net >= 0 ? '+' : '') + net.toLocaleString();
-  document.getElementById('gaming-net').className      = 'pstat-val ' + (net > 0 ? 'pos' : net < 0 ? 'neg' : 'gold');
-  document.getElementById('rounds-played').textContent = stats.totalRounds.toLocaleString();
-  document.getElementById('today-games').textContent   = stats.todayGames.toLocaleString();
+  document.getElementById('gaming-net').textContent  = (vaultNet >= 0 ? '+' : '') + vaultNet.toLocaleString();
+  document.getElementById('gaming-net').className    = 'pstat-val ' + (vaultNet > 0 ? 'pos' : vaultNet < 0 ? 'neg' : 'gold');
+  document.getElementById('rounds-played').textContent = totalRounds.toLocaleString();
+  document.getElementById('today-games').textContent   = parseInt(gd['Gaming XP Today']) > 0 ? '✦' : '0';
 
-  const cached = sessionStorage.getItem('pfp_daily_xp_remaining');
-  if (cached !== null) updateDailyXp(parseInt(cached));
+  if (!isNaN(remaining)) updateDailyXp(remaining);
+  else {
+    const cached = sessionStorage.getItem('pfp_daily_xp_remaining');
+    if (cached !== null) updateDailyXp(parseInt(cached));
+  }
 }
 
 function renderStats() {
-  const stats     = getGamingStats();
-  const vaultRate = stats.vaultRounds > 0 ? Math.round((stats.vaultWins / stats.vaultRounds) * 100) + '%' : '—';
+  const gd = GAMING_DATA || {};
 
-  document.getElementById('biggest-win').textContent       = stats.biggestWin  > 0 ? '+' + stats.biggestWin.toLocaleString()  + ' XP' : '—';
-  document.getElementById('biggest-win-game').textContent  = stats.biggestWinGame;
-  document.getElementById('biggest-loss').textContent      = stats.biggestLoss > 0 ? '−' + stats.biggestLoss.toLocaleString() + ' XP' : '—';
-  document.getElementById('biggest-loss-game').textContent = stats.biggestLossGame;
-  document.getElementById('total-rounds').textContent      = stats.totalRounds.toLocaleString();
-  document.getElementById('luckiest-game').textContent     = stats.vaultRounds > 0 ? 'The Vault' : '—';
-  document.getElementById('luckiest-rate').textContent     = stats.vaultRounds > 0 ? vaultRate + ' win rate' : 'Play a game to see';
-  document.getElementById('vault-net').textContent         = (stats.vaultNet >= 0 ? '+' : '') + stats.vaultNet.toLocaleString();
-  document.getElementById('vault-net').className           = 'gstat-val ' + (stats.vaultNet > 0 ? 'pos' : stats.vaultNet < 0 ? 'neg' : 'neu');
-  document.getElementById('vault-rounds').textContent      = stats.vaultRounds.toLocaleString();
-  document.getElementById('vault-rate').textContent        = vaultRate;
-  document.getElementById('vault-rate').className          = 'gstat-val ' + (stats.vaultRounds > 0 ? 'pos' : 'dim');
+  const vaultNet    = parseInt(gd['Vault Net XP'])      || 0;
+  const vaultRounds = parseInt(gd['Vault Rounds'])       || 0;
+  const vaultWins   = parseInt(gd['Vault Wins'])         || 0;
+  const biggestWin  = parseInt(gd['Vault Biggest Win'])  || 0;
+  const biggestLoss = parseInt(gd['Vault Biggest Loss']) || 0;
+  const caRounds    = parseInt(gd['Card Attack Rounds']) || 0;
+  const caBestScore = parseInt(gd['Card Attack Best Score']) || 0;
+  const caBestWave  = parseInt(gd['Card Attack Best Wave'])  || 0;
+  const caXPEarned  = parseInt(gd['Card Attack XP Earned'])  || 0;
+  const totalRounds = vaultRounds + caRounds;
+  const vaultRate   = vaultRounds > 0 ? Math.round((vaultWins / vaultRounds) * 100) + '%' : '—';
 
-  const allNet = stats.gamingNet;
+  document.getElementById('biggest-win').textContent       = biggestWin  > 0 ? '+' + biggestWin.toLocaleString()  + ' XP' : '—';
+  document.getElementById('biggest-win-game').textContent  = biggestWin  > 0 ? 'The Vault' : '—';
+  document.getElementById('biggest-loss').textContent      = biggestLoss > 0 ? '−' + biggestLoss.toLocaleString() + ' XP' : '—';
+  document.getElementById('biggest-loss-game').textContent = biggestLoss > 0 ? 'The Vault' : '—';
+  document.getElementById('total-rounds').textContent      = totalRounds.toLocaleString();
+  document.getElementById('luckiest-game').textContent     = vaultRounds > 0 ? 'The Vault' : '—';
+  document.getElementById('luckiest-rate').textContent     = vaultRounds > 0 ? vaultRate + ' win rate' : 'Play a game to see';
+
+  document.getElementById('vault-net').textContent    = (vaultNet >= 0 ? '+' : '') + vaultNet.toLocaleString();
+  document.getElementById('vault-net').className      = 'gstat-val ' + (vaultNet > 0 ? 'pos' : vaultNet < 0 ? 'neg' : 'neu');
+  document.getElementById('vault-rounds').textContent = vaultRounds.toLocaleString();
+  document.getElementById('vault-rate').textContent   = vaultRate;
+  document.getElementById('vault-rate').className     = 'gstat-val ' + (vaultRounds > 0 ? 'pos' : 'dim');
+
+  document.getElementById('ca-best-score').textContent = caBestScore > 0 ? caBestScore.toLocaleString() : '—';
+  document.getElementById('ca-best-wave').textContent  = caBestWave  > 0 ? caBestWave.toLocaleString()  : '—';
+  document.getElementById('ca-xp-earned').textContent  = caXPEarned  > 0 ? '+' + caXPEarned.toLocaleString() + ' XP' : '—';
+
+  const allNet = vaultNet + caXPEarned;
   document.getElementById('activity-net').textContent = (allNet >= 0 ? '+' : '') + allNet.toLocaleString() + ' XP all time';
   document.getElementById('activity-net').style.color = allNet > 0 ? 'var(--win)' : allNet < 0 ? 'var(--red-bright)' : 'var(--green-dim)';
-
-  if (stats.ledger && stats.ledger.length > 0) {
-    const iconMap = { 'The Vault':'🃏', 'The Forge':'⚙️', 'The Gauntlet':'🎲', 'The Maze':'🌀', 'Sudoku':'🔢', 'The Puzzle':'🧩' };
-    document.getElementById('activity-list').innerHTML = stats.ledger.slice(0,8).map(e => {
-      const cls   = e.xp > 0 ? 'pos' : e.xp < 0 ? 'neg' : '';
-      const xpStr = e.xp > 0 ? '+'+e.xp.toLocaleString() : e.xp.toLocaleString();
-      return `<div class="activity-item">
-        <div class="activity-icon">${iconMap[e.game]||'✦'}</div>
-        <div><div class="activity-desc">${e.desc}</div><div class="activity-game">${e.game}</div></div>
-        <div class="activity-time">${e.time}</div>
-        <div class="activity-xp ${cls}">${xpStr} XP</div>
-      </div>`;
-    }).join('');
-  }
 }
 
 function spawnMotes() {
