@@ -413,15 +413,15 @@ function loadGamingXP() {
     if (el) el.textContent = cached;
   }
   if (!cardId || !ownerToken) return;
-  jsonp(`${API}?action=get_card&card_id=${encodeURIComponent(cardId)}&owner_token=${encodeURIComponent(ownerToken)}`, 'callback')
+  jsonp(`${API}?action=getGamingData&card_id=${encodeURIComponent(cardId)}&owner_token=${encodeURIComponent(ownerToken)}`, 'callback')
     .then(data => {
-      if (data.success && data.card) {
-        gamingXpBase = parseInt(data.card['Gaming XP']) || 0;
-        const xpToday = parseInt(data.card['Gaming XP Today']) || 0;
-        const remaining = Math.max(0, 100 - xpToday);
-        sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
+      if (data.success && data.gaming) {
+        gamingXpBase = parseInt(data.gaming['Gaming XP']) || 0;
+        const remaining = parseInt(data.gaming['Daily Remaining']);
+        const safeRemaining = isNaN(remaining) ? 100 : remaining;
+        sessionStorage.setItem('pfp_daily_xp_remaining', safeRemaining);
         const el = document.getElementById('hud-daily-remaining');
-        if (el) el.textContent = remaining;
+        if (el) el.textContent = safeRemaining;
       }
     })
     .catch(() => {});
@@ -433,7 +433,7 @@ function logGamingXP(delta) {
   jsonp(`${API}?action=logGamingXP&card_id=${encodeURIComponent(cardId)}&owner_token=${encodeURIComponent(ownerToken)}&xp_amount=${delta}`, 'callback')
     .then(data => {
       if (data.success) {
-        const remaining = Math.max(0, data.remaining ?? (100 - (data.xpToday || 0)));
+        const remaining = Math.max(0, data.remaining ?? 0);
         sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
         const el = document.getElementById('hud-daily-remaining');
         if (el) el.textContent = remaining;
@@ -962,12 +962,22 @@ function nextWave() {
 
 function gameOver() {
   state = 'dead';
-  const xpEarned = Math.floor(score / 100);
+  const rawXP = Math.floor(score / 100);
+  const dailyRemaining = Math.max(0, parseInt(sessionStorage.getItem('pfp_daily_xp_remaining')) || 0);
+  const xpEarned = Math.min(rawXP, dailyRemaining);
+
   document.getElementById('final-score').textContent = score.toLocaleString();
   document.getElementById('final-wave').textContent = `Reached Wave ${wave}`;
   document.getElementById('overlay-dead').style.display = 'flex';
+
   sessionStorage.setItem('pfp_gaming_stats', JSON.stringify({ game: 'card-attack', score, wave, xp: xpEarned }));
+
   logGamingXP(xpEarned);
+
+  if (cardId && ownerToken) {
+    const resultUrl = `${API}?action=logGameResult&card_id=${encodeURIComponent(cardId)}&owner_token=${encodeURIComponent(ownerToken)}&game=Card%20Attack&xp_delta=${xpEarned}&rounds=1&wins=0&best_score=${score}&best_wave=${wave}`;
+    jsonp(resultUrl, 'callback').catch(e => console.warn('logGameResult failed:', e));
+  }
 }
   
 // ── BUTTONS ───────────────────────────────────────────────────
