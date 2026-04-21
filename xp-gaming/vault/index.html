@@ -344,7 +344,6 @@ const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5C
 
 let CARD_ID     = '';
 let OWNER_TOKEN = '';
-let CARD_DATA   = null;
 
 function jsonpFetch(url, timeout) {
   return new Promise((resolve, reject) => {
@@ -363,17 +362,13 @@ function jsonpFetch(url, timeout) {
   });
 }
 
-// Dummy PLAYER kept for compatibility — overwritten by API data on load
-const PLAYER = { xp:0, cardName:'—', stage:'—' };
-
-// House rules
-const BASE_PAYOUT   = 0.85;   // base win multiplier
-const EDGE_PAYOUT   = 0.50;   // half payout on edge picks
-const EDGE_BAND     = 4;      // top/bottom 4 values are edge territory
+const BASE_PAYOUT   = 0.85;
+const EDGE_PAYOUT   = 0.50;
+const EDGE_BAND     = 4;
 const MIN_VAL       = 1;
 const MAX_VAL       = 25;
-const STREAK_RATES  = [1.0, 0.85, 0.70, 0.55]; // streak 1,2,3,4
-const STREAK_FLOOR  = 0.50;   // floor at 50%
+const STREAK_RATES  = [1.0, 0.85, 0.70, 0.55];
+const STREAK_FLOOR  = 0.50;
 
 function streakMultiplier(streak) {
   if (streak <= 0) return STREAK_RATES[0];
@@ -383,7 +378,7 @@ function streakMultiplier(streak) {
 
 function isEdgePick(val, dir) {
   if (dir === 'higher' && val >= (MAX_VAL - EDGE_BAND + 1)) return true;
-  if (dir === 'lower'  && val <= (MIN_VAL + EDGE_BAND - 1))  return true;
+  if (dir === 'lower'  && val <= (MIN_VAL + EDGE_BAND - 1)) return true;
   return false;
 }
 
@@ -396,12 +391,17 @@ function calcPayout(bet, dir, anchorVal, winStreak) {
 
 function randomVal() { return Math.floor(Math.random() * (MAX_VAL - MIN_VAL + 1)) + MIN_VAL; }
 
-let balance = PLAYER.xp, bet = 5, anchorVal = null, sessionDelta = 0, ledgerLog = [], winStreak = 0;
+let balance      = 0;
+let bet          = 5;
+let anchorVal    = null;
+let sessionDelta = 0;
+let sessionWins  = 0;
+let ledgerLog    = [];
+let winStreak    = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
   spawnMotes();
 
-  // Read card identity from URL params, fall back to localStorage
   const params = new URLSearchParams(window.location.search);
   CARD_ID     = params.get('card_id')     || params.get('cardId')     || localStorage.getItem('pfp_gaming_card')  || '';
   OWNER_TOKEN = params.get('owner_token') || params.get('ownerToken') || localStorage.getItem('pfp_gaming_token') || '';
@@ -409,25 +409,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (CARD_ID)     localStorage.setItem('pfp_gaming_card',  CARD_ID);
   if (OWNER_TOKEN) localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
 
-  const imageUrl  = localStorage.getItem('pfp_gaming_image') || '';
-  if (imageUrl) {
-    document.getElementById('card-name-display').style.backgroundImage = 'none';
-  }
-
-  // Load Gaming XP balance from API
   if (CARD_ID) {
     try {
-      const data = await jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 10000);
-      if (data && data.success && data.card) {
-        CARD_DATA   = data.card;
-        balance     = parseInt(data.card['Gaming XP']) || 0;
-        const cardName = data.card['Card Name']        || CARD_ID;
-        const stage    = data.card['Evolution Stage']  || '—';
-        document.getElementById('card-name-display').textContent = cardName + ' · ' + stage;
+      const url  = API + '?action=getGamingData&card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
+      const data = await jsonpFetch(url, 10000);
+      if (data && data.success && data.gaming) {
+        const g = data.gaming;
+        balance = parseInt(g['Gaming XP']) || 0;
+        const remaining = parseInt(g['Daily Remaining']);
+        sessionStorage.setItem('pfp_daily_xp_remaining', isNaN(remaining) ? 100 : remaining);
+        document.getElementById('card-name-display').textContent = CARD_ID;
       }
-    } catch(e) { console.warn('get_card failed:', e); }
+    } catch(e) { console.warn('getGamingData failed:', e); }
   } else {
     document.getElementById('card-name-display').textContent = 'No card loaded';
+    sessionStorage.setItem('pfp_daily_xp_remaining', 100);
   }
 
   updateBalanceDisplay();
@@ -510,7 +506,7 @@ function resolve(dir, rev) {
   const a = anchorVal;
   let outcome;
   if (a === rev) {
-    outcome = 'lose'; // ties always lose
+    outcome = 'lose';
   } else {
     outcome = (dir === 'higher') ? (rev > a ? 'win' : 'lose') : (rev < a ? 'win' : 'lose');
   }
@@ -520,6 +516,7 @@ function resolve(dir, rev) {
   if (outcome === 'win') {
     const payout = calcPayout(bet, dir, a, winStreak);
     winStreak++;
+    sessionWins++;
     xpDelta   = payout;
     balance  += payout;
     headline  = 'The Vault Opens';
@@ -554,6 +551,7 @@ function getWinFlavour(streak) {
 }
 
 function playAgain() { if (balance < 1) { cashOut(); return; } resetCards(); clearResult(); updateBet(bet); setPhase('bet'); }
+
 function cashOut() {
   winStreak = 0;
   resetCards();
@@ -561,32 +559,49 @@ function cashOut() {
   updateBet(bet);
   setPhase('bet');
 
-  // Write session delta back to API
-  if (CARD_ID && OWNER_TOKEN && sessionDelta > 0) {
-    const url = API
-      + '?action=logGamingXP'
+  if (CARD_ID && OWNER_TOKEN && ledgerLog.length > 0) {
+    // Cap XP award to daily remaining
+    const dailyRemaining = Math.max(0, parseInt(sessionStorage.getItem('pfp_daily_xp_remaining')) || 0);
+    const xpToAward = Math.min(Math.max(0, sessionDelta), dailyRemaining);
+
+    if (xpToAward > 0) {
+      const xpUrl = API
+        + '?action=logGamingXP'
+        + '&card_id='     + encodeURIComponent(CARD_ID)
+        + '&owner_token=' + encodeURIComponent(OWNER_TOKEN)
+        + '&xp_amount='   + xpToAward;
+      jsonpFetch(xpUrl, 10000)
+        .then(data => {
+          if (data && data.success) {
+            balance = data.gamingXP;
+            updateBalanceDisplay();
+            const newRemaining = Math.max(0, data.remaining ?? 0);
+            sessionStorage.setItem('pfp_daily_xp_remaining', newRemaining);
+          }
+        })
+        .catch(e => console.warn('logGamingXP failed:', e));
+    }
+
+    // Always log the game result regardless of XP
+    const resultUrl = API
+      + '?action=logGameResult'
       + '&card_id='     + encodeURIComponent(CARD_ID)
       + '&owner_token=' + encodeURIComponent(OWNER_TOKEN)
-      + '&xp_amount='   + sessionDelta;
-    jsonpFetch(url, 10000)
-  .then(data => {
-    if (data && data.success) {
-      balance = data.gamingXP;
-      updateBalanceDisplay();
-      document.getElementById('xp-display').textContent = balance.toLocaleString();
-      const remaining = Math.max(0, data.remaining ?? (100 - (data.xpToday || 0)));
-      sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
-    }
-  })
-  .catch(e => console.warn('logGamingXP failed:', e));
+      + '&game=Vault'
+      + '&xp_delta='    + sessionDelta
+      + '&rounds='      + ledgerLog.length
+      + '&wins='        + sessionWins
+      + '&best_score=0'
+      + '&best_wave=0';
+    jsonpFetch(resultUrl, 10000).catch(e => console.warn('logGameResult failed:', e));
   }
 
-  // Write session stats to sessionStorage for hub to read
+  // Write session stats to sessionStorage
   try {
     const existing = JSON.parse(sessionStorage.getItem('pfp_gaming_stats') || 'null') || defaultGamingStats();
-    existing.vaultNet    = (existing.vaultNet || 0) + sessionDelta;
+    existing.vaultNet    = (existing.vaultNet    || 0) + sessionDelta;
     existing.vaultRounds = (existing.vaultRounds || 0) + ledgerLog.length;
-    existing.vaultWins   = (existing.vaultWins   || 0) + ledgerLog.filter(e => e.xpDelta > 0).length;
+    existing.vaultWins   = (existing.vaultWins   || 0) + sessionWins;
     existing.gamingNet   = (existing.gamingNet   || 0) + sessionDelta;
     existing.totalRounds = (existing.totalRounds || 0) + ledgerLog.length;
     if (sessionDelta > (existing.biggestWin || 0)) { existing.biggestWin = sessionDelta; existing.biggestWinGame = 'The Vault'; }
@@ -596,10 +611,12 @@ function cashOut() {
   } catch(e) {}
 
   sessionDelta = 0;
+  sessionWins  = 0;
+  ledgerLog    = [];
 }
 
 function defaultGamingStats() {
-  return { vaultNet:0, vaultRounds:0, vaultWins:0, biggestWin:0, biggestWinGame:'—', biggestLoss:0, biggestLossGame:'—', totalRounds:0, todayRisked:0, todayGames:0, gamingNet:0, ledger:[] };
+  return { vaultNet:0, vaultRounds:0, vaultWins:0, biggestWin:0, biggestWinGame:'—', biggestLoss:0, biggestLossGame:'—', totalRounds:0, todayGames:0, gamingNet:0, ledger:[] };
 }
 
 function resetCards() {
