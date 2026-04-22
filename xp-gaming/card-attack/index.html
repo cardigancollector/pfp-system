@@ -975,7 +975,7 @@ function gameOver() {
   logGamingXP(xpEarned);
 
   if (cardId && ownerToken) {
-    const resultUrl = `${API}?action=logGameResult&card_id=${encodeURIComponent(cardId)}&owner_token=${encodeURIComponent(ownerToken)}&game=Card%20Attack&xp_delta=${xpEarned}&rounds=1&wins=0&best_score=${score}&best_wave=${wave}`;
+    const resultUrl = `${API}?action=logGameResult&card_id=${encodeURIComponent(cardId)}&owner_token=${encodeURIComponent(ownerToken)}&game=card_attack&xp_delta=${xpEarned}&rounds=1&wins=0&best_score=${score}&best_wave=${wave}`;
     jsonp(resultUrl, 'callback').catch(e => console.warn('logGameResult failed:', e));
   }
 }
