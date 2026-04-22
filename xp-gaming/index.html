@@ -377,6 +377,7 @@ function renderPlayer() {
   const vaultNet  = parseInt(gd['Vault Net XP']) || 0;
   const vaultRounds = parseInt(gd['Vault Rounds']) || 0;
   const caRounds  = parseInt(gd['Card Attack Rounds']) || 0;
+  const caXPEarned = parseInt(gd['Card Attack XP Earned']) || 0;
   const totalRounds = vaultRounds + caRounds;
   const imageUrl  = localStorage.getItem('pfp_gaming_image') || '';
 
@@ -392,8 +393,9 @@ function renderPlayer() {
     document.getElementById('card-placeholder').style.display = 'none';
   }
 
-  document.getElementById('gaming-net').textContent  = (vaultNet >= 0 ? '+' : '') + vaultNet.toLocaleString();
-  document.getElementById('gaming-net').className    = 'pstat-val ' + (vaultNet > 0 ? 'pos' : vaultNet < 0 ? 'neg' : 'gold');
+const allNet = vaultNet + caXPEarned;
+document.getElementById('gaming-net').textContent  = (allNet >= 0 ? '+' : '') + allNet.toLocaleString();
+document.getElementById('gaming-net').className    = 'pstat-val ' + (allNet > 0 ? 'pos' : allNet < 0 ? 'neg' : 'gold');
   document.getElementById('rounds-played').textContent = totalRounds.toLocaleString();
   document.getElementById('today-games').textContent   = parseInt(gd['Gaming XP Today']) > 0 ? '✦' : '0';
 
