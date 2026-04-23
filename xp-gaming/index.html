@@ -184,7 +184,7 @@
         <div><span class="xp-big-num" id="xp-balance">—</span><span class="xp-big-unit">XP</span></div>
       </div>
       <div class="player-stats-row">
-        <div class="pstat"><div class="pstat-label">Gaming Net</div><div class="pstat-val pos" id="gaming-net">+0</div></div>
+        <div class="pstat"><div class="pstat-label">Last Game</div><div class="pstat-val gold" id="last-game">—</div></div>
         <div class="pstat"><div class="pstat-label">Rounds Played</div><div class="pstat-val gold" id="rounds-played">0</div></div>
         <div class="pstat"><div class="pstat-label">Today's Games</div><div class="pstat-val gold" id="today-games">0</div></div>
         <div class="pstat"><div class="pstat-label">Daily XP Left</div><div class="pstat-val gold" id="daily-xp-left">—</div></div>
@@ -396,8 +396,8 @@ function renderPlayer() {
   }
 
 const allNet = vaultNet + caXPEarned;
-document.getElementById('gaming-net').textContent  = (allNet >= 0 ? '+' : '') + allNet.toLocaleString();
-document.getElementById('gaming-net').className    = 'pstat-val ' + (allNet > 0 ? 'pos' : allNet < 0 ? 'neg' : 'gold');
+const lastGame = (gd['Last Game'] || '—');
+document.getElementById('last-game').textContent = lastGame.charAt(0).toUpperCase() + lastGame.slice(1);
   document.getElementById('rounds-played').textContent = totalRounds.toLocaleString();
   document.getElementById('today-games').textContent   = parseInt(gd['Gaming XP Today']) > 0 ? '✦' : '0';
 
