@@ -342,8 +342,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (IMAGE_URL)   localStorage.setItem('pfp_gaming_image', IMAGE_URL);
 
   document.getElementById('back-btn').onclick = () => {
-    window.location.href = CARD_ID ? '../index.html?card_id=' + encodeURIComponent(CARD_ID) : '../index.html';
-  };
+  window.location.href = CARD_ID
+    ? 'https://cardigancollector.github.io/pfp-system/dashboard/?card_id=' + encodeURIComponent(CARD_ID)
+    : 'https://cardigancollector.github.io/pfp-system/dashboard/';
+};
 
   const vaultLink = document.getElementById('vault-link');
   if (vaultLink && CARD_ID && OWNER_TOKEN) {
