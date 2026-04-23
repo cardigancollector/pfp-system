@@ -186,7 +186,6 @@
       <div class="player-stats-row">
         <div class="pstat"><div class="pstat-label">Last Game</div><div class="pstat-val gold" id="last-game">—</div></div>
         <div class="pstat"><div class="pstat-label">Rounds Played</div><div class="pstat-val gold" id="rounds-played">0</div></div>
-        <div class="pstat"><div class="pstat-label">Today's Games</div><div class="pstat-val gold" id="today-games">0</div></div>
         <div class="pstat"><div class="pstat-label">Daily XP Left</div><div class="pstat-val gold" id="daily-xp-left">—</div></div>
       </div>
     </div>
@@ -399,7 +398,6 @@ const allNet = vaultNet + caXPEarned;
 const lastGame = (gd['Last Game'] || '—');
 document.getElementById('last-game').textContent = lastGame.charAt(0).toUpperCase() + lastGame.slice(1);
   document.getElementById('rounds-played').textContent = totalRounds.toLocaleString();
-  document.getElementById('today-games').textContent   = parseInt(gd['Gaming XP Today']) > 0 ? '✦' : '0';
 
   if (!isNaN(remaining)) updateDailyXp(remaining);
   else {
