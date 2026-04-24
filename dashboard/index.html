@@ -901,7 +901,26 @@ function buildDashboard(asOwner) {
   buildMilestones(xp, streak, interactions);
   buildStreakCalendar(streak, daysSince);
   buildLog(interactions, daysSince);
+
+
+  const eventIndicator = document.getElementById('active-event-indicator');
+  const activeEvent    = lc['Active Event'];
+  if (activeEvent && activeEvent.eventName) {
+    const isPositive  = activeEvent.xpEffect >= 0;
+    const polarityDot = isPositive ? '🟢' : '🔴';
+    const xpSign      = isPositive ? '+' : '';
+    eventIndicator.innerHTML =
+      '<div class="aei-label">ACTIVE EVENT</div>' +
+      '<div class="aei-name">' + polarityDot + ' ' + activeEvent.eventName + '</div>' +
+      '<div class="aei-flavour">' + esc(activeEvent.flavourText) + '</div>' +
+      '<div class="aei-meta">' + xpSign + activeEvent.xpEffect + ' XP &nbsp;·&nbsp; Expires ' + activeEvent.expiryDate + '</div>';
+    eventIndicator.style.display = 'block';
+  } else {
+    eventIndicator.style.display = 'none';
+  }
 }
+
+
 
 async function incrementView(cardId) {
   const key   = 'pfp_viewed_' + cardId;
