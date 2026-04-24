@@ -912,6 +912,8 @@ async function incrementView(cardId) {
   } catch(e) {}
 }
 
+// REPLACEMENT — paste this over the existing logScan() function in your dashboard JS
+
 async function logScan() {
   const cardId   = urlCardId;
   const token    = (savedOwner && savedOwner.ownerToken) ? savedOwner.ownerToken : null;
@@ -932,9 +934,24 @@ async function logScan() {
       + '&owner_token=' + encodeURIComponent(token);
     const data = await jsonpFetch(url, 8000);
     if (data.success || data.status === 200) {
-      btn.innerHTML = '<span>✦</span> Scan Logged — +10 XP Awarded';
-      feedback.textContent = 'XP: ' + (data.totalXP ? data.totalXP.toLocaleString() : '--') + '  Stage: ' + (data.stage || '--');
+      const xpDisplay  = data.totalXP !== undefined ? data.totalXP.toLocaleString() : '--';
+      const xpEffect   = data.xpEffect !== undefined ? data.xpEffect : 10;
+      const xpSign     = xpEffect >= 0 ? '+' : '';
+
+      btn.innerHTML = '<span>✦</span> Scan Logged — ' + xpSign + xpEffect + ' XP Awarded';
+
+      if (data.eventFired && data.eventName) {
+        const polarityIcon = data.polarity === 'positive' ? '🟢' : '🔴';
+        feedback.innerHTML =
+          '<div class="scan-xp-line">XP: ' + xpDisplay + '&nbsp;&nbsp;Stage: ' + (data.stage || '--') + '</div>' +
+          '<div class="scan-event-line">' + polarityIcon + ' <strong>' + data.badge + ' ' + data.eventName + '</strong></div>' +
+          '<div class="scan-flavour-line">' + data.flavourText + '</div>';
+      } else {
+        feedback.textContent = 'XP: ' + xpDisplay + '  Stage: ' + (data.stage || '--');
+      }
+
       feedback.className = 'scan-feedback success';
+
       if (data.totalXP !== undefined) {
         document.getElementById('d-xp').textContent = data.totalXP.toLocaleString();
         if (livingCard) livingCard['Current XP'] = data.totalXP;
@@ -960,7 +977,6 @@ async function logScan() {
     btn.disabled = false;
   }
 }
-
 function buildMilestones(xp, streak, interactions) {
   const MILESTONE_DEFS = [
     { icon:'🌅', name:'First Awakening', desc:'Reach 500 XP',         key:'First Awakening', target:500,  current:xp },
