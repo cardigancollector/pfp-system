@@ -117,6 +117,9 @@
   .page-header-top { position:relative; display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
   .back-btn { position:absolute; left:0; background:none; border:1px solid rgba(201,168,76,0.25); color:var(--text-dim); font-family:'Cinzel',serif; font-size:0.68rem; letter-spacing:0.2em; text-transform:uppercase; padding:8px 16px; cursor:pointer; transition:all 0.3s; text-decoration:none; white-space:nowrap; }
   .back-btn:hover { border-color:var(--gold); color:var(--gold); }
+  @keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
   .page-footer { text-align:center; padding-top:40px; border-top:1px solid rgba(201,168,76,0.1); }
   .footer-text { font-size:0.78rem; color:var(--text-dim); font-style:italic; line-height:1.8; }
