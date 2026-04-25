@@ -811,7 +811,7 @@ function doSignOut() {
 function showYourLifeBtn() {
   const btn = document.getElementById('your-life-btn');
   if (!btn || !urlCardId) return;
-  btn.href = 'your_life.html?card_id=' + encodeURIComponent(urlCardId);
+  btn.href = '../your_life.html?card_id=' + encodeURIComponent(urlCardId);
 }
 
 function buildDashboard(asOwner) {
