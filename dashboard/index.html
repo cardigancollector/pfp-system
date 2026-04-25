@@ -187,36 +187,17 @@
   .scan-feedback.success { color:var(--green); }
   .scan-feedback.error { color:var(--red); }
   #active-event-indicator {
-  margin: 16px 0;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
-  text-align: center;
-}
-.aei-label {
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-  color: var(--gold);
-  margin-bottom: 6px;
-  opacity: 0.8;
-}
-.aei-name {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-.aei-flavour {
-  font-size: 0.82rem;
-  font-style: italic;
-  opacity: 0.75;
-  margin-bottom: 6px;
-}
-.aei-meta {
-  font-size: 0.75rem;
-  opacity: 0.6;
-  letter-spacing: 0.04em;
-}
+    margin: 16px 0;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+  }
+  .aei-label { font-size: 0.62rem; letter-spacing: 0.12em; color: var(--gold); margin-bottom: 6px; opacity: 0.8; }
+  .aei-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+  .aei-flavour { font-size: 0.82rem; font-style: italic; opacity: 0.75; margin-bottom: 6px; }
+  .aei-meta { font-size: 0.75rem; opacity: 0.6; letter-spacing: 0.04em; }
   .scan-event-line  { margin-top: 6px; font-size: 0.95em; }
   .scan-flavour-line { font-style: italic; font-size: 0.88em; opacity: 0.85; margin-top: 2px; }
   .scan-xp-line     { margin-bottom: 2px; }
@@ -306,9 +287,39 @@
   .delay-4 { animation-delay:0.4s; }
   .delay-5 { animation-delay:0.5s; }
 
+  /* ── YOUR LIFE BUTTON ─────────────────────────────────────────────────── */
+  .your-life-btn {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.06), rgba(201,168,76,0.13));
+    border: 1px solid rgba(201,168,76,0.45);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .your-life-btn:hover {
+    background: linear-gradient(135deg, rgba(201,168,76,0.14), rgba(201,168,76,0.24));
+    box-shadow: 0 0 30px rgba(201,168,76,0.12);
+    border-color: var(--gold-light);
+    color: var(--gold-light);
+  }
+
+  /* ── GAMING HUB BUTTON ────────────────────────────────────────────────── */
   .gaming-hub-btn { display:none; width:100%; margin-top:10px; padding:14px 24px; background:linear-gradient(135deg,rgba(46,204,113,0.06),rgba(46,204,113,0.12)); border:1px solid rgba(46,204,113,0.35); color:#2ecc71; font-family:'Cinzel',serif; font-size:0.82rem; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; text-align:center; text-decoration:none; }
   .gaming-hub-btn:hover { background:linear-gradient(135deg,rgba(46,204,113,0.12),rgba(46,204,113,0.22)); box-shadow:0 0 30px rgba(46,204,113,0.1); border-color:#2ecc71; }
   .gaming-hub-btn.visible { display:flex; align-items:center; justify-content:center; gap:10px; }
+
   @media (max-width:900px) {
     .stat-grid { grid-template-columns:repeat(2,1fr); }
     .two-col { grid-template-columns:1fr; }
@@ -425,8 +436,13 @@
       <div id="scan-area"></div>
       <div class="scan-feedback" id="scan-feedback"></div>
     </div>
+
     <div id="active-event-indicator" style="display:none;"></div>
 
+    <!-- YOUR LIFE BUTTON — always visible once dashboard loads -->
+    <a class="your-life-btn" id="your-life-btn" href="#">📖 &nbsp; Your Life</a>
+
+    <!-- GAMING HUB BUTTON — owners only -->
     <a class="gaming-hub-btn" id="gaming-hub-btn" href="#">🎮 &nbsp; Enter XP Gaming Hub</a>
 
     <div class="section-title animate-in delay-1">At a Glance</div>
@@ -777,6 +793,7 @@ function showDashboard(asOwner) {
   }
 
   buildDashboard(asOwner);
+  showYourLifeBtn();
   showGamingBtn(asOwner);
 }
 
@@ -788,6 +805,13 @@ function doSignOut() {
   document.getElementById('readonly-banner').style.display = 'flex';
   document.getElementById('banner-card-name').textContent  = analyzerCard ? analyzerCard.card : urlCardId;
   buildDashboard(false);
+}
+
+// ── YOUR LIFE BUTTON ────────────────────────────────────────────────────────
+function showYourLifeBtn() {
+  const btn = document.getElementById('your-life-btn');
+  if (!btn || !urlCardId) return;
+  btn.href = 'your_life.html?card_id=' + encodeURIComponent(urlCardId);
 }
 
 function buildDashboard(asOwner) {
@@ -933,7 +957,6 @@ function buildDashboard(asOwner) {
   buildStreakCalendar(streak, daysSince);
   buildLog(interactions, daysSince);
 
-
   const eventIndicator = document.getElementById('active-event-indicator');
   const activeEvent    = lc['Active Event'];
   if (activeEvent && activeEvent.eventName) {
@@ -951,8 +974,6 @@ function buildDashboard(asOwner) {
   }
 }
 
-
-
 async function incrementView(cardId) {
   const key   = 'pfp_viewed_' + cardId;
   const today = new Date().toISOString().slice(0, 10);
@@ -965,8 +986,6 @@ async function incrementView(cardId) {
     }
   } catch(e) {}
 }
-
-// REPLACEMENT — paste this over the existing logScan() function in your dashboard JS
 
 async function logScan() {
   const cardId   = urlCardId;
@@ -1031,6 +1050,7 @@ async function logScan() {
     btn.disabled = false;
   }
 }
+
 function buildMilestones(xp, streak, interactions) {
   const MILESTONE_DEFS = [
     { icon:'🌅', name:'First Awakening', desc:'Reach 500 XP',         key:'First Awakening', target:500,  current:xp },
