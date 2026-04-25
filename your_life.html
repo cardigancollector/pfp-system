@@ -513,8 +513,16 @@ async function loadLifeEvents(cardId) {
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const cardId = params.get('card_id') || params.get('cardId') || '';
-  const dashUrl = cardId ? 'index.html?card_id=' + encodeURIComponent(cardId) : 'index.html';
-  const backLink = document.querySelector('.header-card-name');
+
+  const backBtn = document.getElementById('back-link');
+  if (backBtn) {
+    backBtn.onclick = () => {
+      window.location.href = cardId
+        ? 'https://cardigancollector.github.io/pfp-system/dashboard/?card_id=' + encodeURIComponent(cardId)
+        : 'https://cardigancollander.github.io/pfp-system/dashboard/';
+    };
+  }
+
   if (!cardId) { showNoEvents(''); return; }
   loadLifeEvents(cardId);
 });
