@@ -52,7 +52,7 @@
   .ratio-pos { color:var(--green); }
   .ratio-neg { color:#c0392b; }
   .ratio-track { height:10px; background:rgba(192,57,43,0.3); border-radius:5px; overflow:hidden; margin-bottom:10px; }
-  .ratio-fill { height:100%; background:linear-gradient(90deg,#27ae60,var(--green)); border-radius:5px; }
+  .ratio-fill { height:100%; background:linear-gradient(90deg,#27ae60,var(--green)); border-radius:5px; transition:width 1.2s cubic-bezier(0.4,0,0.2,1); }
   .ratio-summary { text-align:center; font-size:0.82rem; color:var(--text-dim); font-style:italic; }
 
   .narrative-section { margin-bottom:56px; }
@@ -91,7 +91,7 @@
   .cat-name { font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); width:110px; flex-shrink:0; }
   .cat-bar-wrap { flex:1; }
   .cat-bar-track { height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden; }
-  .cat-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); }
+  .cat-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); transition:width 1s ease; }
   .cat-count { font-family:'Cinzel',serif; font-size:0.75rem; color:var(--gold-dim); width:40px; text-align:right; flex-shrink:0; }
 
   .timeline-section { margin-bottom:56px; }
@@ -129,11 +129,26 @@
 <body>
 
 
+
+<!-- LOADING -->
+<div id="your-life-loading" style="position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0806;gap:20px;">
+  <div style="font-family:'Cinzel Decorative',serif;font-size:2rem;color:#c9a84c;letter-spacing:0.08em;text-shadow:0 0 40px rgba(201,168,76,0.4);">PfP</div>
+  <div style="width:40px;height:40px;border:2px solid rgba(201,168,76,0.2);border-top-color:#c9a84c;border-radius:50%;animation:spin 0.9s linear infinite;"></div>
+  <div id="your-life-loading-sub" style="font-size:0.72rem;color:#7a6030;font-style:italic;">Consulting the chronicle…</div>
+</div>
+<!-- NO EVENTS -->
+<div id="your-life-no-events" style="position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:2rem;">
+  <div style="font-size:3rem;opacity:0.4;">📖</div>
+  <div style="font-family:'Cinzel Decorative',serif;font-size:1.6rem;color:#c9a84c;letter-spacing:0.06em;">No Life Events Recorded Yet</div>
+  <div style="font-family:'EB Garamond',serif;font-size:1.05rem;color:#9a8a6a;font-style:italic;max-width:380px;line-height:1.7;">This card’s chronicle has not yet been written. Life events will appear here once they have been recorded.</div>
+  <a id="no-events-back" href="index.html" style="margin-top:8px;font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.25em;text-transform:uppercase;color:#7a6030;text-decoration:none;border:1px solid #7a6030;padding:10px 24px;transition:all 0.3s;">← Return to Dashboard</a>
+</div>
+
 <div class="bg-layer"></div>
 <div class="bg-overlay"></div>
 <div class="bg-vignette"></div>
 
-<div class="page-wrap">
+<div class="page-wrap" style="display:none;">
 
   <div class="page-header">
     <div class="header-eyebrow">PfP · Living Card</div>
@@ -252,5 +267,251 @@
   </div>
 
 </div>
+
+<script>
+const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+
+function jsonpFetch(url, timeout) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+    const script = document.createElement('script');
+    const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 12000);
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (document.body.contains(script)) document.body.removeChild(script);
+    }
+    window[cbName] = function(data) { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('script error')); };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName + '&_=' + Date.now();
+    document.body.appendChild(script);
+  });
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+const DOMAIN_MAP = {
+  social:    { icon:'\u{1F91D}', label:'Social' },
+  mental:    { icon:'\u{1F9E0}', label:'Mental' },
+  skill:     { icon:'\u{1F4A1}', label:'Skill' },
+  financial: { icon:'\u{1F4B0}', label:'Financial' },
+  luck:      { icon:'\u{1F3B2}', label:'Luck' },
+  health:    { icon:'\u{1FA7A}', label:'Health' },
+  mystery:   { icon:'\u{1F300}', label:'Mystery' },
+  creative:  { icon:'\u{1F3A8}', label:'Creative' },
+  work:      { icon:'\u{1F4BC}', label:'Work' },
+  family:    { icon:'\u{1F3E0}', label:'Family' },
+};
+
+function extractDomain(notes) {
+  if (!notes) return null;
+  const n = notes.toLowerCase();
+  for (const key of Object.keys(DOMAIN_MAP)) { if (n.includes(key)) return key; }
+  return null;
+}
+
+function calcLifeGrade(events) {
+  const count    = events.length;
+  const netXP    = events.reduce((s,e) => s + (Number(e['XP Gained'])||0) - (Number(e['XP Lost'])||0), 0);
+  const posCount = events.filter(e => (Number(e['XP Gained'])||0) > 0).length;
+  const ratio    = count > 0 ? posCount / count : 0;
+  if (count < 3)    return { grade:'Nascent',   desc:'The story is just beginning.' };
+  if (netXP < 0)    return { grade:'Burdened',  desc:'More loss than gain. Yet still standing.' };
+  if (ratio < 0.35) return { grade:'Weathered', desc:'Marked by hardship. Shaped by endurance.' };
+  if (ratio < 0.5)  return { grade:'Tested',    desc:'Adversity known. The balance is close.' };
+  if (ratio < 0.65) return { grade:'Seasoned',  desc:'Tested by adversity. Shaped by experience.' };
+  if (ratio < 0.8)  return { grade:'Fortunate', desc:'A life tipped toward the light.' };
+  return { grade:'Blessed', desc:'Remarkable fortune. Cherish it.' };
+}
+
+function ratioSummary(posPct) {
+  if (posPct >= 80) return 'A life of remarkable fortune. The shadows were brief.';
+  if (posPct >= 65) return 'More light than shadow. A life tipped toward the fortunate.';
+  if (posPct >= 50) return 'A life neither charmed nor cursed — but genuinely lived. The shadows gave the light its meaning.';
+  if (posPct >= 35) return 'The burdens have been real. What endures is the fact of enduring.';
+  return 'Much has been carried. This card has known genuine difficulty.';
+}
+
+function buildNarrative(events, cardId) {
+  if (!events || events.length === 0) return '<p>No events to chronicle.</p>';
+  const sorted  = [...events].sort((a,b) => new Date(a.Timestamp) - new Date(b.Timestamp));
+  const count   = sorted.length;
+  const posEvts = sorted.filter(e => (Number(e['XP Gained'])||0) > 0);
+  const negEvts = sorted.filter(e => (Number(e['XP Lost'])||0)   > 0);
+  const netXP   = sorted.reduce((s,e) => s + (Number(e['XP Gained'])||0) - (Number(e['XP Lost'])||0), 0);
+  const first   = sorted[0];
+  const topPos  = [...posEvts].sort((a,b) => (Number(b['XP Gained'])||0) - (Number(a['XP Gained'])||0))[0];
+  const topNeg  = [...negEvts].sort((a,b) => (Number(b['XP Lost'])||0)   - (Number(a['XP Lost'])||0))[0];
+  const openNote   = (first.Notes || 'an unrecorded moment').slice(0, 80);
+  const topPosNote = topPos ? (topPos.Notes || 'a moment of great fortune') : null;
+  const topNegNote = topNeg ? (topNeg.Notes || 'a moment of great difficulty') : null;
+  const paras = [];
+  paras.push('This card\'s chronicle begins with ' + esc(openNote.toLowerCase()) + '. The first mark was made, and the record started.');
+  if (count >= 5) {
+    const mid = negEvts.length > 0
+      ? 'The record carries ' + negEvts.length + ' difficult ' + (negEvts.length === 1 ? 'moment' : 'moments') + ' — ' + esc((topNegNote||'').toLowerCase()) + '. These entries do not disappear. They are part of what this card has carried.'
+      : 'The record has been spared significant hardship so far. ' + posEvts.length + ' fortunate ' + (posEvts.length === 1 ? 'entry' : 'entries') + ' mark the path taken.';
+    paras.push(mid);
+  }
+  if (topPos) {
+    paras.push('The highest point in this chronicle: ' + esc((topPosNote||'').toLowerCase()) + ' — yielding +' + Number(topPos['XP Gained']).toLocaleString() + ' XP. A moment that defines what this card is capable of.');
+  }
+  const netSign = netXP >= 0 ? 'positive' : 'negative';
+  paras.push('The chronicle now stands at ' + count + ' recorded ' + (count === 1 ? 'event' : 'events') + ', with a net ' + netSign + ' balance of ' + (netXP >= 0 ? '+' : '') + netXP.toLocaleString() + ' XP from life. What remains is a life that is — in the only way that matters — continuing.');
+  return paras.map((p, i) =>
+    i === 0 ? '<p><span class="narrative-opening">"</span>' + p + '</p>'
+    : i === paras.length - 1 ? '<p>' + p + '"</p>'
+    : '<p>' + p + '</p>'
+  ).join('');
+}
+
+function renderPage(events, cardId) {
+  const count   = events.length;
+  const posEvts = events.filter(e => (Number(e['XP Gained'])||0) > 0);
+  const negEvts = events.filter(e => (Number(e['XP Lost'])||0)   > 0);
+  const totalG  = posEvts.reduce((s,e) => s + (Number(e['XP Gained'])||0), 0);
+  const totalL  = negEvts.reduce((s,e) => s + (Number(e['XP Lost'])||0),   0);
+  const netXP   = totalG - totalL;
+  const posPct  = count > 0 ? Math.round((posEvts.length / count) * 100) : 0;
+  const negPct  = 100 - posPct;
+
+  // Header card name
+  const nameEl = document.querySelector('.header-card-name');
+  if (nameEl) nameEl.textContent = cardId;
+
+  // Hero stats
+  const evtCountEl = document.querySelector('.life-stat-value');
+  if (evtCountEl) evtCountEl.textContent = count;
+
+  const allStatVals = document.querySelectorAll('.life-stat-value');
+  if (allStatVals[0]) allStatVals[0].textContent = count;
+  if (allStatVals[1]) {
+    allStatVals[1].textContent = (netXP >= 0 ? '+' : '') + netXP.toLocaleString();
+    const sub = allStatVals[1].nextElementSibling;
+    if (sub) sub.textContent = netXP >= 0 ? 'net positive' : 'net negative';
+  }
+
+  // Life grade badge
+  const grade = calcLifeGrade(events);
+  const badgeEl = document.querySelector('.life-grade-badge');
+  const descEl  = document.querySelector('.life-grade-desc');
+  if (badgeEl) badgeEl.textContent = grade.grade;
+  if (descEl)  descEl.textContent  = grade.desc;
+
+  // Ratio bar
+  const posLabel  = document.querySelector('.ratio-pos');
+  const negLabel  = document.querySelector('.ratio-neg');
+  const ratioFill = document.querySelector('.ratio-fill');
+  const ratioSum  = document.querySelector('.ratio-summary');
+  if (posLabel)  posLabel.textContent  = '\u2726 Fortunate   ' + posPct + '%';
+  if (negLabel)  negLabel.textContent  = negPct + '%   Troubled \u2726';
+  if (ratioSum)  ratioSum.textContent  = ratioSummary(posPct);
+  setTimeout(() => { if (ratioFill) ratioFill.style.width = posPct + '%'; }, 300);
+
+  // Narrative
+  const narText = document.querySelector('.narrative-text');
+  if (narText) narText.innerHTML = buildNarrative(events, cardId);
+
+  // Highlights
+  const sorted   = [...events].sort((a,b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+  const bestEvt  = [...posEvts].sort((a,b) => (Number(b['XP Gained'])||0) - (Number(a['XP Gained'])||0))[0];
+  const worstEvt = [...negEvts].sort((a,b) => (Number(b['XP Lost'])||0)   - (Number(a['XP Lost'])||0))[0];
+  const recentEvt = sorted[0];
+
+  function hlCard(selector, evt, xpFn) {
+    const card = document.querySelector(selector);
+    if (!card || !evt) return;
+    card.querySelector('.highlight-badge').textContent  = '\u2736';
+    card.querySelector('.highlight-name').textContent   = (evt.Notes||'—').slice(0,55);
+    card.querySelector('.highlight-flavour').textContent = evt.Timestamp ? new Date(evt.Timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    card.querySelector('.highlight-xp').textContent     = xpFn(evt);
+  }
+  hlCard('.highlight-card.best',   bestEvt,   e => '+' + Number(e['XP Gained']).toLocaleString() + ' XP');
+  hlCard('.highlight-card.worst',  worstEvt,  e => '\u2212' + Number(e['XP Lost']).toLocaleString()   + ' XP');
+  hlCard('.highlight-card.streak', recentEvt, e => {
+    const g = Number(e['XP Gained'])||0;
+    const l = Number(e['XP Lost'])||0;
+    return g > 0 ? '+' + g.toLocaleString() + ' XP' : l > 0 ? '\u2212' + l.toLocaleString() + ' XP' : '\u2014';
+  });
+  hlCard('.highlight-card.rare', [...events].sort((a,b) => ((Number(b['XP Gained'])||0)+(Number(b['XP Lost'])||0)) - ((Number(a['XP Gained'])||0)+(Number(a['XP Lost'])||0)))[0],
+    e => '+' + (Number(e['XP Gained'])||0).toLocaleString() + ' XP');
+
+  // Domains
+  const domainCounts = {};
+  events.forEach(e => { const d = extractDomain(e.Notes); if (d) domainCounts[d] = (domainCounts[d]||0) + 1; });
+  const domainEntries = Object.entries(domainCounts).sort((a,b) => b[1]-a[1]);
+  const maxCount = domainEntries[0]?.[1] || 1;
+  const catSection = document.querySelector('.categories-section');
+  if (catSection && domainEntries.length > 0) {
+    catSection.innerHTML = domainEntries.map(([key, cnt]) => {
+      const def = DOMAIN_MAP[key] || { icon: '\u2736', label: key };
+      const pct = Math.round((cnt / maxCount) * 100);
+      return '<div class="category-row"><div class="cat-icon">' + def.icon + '</div><div class="cat-name">' + def.label + '</div><div class="cat-bar-wrap"><div class="cat-bar-track"><div class="cat-bar-fill" style="width:0%" data-pct="' + pct + '"></div></div></div><div class="cat-count">' + cnt + '</div></div>';
+    }).join('');
+    setTimeout(() => { document.querySelectorAll('.cat-bar-fill').forEach(el => { el.style.width = el.dataset.pct + '%'; }); }, 400);
+  }
+
+  // Timeline
+  const timelineEl = document.querySelector('.timeline');
+  if (timelineEl) {
+    const tSorted = [...events].sort((a,b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+    timelineEl.innerHTML = tSorted.map(e => {
+      const gained  = Number(e['XP Gained']) || 0;
+      const lost    = Number(e['XP Lost'])   || 0;
+      const isPos   = gained > 0;
+      const xpStr   = isPos ? '+' + gained.toLocaleString() + ' XP' : lost > 0 ? '\u2212' + lost.toLocaleString() + ' XP' : '\u2014';
+      const notes   = e.Notes || '\u2014';
+      const dateStr = e.Timestamp ? new Date(e.Timestamp).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '\u2014';
+      const dotCls  = isPos ? 'pos' : lost > 0 ? 'neg' : '';
+      return '<div class="timeline-item"><div class="timeline-dot ' + dotCls + '"></div><div class="timeline-card ' + dotCls + '"><div class="timeline-top"><div class="timeline-badge">' + (isPos ? '\u2736' : lost > 0 ? '\u25C6' : '\u00B7') + '</div><div class="timeline-name">' + esc(notes.length > 65 ? notes.slice(0,62)+'\u2026' : notes) + '</div><div class="timeline-xp ' + dotCls + '">' + xpStr + '</div></div><div class="timeline-meta">' + dateStr + '</div></div></div>';
+    }).join('');
+  }
+}
+
+function showNoEvents(cardId) {
+  document.getElementById('your-life-loading').style.display    = 'none';
+  document.getElementById('your-life-no-events').style.display  = 'flex';
+  const backUrl = cardId ? 'index.html?card_id=' + encodeURIComponent(cardId) : 'index.html';
+  document.getElementById('no-events-back').href = backUrl;
+}
+
+function showPage() {
+  document.getElementById('your-life-loading').style.display = 'none';
+  document.querySelector('.page-wrap').style.display          = 'block';
+}
+
+async function loadLifeEvents(cardId) {
+  document.getElementById('your-life-loading-sub').textContent = 'Fetching life events\u2026';
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_ledger&card_id=' + encodeURIComponent(cardId), 12000);
+    if (!data || !data.success || !data.entries) { showNoEvents(cardId); return; }
+    const lifeEvents = data.entries.filter(e => (e.type || e['Interaction Type'] || '').toUpperCase() === 'LIFE_EVENT');
+    if (lifeEvents.length === 0) { showNoEvents(cardId); return; }
+    const mapped = lifeEvents.map(e => ({
+      Timestamp:          e.date   || e.Timestamp        || '',
+      'Card ID':          cardId,
+      'Interaction Type': 'LIFE_EVENT',
+      'XP Gained':        e.gained || e['XP Gained']     || 0,
+      'XP Lost':          e.lost   || e['XP Lost']       || 0,
+      Notes:              e.notes  || e.Notes            || '',
+    }));
+    renderPage(mapped, cardId);
+    showPage();
+  } catch(err) {
+    console.warn('Life events fetch error:', err);
+    showNoEvents(cardId);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const cardId = params.get('card_id') || params.get('cardId') || '';
+  const dashUrl = cardId ? 'index.html?card_id=' + encodeURIComponent(cardId) : 'index.html';
+  const backLink = document.querySelector('.header-card-name');
+  if (!cardId) { showNoEvents(''); return; }
+  loadLifeEvents(cardId);
+});
+</script>
+
 </body>
 </html>
