@@ -114,6 +114,10 @@
   .timeline-flavour { font-size:0.88rem; color:var(--text-dim); font-style:italic; line-height:1.6; margin-bottom:6px; }
   .timeline-meta { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:rgba(201,168,76,0.35); }
 
+  .page-header-top { position:relative; display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
+  .back-btn { position:absolute; left:0; background:none; border:1px solid rgba(201,168,76,0.25); color:var(--text-dim); font-family:'Cinzel',serif; font-size:0.68rem; letter-spacing:0.2em; text-transform:uppercase; padding:8px 16px; cursor:pointer; transition:all 0.3s; text-decoration:none; white-space:nowrap; }
+  .back-btn:hover { border-color:var(--gold); color:var(--gold); }
+
   .page-footer { text-align:center; padding-top:40px; border-top:1px solid rgba(201,168,76,0.1); }
   .footer-text { font-size:0.78rem; color:var(--text-dim); font-style:italic; line-height:1.8; }
   .footer-logo { font-family:'Cinzel Decorative',serif; font-size:1rem; color:var(--gold-dim); letter-spacing:0.1em; margin-top:12px; }
@@ -151,11 +155,14 @@
 <div class="page-wrap" style="display:none;">
 
   <div class="page-header">
-    <div class="header-eyebrow">PfP · Living Card</div>
+    <div class="page-header-top">
+      <a class="back-btn" id="back-link" href="#">← Dashboard</a>
+      <div class="header-eyebrow">PfP · Living Card</div>
+    </div>
     <div class="header-title">Your Life</div>
     <div class="header-subtitle">How's Life Treating You?</div>
     <div class="header-ornament"><span class="ornament-diamond">◆</span></div>
-    <div class="header-card-name">Dude_Elle &nbsp;·&nbsp; EVO-ART-1-108 &nbsp;·&nbsp; Renowned · Level 10</div>
+    <div class="header-card-name" id="header-card-name">—</div>
   </div>
 
   <div class="life-grade-hero">
@@ -506,7 +513,7 @@ async function loadLifeEvents(cardId) {
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const cardId = params.get('card_id') || params.get('cardId') || '';
-  const dashUrl = cardId ? 'dashboard/index.html?card_id=' + encodeURIComponent(cardId) : 'dashboard/index.html';
+  const dashUrl = cardId ? 'index.html?card_id=' + encodeURIComponent(cardId) : 'index.html';
   const backLink = document.querySelector('.header-card-name');
   if (!cardId) { showNoEvents(''); return; }
   loadLifeEvents(cardId);
