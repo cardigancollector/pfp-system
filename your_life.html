@@ -506,7 +506,7 @@ async function loadLifeEvents(cardId) {
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const cardId = params.get('card_id') || params.get('cardId') || '';
-  const dashUrl = cardId ? 'index.html?card_id=' + encodeURIComponent(cardId) : 'index.html';
+  const dashUrl = cardId ? 'dashboard/index.html?card_id=' + encodeURIComponent(cardId) : 'dashboard/index.html';
   const backLink = document.querySelector('.header-card-name');
   if (!cardId) { showNoEvents(''); return; }
   loadLifeEvents(cardId);
