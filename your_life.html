@@ -345,35 +345,49 @@ function ratioSummary(posPct) {
 
 function buildNarrative(events, cardId) {
   if (!events || events.length === 0) return '<p>No events to chronicle.</p>';
-  const sorted  = [...events].sort((a,b) => new Date(a.Timestamp) - new Date(b.Timestamp));
+
+  const sorted  = [...events].sort((a, b) => new Date(a.Timestamp) - new Date(b.Timestamp));
   const count   = sorted.length;
-  const posEvts = sorted.filter(e => (Number(e['XP Gained'])||0) > 0);
-  const negEvts = sorted.filter(e => (Number(e['XP Lost'])||0)   > 0);
-  const netXP   = sorted.reduce((s,e) => s + (Number(e['XP Gained'])||0) - (Number(e['XP Lost'])||0), 0);
+  const posEvts = sorted.filter(e => (Number(e['XP Gained']) || 0) > 0);
+  const negEvts = sorted.filter(e => (Number(e['XP Lost'])   || 0) > 0);
+  const netXP   = sorted.reduce((s, e) => s + (Number(e['XP Gained']) || 0) - (Number(e['XP Lost']) || 0), 0);
+  const ratio   = count > 0 ? posEvts.length / count : 0.5;
   const first   = sorted[0];
-  const topPos  = [...posEvts].sort((a,b) => (Number(b['XP Gained'])||0) - (Number(a['XP Gained'])||0))[0];
-  const topNeg  = [...negEvts].sort((a,b) => (Number(b['XP Lost'])||0)   - (Number(a['XP Lost'])||0))[0];
-  const openNote   = (first.Notes || 'an unrecorded moment').slice(0, 80);
-  const topPosNote = topPos ? (topPos.Notes || 'a moment of great fortune') : null;
-  const topNegNote = topNeg ? (topNeg.Notes || 'a moment of great difficulty') : null;
-  const paras = [];
-  paras.push('This card\'s chronicle begins with ' + esc(openNote.toLowerCase()) + '. The first mark was made, and the record started.');
-  if (count >= 5) {
-    const mid = negEvts.length > 0
-      ? 'The record carries ' + negEvts.length + ' difficult ' + (negEvts.length === 1 ? 'moment' : 'moments') + ' — ' + esc((topNegNote||'').toLowerCase()) + '. These entries do not disappear. They are part of what this card has carried.'
-      : 'The record has been spared significant hardship so far. ' + posEvts.length + ' fortunate ' + (posEvts.length === 1 ? 'entry' : 'entries') + ' mark the path taken.';
-    paras.push(mid);
-  }
-  if (topPos) {
-    paras.push('The highest point in this chronicle: ' + esc((topPosNote||'').toLowerCase()) + ' — yielding +' + Number(topPos['XP Gained']).toLocaleString() + ' XP. A moment that defines what this card is capable of.');
-  }
-  const netSign = netXP >= 0 ? 'positive' : 'negative';
-  paras.push('The chronicle now stands at ' + count + ' recorded ' + (count === 1 ? 'event' : 'events') + ', with a net ' + netSign + ' balance of ' + (netXP >= 0 ? '+' : '') + netXP.toLocaleString() + ' XP from life. What remains is a life that is — in the only way that matters — continuing.');
-  return paras.map((p, i) =>
-    i === 0 ? '<p><span class="narrative-opening">"</span>' + p + '</p>'
-    : i === paras.length - 1 ? '<p>' + p + '"</p>'
-    : '<p>' + p + '</p>'
-  ).join('');
+  const topPos  = [...posEvts].sort((a, b) => (Number(b['XP Gained']) || 0) - (Number(a['XP Gained']) || 0))[0];
+  const topNeg  = [...negEvts].sort((a, b) => (Number(b['XP Lost'])   || 0) - (Number(a['XP Lost'])   || 0))[0];
+
+  const vars = {
+    first_event: esc((first.Notes || 'an unrecorded moment').slice(0, 80).toLowerCase()),
+    event:       topPos ? esc((topPos.Notes || '').toLowerCase()) : '',
+    xp:          netXP >= 0 ? '+' + netXP.toLocaleString() : netXP.toLocaleString(),
+    count:       count,
+    net_xp:      netXP >= 0 ? '+' + netXP.toLocaleString() : netXP.toLocaleString(),
+    card_id:     esc(cardId || ''),
+  };
+
+  // Pick opener
+  const openerRaw = pickFlavour(LIFE_FLAVOURS.opener);
+  const opener    = fillFlavour(openerRaw, vars);
+
+  // Pick middle paragraph based on ratio
+  let middlePool;
+  if (ratio >= 0.6)      middlePool = LIFE_FLAVOURS.positive;
+  else if (ratio <= 0.4) middlePool = LIFE_FLAVOURS.negative;
+  else                   middlePool = LIFE_FLAVOURS.balanced;
+
+  const middle1 = fillFlavour(pickFlavour(middlePool), vars);
+  const middle2 = fillFlavour(pickFlavour(middlePool), vars);
+
+  // Pick closer
+  const closerRaw = pickFlavour(LIFE_FLAVOURS.closer);
+  const closer    = fillFlavour(closerRaw, vars);
+
+  return [
+    '<p><span class="narrative-opening">"</span>' + opener + '</p>',
+    '<p>' + middle1 + '</p>',
+    count >= 5 ? '<p>' + middle2 + '</p>' : '',
+    '<p>' + closer + '"</p>',
+  ].filter(Boolean).join('');
 }
 
 function renderPage(events, cardId) {
