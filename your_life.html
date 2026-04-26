@@ -381,8 +381,10 @@ function buildNarrative(events, cardId) {
     card_id:     esc(cardId || ''),
   };
 
+const rng = seededRandom(cardId + '-' + count);
+
   // Pick opener
-  const openerRaw = pickFlavour(LIFE_FLAVOURS.opener);
+  const openerRaw = pickFlavourSeeded(LIFE_FLAVOURS.opener, rng);
   const opener    = fillFlavour(openerRaw, vars);
 
   // Pick middle paragraph based on ratio
@@ -391,11 +393,11 @@ function buildNarrative(events, cardId) {
   else if (ratio <= 0.4) middlePool = LIFE_FLAVOURS.negative;
   else                   middlePool = LIFE_FLAVOURS.balanced;
 
-  const middle1 = fillFlavour(pickFlavour(middlePool), vars);
-  const middle2 = fillFlavour(pickFlavour(middlePool), vars);
+  const middle1 = fillFlavour(pickFlavourSeeded(middlePool, rng), vars);
+  const middle2 = fillFlavour(pickFlavourSeeded(middlePool, rng), vars);
 
   // Pick closer
-  const closerRaw = pickFlavour(LIFE_FLAVOURS.closer);
+  const closerRaw = pickFlavourSeeded(LIFE_FLAVOURS.closer, rng);
   const closer    = fillFlavour(closerRaw, vars);
 
   return [
