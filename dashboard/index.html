@@ -1025,10 +1025,8 @@ async function logScan() {
 
       feedback.className = 'scan-feedback success';
 
-      if (data.totalXP !== undefined) {
-        document.getElementById('d-xp').textContent = data.totalXP.toLocaleString();
-        if (livingCard) livingCard['Current XP'] = data.totalXP;
-      }
+      await fetchFreshLivingCard();
+      buildDashboard(true);
     } else {
       const alreadyScanned = data.error && data.error.toLowerCase().includes('already scanned');
       if (alreadyScanned) {
