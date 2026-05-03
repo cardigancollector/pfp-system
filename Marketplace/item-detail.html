@@ -15,6 +15,9 @@
       --border-md: rgba(232, 228, 220, 0.28);
       --text:      #e8e4dc;
       --muted:     #a8a9ad;
+      --gold:      #c9a84c;
+      --red:       #e74c3c;
+      --green:     #2ecc71;
       --font-display: 'Cinzel Decorative', serif;
       --font-body:    'Crimson Pro', Georgia, serif;
     }
@@ -36,15 +39,94 @@
       z-index: 0;
     }
 
+    /* ── LOADING SCREEN ── */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid rgba(201,168,76,0.15);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-label {
+      font-size: 9px;
+      letter-spacing: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* ── ERROR SCREEN ── */
+    #error-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--bg);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    #error-screen.visible { display: flex; }
+
+    .error-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      color: var(--text);
+      letter-spacing: 1px;
+    }
+
+    .error-msg {
+      font-size: 14px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .error-back {
+      margin-top: 12px;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .error-back:hover { opacity: 1; }
+
+    /* ── PAGE ── */
     .page {
       position: relative;
       z-index: 1;
       max-width: 480px;
       margin: 0 auto;
       padding: 0 0 60px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
     }
 
-    /* Header */
+    .page.visible { opacity: 1; }
+
+    /* ── HEADER ── */
     .header {
       display: flex;
       justify-content: space-between;
@@ -62,6 +144,7 @@
       font-size: 10px;
       letter-spacing: 3px;
       color: var(--text);
+      text-decoration: none;
     }
 
     .xp-wrap { text-align: right; }
@@ -80,7 +163,7 @@
       letter-spacing: 1px;
     }
 
-    /* Image area */
+    /* ── IMAGE ── */
     .image-wrap {
       display: flex;
       justify-content: center;
@@ -98,13 +181,11 @@
       overflow: hidden;
     }
 
-    /* Poker card proportions */
     .item-image.poker {
       width: 200px;
       aspect-ratio: 2.5 / 3.5;
     }
 
-    /* Square for prints and jerseys */
     .item-image.square {
       width: 100%;
       max-width: 320px;
@@ -120,7 +201,6 @@
       display: block;
     }
 
-    /* Corner brackets */
     .corner {
       position: absolute;
       width: 14px;
@@ -131,7 +211,6 @@
     .corner.bl { bottom: 8px; left: 8px; border-bottom: 0.5px solid var(--muted); border-left: 0.5px solid var(--muted); }
     .corner.br { bottom: 8px; right: 8px; border-bottom: 0.5px solid var(--muted); border-right: 0.5px solid var(--muted); }
 
-    /* Type badge on image */
     .type-badge {
       position: absolute;
       top: 10px;
@@ -145,7 +224,23 @@
       color: var(--muted);
     }
 
-    /* Item title area */
+    /* Sold out overlay on image */
+    .sold-out-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(17,19,24,0.75);
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .sold-out-overlay.visible { display: flex; }
+
+    /* ── TITLE ── */
     .item-title-wrap {
       padding: 24px 20px 0;
       animation: fadeUp 0.7s ease 0.08s both;
@@ -167,7 +262,7 @@
       line-height: 1.4;
     }
 
-    /* Metadata strip */
+    /* ── META STRIP ── */
     .meta-strip {
       display: flex;
       justify-content: space-around;
@@ -202,7 +297,36 @@
       background: var(--border-md);
     }
 
-    /* Description */
+    /* ── AVAILABILITY BAR ── */
+    .avail-wrap {
+      margin: 16px 20px 0;
+      animation: fadeUp 0.7s ease 0.18s both;
+    }
+
+    .avail-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .avail-track {
+      height: 2px;
+      background: rgba(201,168,76,0.12);
+      overflow: hidden;
+    }
+
+    .avail-fill {
+      height: 100%;
+      background: var(--gold);
+      width: 0%;
+      transition: width 1s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    /* ── DESCRIPTION ── */
     .description {
       padding: 22px 20px;
       animation: fadeUp 0.7s ease 0.2s both;
@@ -223,7 +347,7 @@
       font-style: italic;
     }
 
-    /* Cost + redeem section */
+    /* ── REDEEM SECTION ── */
     .redeem-section {
       margin: 0 20px;
       border: 0.5px solid var(--border);
@@ -236,7 +360,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
     }
 
     .redeem-label {
@@ -251,6 +375,18 @@
       font-size: 16px;
       color: var(--text);
     }
+
+    /* Afford status line */
+    .afford-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+      font-size: 11px;
+      font-style: italic;
+    }
+
+    .afford-row.can   { color: var(--green); }
+    .afford-row.cannot { color: var(--red); }
 
     .btn-redeem {
       display: block;
@@ -268,10 +404,16 @@
       transition: opacity 0.2s, transform 0.15s;
     }
 
-    .btn-redeem:hover { opacity: 0.9; }
-    .btn-redeem:active { transform: scale(0.99); }
+    .btn-redeem:hover:not(.disabled) { opacity: 0.9; }
+    .btn-redeem:active:not(.disabled) { transform: scale(0.99); }
 
-    /* Back link */
+    .btn-redeem.disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ── BACK LINK ── */
     .back-link {
       display: block;
       text-align: center;
@@ -298,13 +440,27 @@
 </head>
 <body>
 
-<div class="page">
+<!-- Loading -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div class="loading-label">Loading item…</div>
+</div>
+
+<!-- Error -->
+<div id="error-screen">
+  <div class="error-title">Item Not Found</div>
+  <div class="error-msg" id="error-msg">This item could not be loaded.</div>
+  <a class="error-back" href="marketplace.html">← Back to Marketplace</a>
+</div>
+
+<!-- Page -->
+<div class="page" id="page">
 
   <header class="header">
-    <span class="logo">XP Marketplace</span>
+    <a class="logo" href="spotlight.html">XP Marketplace</a>
     <div class="xp-wrap">
       <span class="xp-label">Available XP</span>
-      <span class="xp-value" id="header-xp">7,150 XP</span>
+      <span class="xp-value" id="header-xp">—</span>
     </div>
   </header>
 
@@ -315,6 +471,7 @@
       <div class="corner bl"></div>
       <div class="corner br"></div>
       <div class="type-badge" id="type-badge">Card</div>
+      <div class="sold-out-overlay" id="sold-out-overlay">Sold Out</div>
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
         <rect x="1" y="1" width="46" height="46" stroke="#e8e4dc" stroke-width="0.5"/>
         <line x1="1" y1="1" x2="47" y2="47" stroke="#e8e4dc" stroke-width="0.5"/>
@@ -325,47 +482,58 @@
 
   <div class="item-title-wrap">
     <div class="item-eyebrow" id="item-eyebrow">Card</div>
-    <div class="item-title" id="item-title">The Founder's Edition</div>
+    <div class="item-title" id="item-title">—</div>
   </div>
 
   <div class="meta-strip">
     <div class="meta-item">
-      <span class="meta-val" id="editions-issued">47</span>
+      <span class="meta-val" id="editions-issued">—</span>
       <span class="meta-lbl">Editions Issued</span>
     </div>
     <div class="meta-divider"></div>
     <div class="meta-item">
-      <span class="meta-val" id="editions-remaining">12</span>
+      <span class="meta-val" id="editions-remaining">—</span>
       <span class="meta-lbl">Remaining</span>
     </div>
     <div class="meta-divider"></div>
     <div class="meta-item">
-      <span class="meta-val" id="date-issued">Apr 29, 2026</span>
-      <span class="meta-lbl">Date Issued</span>
+      <span class="meta-val" id="date-issued">—</span>
+      <span class="meta-lbl">Date Listed</span>
+    </div>
+  </div>
+
+  <div class="avail-wrap">
+    <div class="avail-label-row">
+      <span>Availability</span>
+      <span id="avail-text">—</span>
+    </div>
+    <div class="avail-track">
+      <div class="avail-fill" id="avail-fill"></div>
     </div>
   </div>
 
   <div class="description">
     <div class="desc-eyebrow">Description</div>
-    <p class="desc-text" id="item-description">Loading...</p>
+    <p class="desc-text" id="item-description">—</p>
   </div>
 
   <div class="redeem-section">
     <div class="redeem-row">
       <span class="redeem-label">Redeem for</span>
-      <span class="redeem-cost" id="redeem-cost">2,500 XP</span>
+      <span class="redeem-cost" id="redeem-cost">—</span>
     </div>
+    <div class="afford-row" id="afford-row"></div>
     <a class="btn-redeem" id="btn-redeem" href="#">Redeem This Item</a>
   </div>
 
-  <a class="back-link" href="marketplace.html">&#8592; Back to Marketplace</a>
+  <a class="back-link" id="back-link" href="marketplace.html">← Back to Marketplace</a>
 
 </div>
 
- <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+<script type="module">
+  import { initializeApp }  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, doc, getDoc }  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
@@ -382,11 +550,7 @@
 
   const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 
-  let currentUser = null;
-  let userXP      = 0;
-  let userCards   = [];
-  let cardData    = null;
-
+  // ── JSONP ──
   function jsonpFetch(url, timeout) {
     return new Promise((resolve, reject) => {
       const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
@@ -414,124 +578,204 @@
     return new URLSearchParams(window.location.search).get('from') || 'marketplace';
   }
 
+  function showError(msg) {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('error-msg').textContent = msg || 'This item could not be loaded.';
+    document.getElementById('error-screen').classList.add('visible');
+  }
+
+  function hideLoading() {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('page').classList.add('visible');
+  }
+
+  // ── AUTH GUARD ──
   onAuthStateChanged(auth, async user => {
-    if (!user) { window.location.href = 'login.html'; return; }
-    currentUser = user;
-    await Promise.all([loadUserData(user), loadCardData()]);
-    render();
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const cardId = getCardIdFromURL();
+    if (!cardId) {
+      showError('No item ID provided.');
+      return;
+    }
+
+    // Load user XP and marketplace data in parallel
+    const [userXP] = await Promise.all([
+      loadUserXP(user),
+      loadAndRender(cardId, user)
+    ]);
   });
 
-  async function loadUserData(user) {
+  // ── LOAD USER XP ──
+  async function loadUserXP(user) {
     try {
-      const snap = await getDoc(doc(db, 'users', user.uid));
-      if (!snap.exists()) return;
-      const cards = snap.data().cards || [];
-      userCards = cards.map(c => c.cardId);
+      const userSnap = await getDoc(doc(db, 'users', user.uid));
+      if (!userSnap.exists()) return 0;
+      const cards = userSnap.data().cards || [];
+      if (cards.length === 0) return 0;
 
-      if (userCards.length === 0) { updateXPDisplay(0); return; }
-
-      const fetches = userCards.map(async id => {
+      const fetches = cards.map(async c => {
         try {
-          const res = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(id), 8000);
+          const res = await jsonpFetch(
+            LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(c.cardId), 8000
+          );
           if (res && res.success && res.card) return parseInt(res.card['Current XP']) || 0;
         } catch(e) {}
         return 0;
       });
 
-      userXP = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
-      updateXPDisplay(userXP);
+      const total = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
+      document.getElementById('header-xp').textContent = fmt(total) + ' XP';
+      return total;
     } catch(err) {
-      updateXPDisplay(0);
+      return 0;
     }
   }
 
-  function updateXPDisplay(xp) {
-    userXP = xp;
-    document.getElementById('header-xp').textContent = fmt(xp) + ' XP';
-  }
-
-  async function loadCardData() {
-    const cardId = getCardIdFromURL();
-    if (!cardId) { showError(); return; }
-
+  // ── LOAD MARKETPLACE AND RENDER ──
+  async function loadAndRender(cardId, user) {
     try {
       const data = await jsonpFetch(LIVING_API + '?action=get_marketplace', 12000);
-      if (!data || !data.success || !data.cards) { showError(); return; }
-      cardData = data.cards.find(c => c.cardId === cardId);
-      if (!cardData) showError();
+
+      if (!data || !data.success || !data.cards) {
+        showError('Could not load marketplace data. Please try again.');
+        return;
+      }
+
+      const card = data.cards.find(c => String(c.cardId) === String(cardId));
+
+      if (!card) {
+        showError('Item not found in the marketplace.');
+        return;
+      }
+
+      // Get current XP from header (may still be loading, so we re-fetch)
+      let userXP = 0;
+      try {
+        const userSnap = await getDoc(doc(db, 'users', user.uid));
+        if (userSnap.exists()) {
+          const registeredCards = userSnap.data().cards || [];
+          const fetches = registeredCards.map(async c => {
+            try {
+              const res = await jsonpFetch(
+                LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(c.cardId), 8000
+              );
+              if (res && res.success && res.card) return parseInt(res.card['Current XP']) || 0;
+            } catch(e) {}
+            return 0;
+          });
+          userXP = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
+        }
+      } catch(e) {}
+
+      render(card, userXP);
+
     } catch(err) {
-      showError();
+      showError('Connection error — please refresh and try again.');
     }
   }
 
-  function render() {
-    if (!cardData) return;
+  // ── RENDER ──
+  function render(card, userXP) {
+    const remaining  = parseInt(card.remaining)   || 0;
+    const edition    = parseInt(card.editionSize) || 0;
+    const xpPrice    = parseInt(card.xpPrice)     || 0;
+    const soldOut    = remaining <= 0;
+    const canAfford  = userXP >= xpPrice;
+    const availPct   = edition > 0 ? Math.round((remaining / edition) * 100) : 0;
+    const format     = (card.format || 'Card').toLowerCase();
+    const label      = card.format || 'Card';
+    const imageShape = format === 'card' ? 'poker' : 'square';
 
-    const remaining = parseInt(cardData.remaining)  || 0;
-    const edition   = parseInt(cardData.editionSize) || 0;
-    const xpPrice   = parseInt(cardData.xpPrice)    || 0;
-    const format    = cardData.format || 'Card';
-    const label     = format.charAt(0).toUpperCase() + format.slice(1);
-    const soldOut   = remaining <= 0;
-    const canAfford = userXP >= xpPrice;
+    // Back link
+    const from = getFromParam();
+    document.getElementById('back-link').href = from === 'spotlight' ? 'spotlight.html' : 'marketplace.html';
+    document.getElementById('back-link').textContent = from === 'spotlight'
+      ? '← Back to Spotlight'
+      : '← Back to Marketplace';
 
-    const imageEl = document.getElementById('item-image');
-    imageEl.classList.add(format.toLowerCase() === 'card' ? 'poker' : 'square');
+    // Image shape
+    document.getElementById('item-image').classList.add(imageShape);
 
-    if (cardData.imageUrl) {
-      imageEl.innerHTML = `
-        <div class="corner tl"></div>
-        <div class="corner tr"></div>
-        <div class="corner bl"></div>
-        <div class="corner br"></div>
-        <div class="type-badge">${label}</div>
-        <img src="${cardData.imageUrl}" alt="${cardData.cardName}" />
-      `;
-    } else {
-      document.getElementById('type-badge').textContent = label;
+    // Type badge
+    document.getElementById('type-badge').textContent  = label;
+    document.getElementById('item-eyebrow').textContent = label;
+
+    // Sold out overlay
+    if (soldOut) {
+      document.getElementById('sold-out-overlay').classList.add('visible');
     }
 
-    document.getElementById('item-eyebrow').textContent       = label;
-    document.getElementById('item-title').textContent         = cardData.cardName  || '—';
-    document.getElementById('item-description').textContent   = cardData.description || '—';
-    document.getElementById('editions-issued').textContent    = fmt(edition);
+    // Image
+    if (card.imageUrl) {
+      const imageEl = document.getElementById('item-image');
+      const img = document.createElement('img');
+      img.src = card.imageUrl;
+      img.alt = card.cardName || '';
+      img.onerror = () => img.remove();
+      imageEl.appendChild(img);
+    }
+
+    // Title
+    document.getElementById('item-title').textContent = card.cardName || '—';
+
+    // Meta strip
+    document.getElementById('editions-issued').textContent   = fmt(edition);
     document.getElementById('editions-remaining').textContent = fmt(remaining);
-    document.getElementById('redeem-cost').textContent        = fmt(xpPrice) + ' XP';
 
-    if (cardData.dateAdded) {
-      const d = new Date(cardData.dateAdded);
-      document.getElementById('date-issued').textContent =
-        d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+    if (card.dateAdded) {
+      const d = new Date(card.dateAdded);
+      document.getElementById('date-issued').textContent = isNaN(d)
+        ? String(card.dateAdded)
+        : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
-    document.getElementById('back-link').href =
-      getFromParam() === 'spotlight' ? 'spotlight.html' : 'marketplace.html';
+    // Availability bar
+    document.getElementById('avail-text').textContent = remaining + ' of ' + edition + ' remaining';
+    setTimeout(() => {
+      document.getElementById('avail-fill').style.width = availPct + '%';
+    }, 400);
 
+    // Description
+    document.getElementById('item-description').textContent = card.description || '—';
+
+    // XP cost
+    document.getElementById('redeem-cost').textContent = fmt(xpPrice) + ' XP';
+
+    // Afford indicator
+    const affordEl = document.getElementById('afford-row');
+    if (soldOut) {
+      affordEl.textContent = '';
+    } else if (canAfford) {
+      affordEl.textContent = '✓ You can afford this';
+      affordEl.className   = 'afford-row can';
+    } else {
+      const needed = xpPrice - userXP;
+      affordEl.textContent = fmt(needed) + ' more XP needed';
+      affordEl.className   = 'afford-row cannot';
+    }
+
+    // Redeem button
     const btn = document.getElementById('btn-redeem');
     if (soldOut) {
       btn.textContent = 'Sold Out';
-      btn.style.opacity = '0.4';
-      btn.style.pointerEvents = 'none';
+      btn.classList.add('disabled');
     } else if (!canAfford) {
       btn.textContent = 'Insufficient XP';
-      btn.style.opacity = '0.4';
-      btn.style.pointerEvents = 'none';
+      btn.classList.add('disabled');
     } else {
-      const params = new URLSearchParams({
-        card_id:   cardData.cardId,
-        name:      cardData.cardName,
-        xp:        xpPrice,
-        edition:   edition,
-        remaining: remaining,
-        format:    format
-      });
+      const params = new URLSearchParams({ card_id: card.cardId, from: getFromParam() });
       btn.href = 'confirmation.html?' + params.toString();
+      btn.textContent = 'Redeem This Item';
     }
-  }
 
-  function showError() {
-    document.getElementById('item-title').textContent       = 'Item not found';
-    document.getElementById('item-description').textContent = 'This item could not be loaded.';
+    // Header XP (update now that we have it)
+    document.getElementById('header-xp').textContent = fmt(userXP) + ' XP';
+
+    hideLoading();
   }
 </script>
 
