@@ -410,7 +410,7 @@
       }
 
       const cardPromises = registeredCards.map(c =>
-        jsonpFetch(SHEETS_API + '?action=get_card&card_id=' + encodeURIComponent(c.cardId), 10000)
+        jsonpFetch(SHEETS_API + '?action=get_card&card_id=' + encodeURIComponent(c.cardId || c), 10000)
           .then(res => (res && res.success && res.card) ? res.card : null)
           .catch(() => null)
       );
