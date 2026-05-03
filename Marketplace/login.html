@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XP Marketplace — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #111318;
+    --bg2:       #181b22;
+    --bg3:       #1e2229;
+    --text:      #e8e4dc;
+    --muted:     #a8a9ad;
+    --gold:      #c9a84c;
+    --gold-dim:  #7a6530;
+    --gold-lite: #e8c97a;
+    --green:     #2ecc71;
+    --red:       #e74c3c;
+    --border:    rgba(201,168,76,0.18);
+    --border-h:  rgba(201,168,76,0.55);
+    --glass:     rgba(17,19,24,0.85);
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Crimson Pro', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── ATMOSPHERIC BACKGROUND ── */
+  .bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(201,168,76,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 90%, rgba(201,168,76,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 100% at 50% 50%, #131620 0%, #0e1015 100%);
+  }
+  .bg-lines {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+  }
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    animation: drift 12s ease-in-out infinite alternate;
+  }
+  .orb-1 { width:500px; height:500px; background:rgba(201,168,76,0.06); top:-200px; right:-150px; animation-delay: 0s; }
+  .orb-2 { width:400px; height:400px; background:rgba(201,168,76,0.04); bottom:-150px; left:-100px; animation-delay: -6s; }
+  @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,20px) scale(1.05); } }
+
+  /* ── MAIN WRAPPER ── */
+  .page {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 460px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--gold);
+    backdrop-filter: blur(24px);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.4),
+      0 40px 80px rgba(0,0,0,0.6),
+      0 0 120px rgba(201,168,76,0.05),
+      inset 0 1px 0 rgba(201,168,76,0.1);
+    animation: riseIn 0.7s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes riseIn {
+    from { opacity:0; transform: translateY(32px) scale(0.97); }
+    to   { opacity:1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── HEADER ── */
+  .card-header {
+    padding: 48px 48px 32px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: var(--gold);
+  }
+  .logo {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 2.2rem;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 60px rgba(201,168,76,0.5), 0 0 20px rgba(201,168,76,0.3);
+    margin-bottom: 6px;
+    animation: glow 3s ease-in-out infinite alternate;
+  }
+  @keyframes glow {
+    from { text-shadow: 0 0 40px rgba(201,168,76,0.4), 0 0 15px rgba(201,168,76,0.2); }
+    to   { text-shadow: 0 0 80px rgba(201,168,76,0.7), 0 0 30px rgba(201,168,76,0.4); }
+  }
+  .logo-sub {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.45em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .header-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.05rem;
+    color: var(--text);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+  .header-desc {
+    font-size: 0.92rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 16px;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.25s;
+    border-bottom: 2px solid transparent;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    position: relative;
+  }
+  .tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    background: rgba(201,168,76,0.04);
+  }
+  .tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.02); }
+
+  /* ── FORM PANELS ── */
+  .panel { display: none; padding: 36px 48px 44px; }
+  .panel.active { display: block; animation: fadeIn 0.3s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+
+  /* ── FORM ELEMENTS ── */
+  .field { margin-bottom: 20px; }
+  .field-label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .field-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--gold-dim);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.05rem;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+    appearance: none;
+  }
+  .field-input:focus {
+    border-color: var(--gold);
+    border-bottom-color: var(--gold);
+    background: rgba(201,168,76,0.04);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+  }
+  .field-input::placeholder { color: rgba(168,169,173,0.5); }
+  .field-input.claim { text-transform: uppercase; letter-spacing: 2px; font-size: 0.95rem; }
+
+  /* ── DIVIDER ── */
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .or-divider::before, .or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .or-divider span {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    width: 100%;
+    padding: 15px 24px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: none;
+    outline: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: #0e1015;
+    margin-bottom: 12px;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--gold), var(--gold-lite));
+    box-shadow: 0 0 30px rgba(201,168,76,0.3);
+    transform: translateY(-1px);
+  }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .btn-google {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-google:hover {
+    background: rgba(255,255,255,0.09);
+    border-color: var(--border-h);
+  }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--gold);
+  }
+  .btn-secondary:hover { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+
+  /* Google icon */
+  .g-icon { width:18px; height:18px; }
+
+  /* ── MESSAGES ── */
+  .msg {
+    font-size: 0.85rem;
+    margin-top: 12px;
+    min-height: 20px;
+    text-align: center;
+    font-style: italic;
+    transition: all 0.3s;
+  }
+  .msg.error { color: var(--red); }
+  .msg.success { color: var(--green); }
+  .msg.info { color: var(--muted); }
+
+  /* ── REGISTER CARD SECTION ── */
+  #register-panel {
+    display: none;
+    padding: 36px 48px 44px;
+    animation: fadeIn 0.4s ease both;
+  }
+  #register-panel.active { display: block; }
+
+  .register-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+  .register-desc {
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  .cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .card-registered {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(46,204,113,0.06);
+    border: 1px solid rgba(46,204,113,0.2);
+    font-size: 0.88rem;
+  }
+  .card-registered .cr-icon { color: var(--green); font-size: 1rem; flex-shrink:0; }
+  .card-registered .cr-name { color: var(--text); flex: 1; font-family:'Cinzel',serif; font-size:0.82rem; }
+  .card-registered .cr-id { color: var(--muted); font-size:0.72rem; letter-spacing:0.05em; }
+
+  .add-card-row { display: flex; gap: 10px; margin-bottom: 8px; }
+  .add-card-row .field-input { margin: 0; flex: 1; }
+  .btn-add {
+    padding: 12px 20px;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-add:hover { background: rgba(201,168,76,0.2); }
+  .btn-add:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .hint {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-style: italic;
+    line-height: 1.5;
+    margin-bottom: 28px;
+  }
+
+  /* ── FOOTER ── */
+  .card-footer {
+    padding: 16px 48px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .footer-text {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* ── LOADING OVERLAY ── */
+  #loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(14,16,21,0.88);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+    backdrop-filter: blur(4px);
+  }
+  #loading-overlay.active { display: flex; }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 2px solid rgba(201,168,76,0.2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.85s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  @media (max-width: 520px) {
+    .card-header, .panel, #register-panel, .card-footer { padding-left: 24px; padding-right: 24px; }
+    .logo { font-size: 1.7rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-canvas"></div>
+<div class="bg-lines"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-label" id="loading-label">Authenticating…</div>
+</div>
+
+<div class="page">
+  <div class="card">
+
+    <div class="card-header">
+      <div class="logo">XP</div>
+      <div class="logo-sub">Marketplace</div>
+      <div class="header-title" id="header-title">Welcome Back</div>
+      <div class="header-desc" id="header-desc">Sign in to access your card collection</div>
+    </div>
+
+    <!-- AUTH TABS -->
+    <div class="tabs" id="auth-tabs">
+      <button class="tab active" onclick="switchTab('signin')">Sign In</button>
+      <button class="tab" onclick="switchTab('signup')">Create Account</button>
+    </div>
+
+    <!-- SIGN IN PANEL -->
+    <div class="panel active" id="panel-signin">
+      <div class="field">
+        <label class="field-label">Email Address</label>
+        <input class="field-input" type="email" id="signin-email" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label class="field-label">Password</label>
+        <input class="field-input" type="password" id="signin-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" id="signin-btn" onclick="doSignIn()">
+        <span>✦</span> Sign In
+      </button>
+      <div class="or-divider"><span>or</span></div>
+      <button class="btn btn-google" onclick="doGoogleSignIn()">
+        <svg class="g-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+      <div class="msg" id="signin-msg"></div>
+    </div>
+
+    <!-- SIGN UP PANEL -->
+    <div class="panel" id="panel-signup">
+      <div class="field">
+        <label class="field-label">Email Address</label>
+        <input class="field-input" type="email" id="signup-email" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label class="field-label">Password</label>
+        <input class="field-input" type="password" id="signup-password" placeholder="Min. 6 characters" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label class="field-label">Confirm Password</label>
+        <input class="field-input" type="password" id="signup-confirm" placeholder="Repeat password" autocomplete="new-password">
+      </div>
+      <button class="btn btn-primary" id="signup-btn" onclick="doSignUp()">
+        <span>✦</span> Create Account
+      </button>
+      <div class="or-divider"><span>or</span></div>
+      <button class="btn btn-google" onclick="doGoogleSignIn()">
+        <svg class="g-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+      <div class="msg" id="signup-msg"></div>
+    </div>
+
+    <!-- REGISTER CARD PANEL (shown after first login) -->
+    <div id="register-panel">
+      <div class="register-title">Register Your Cards</div>
+      <div class="register-desc">Enter the claim code from each of your physical cards to link them to your account and begin earning XP.</div>
+
+      <div class="cards-list" id="cards-list">
+        <!-- registered cards appear here -->
+      </div>
+
+      <div class="add-card-row">
+        <input class="field-input claim" type="text" id="claim-input" placeholder="CLAIM-XXXXXX" maxlength="12">
+        <button class="btn-add" id="add-card-btn" onclick="addCard()">Add Card</button>
+      </div>
+      <div class="msg" id="register-msg"></div>
+
+      <div class="hint" id="register-hint">The claim code came with your physical card. Each code can only be registered once.</div>
+
+      <button class="btn btn-primary" id="enter-btn" onclick="enterMarketplace()" style="margin-top:8px;">
+        <span>✦</span> Enter the Marketplace
+      </button>
+      <button class="btn btn-secondary" style="margin-top:8px;" onclick="skipRegistration()">
+        Skip for Now
+      </button>
+    </div>
+
+    <div class="card-footer">
+      <div class="footer-text">PfP Card System &nbsp;·&nbsp; XP Marketplace</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    GoogleAuthProvider,
+    signInWithPopup,
+    onAuthStateChanged
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc,
+    arrayUnion
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  // ── FIREBASE CONFIG ── Replace with your actual config
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain:        "pfp-system.firebaseapp.com",
+    projectId:         "pfp-system",
+    storageBucket:     "pfp-system.appspot.com",
+    messagingSenderId: "643360345707",
+    appId:             "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+
+  // ── STATE ──
+  let currentUser      = null;
+  let registeredCards  = [];
+  let isNewUser        = false;
+
+  // ── JSONP HELPER ──
+  function jsonpFetch(url, timeout) {
+    return new Promise((resolve, reject) => {
+      const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+      const script = document.createElement('script');
+      const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 10000);
+      function cleanup() {
+        clearTimeout(timer);
+        delete window[cb];
+        if (document.body.contains(script)) document.body.removeChild(script);
+      }
+      window[cb]     = data => { cleanup(); resolve(data); };
+      script.onerror = ()   => { cleanup(); reject(new Error('script error')); };
+      script.src     = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
+      document.body.appendChild(script);
+    });
+  }
+
+  // ── LOADING ──
+  function showLoading(label) {
+    document.getElementById('loading-label').textContent = label || 'Loading…';
+    document.getElementById('loading-overlay').classList.add('active');
+  }
+  function hideLoading() {
+    document.getElementById('loading-overlay').classList.remove('active');
+  }
+
+  // ── AUTH STATE LISTENER ──
+  onAuthStateChanged(auth, async user => {
+    if (user) {
+      currentUser = user;
+      await handleAuthenticatedUser(user, isNewUser);
+    }
+  });
+
+  // ── HANDLE AUTHENTICATED USER ──
+  async function handleAuthenticatedUser(user, newUser) {
+    showLoading('Loading your account…');
+    try {
+      const userRef  = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        // Brand new user — create Firestore document
+        await setDoc(userRef, {
+          email:      user.email,
+          createdAt:  new Date().toISOString(),
+          cards:      [],
+          xpTotal:    0
+        });
+        hideLoading();
+        showRegisterPanel([]);
+      } else {
+        const data = userSnap.data();
+        registeredCards = data.cards || [];
+
+        if (registeredCards.length === 0) {
+          // Has account but no cards yet
+          hideLoading();
+          showRegisterPanel([]);
+        } else {
+          // Returning user with cards — go straight to spotlight
+          hideLoading();
+          goToSpotlight();
+        }
+      }
+    } catch(err) {
+      hideLoading();
+      console.error('Firestore error:', err);
+      // If Firestore fails, still let them through
+      goToSpotlight();
+    }
+  }
+
+  // ── SIGN IN ──
+  window.doSignIn = async function() {
+    const email    = document.getElementById('signin-email').value.trim();
+    const password = document.getElementById('signin-password').value;
+    const msgEl    = document.getElementById('signin-msg');
+    const btn      = document.getElementById('signin-btn');
+
+    msgEl.textContent = '';
+    if (!email || !password) { showMsg(msgEl, 'Please enter your email and password.', 'error'); return; }
+
+    btn.disabled = true;
+    showLoading('Signing in…');
+
+    try {
+      isNewUser = false;
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch(err) {
+      hideLoading();
+      btn.disabled = false;
+      showMsg(msgEl, friendlyError(err.code), 'error');
+    }
+  };
+
+  // ── SIGN UP ──
+  window.doSignUp = async function() {
+    const email    = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const confirm  = document.getElementById('signup-confirm').value;
+    const msgEl    = document.getElementById('signup-msg');
+    const btn      = document.getElementById('signup-btn');
+
+    msgEl.textContent = '';
+    if (!email || !password) { showMsg(msgEl, 'Please fill in all fields.', 'error'); return; }
+    if (password.length < 6) { showMsg(msgEl, 'Password must be at least 6 characters.', 'error'); return; }
+    if (password !== confirm) { showMsg(msgEl, 'Passwords do not match.', 'error'); return; }
+
+    btn.disabled = true;
+    showLoading('Creating your account…');
+
+    try {
+      isNewUser = true;
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch(err) {
+      hideLoading();
+      btn.disabled = false;
+      showMsg(msgEl, friendlyError(err.code), 'error');
+    }
+  };
+
+  // ── GOOGLE SIGN IN ──
+  window.doGoogleSignIn = async function() {
+    const provider = new GoogleAuthProvider();
+    showLoading('Connecting to Google…');
+    try {
+      isNewUser = false;
+      await signInWithPopup(auth, provider);
+    } catch(err) {
+      hideLoading();
+      if (err.code !== 'auth/popup-closed-by-user') {
+        showMsg(document.getElementById('signin-msg'), friendlyError(err.code), 'error');
+      }
+    }
+  };
+
+  // ── ADD CARD ──
+  window.addCard = async function() {
+    const input  = document.getElementById('claim-input');
+    const code   = input.value.trim().toUpperCase();
+    const msgEl  = document.getElementById('register-msg');
+    const btn    = document.getElementById('add-card-btn');
+
+    msgEl.textContent = '';
+    if (!code || code.length < 6) { showMsg(msgEl, 'Please enter a valid claim code.', 'error'); return; }
+    if (!code.startsWith('CLAIM-')) { showMsg(msgEl, 'Claim codes start with CLAIM-', 'error'); return; }
+
+    // Check not already registered
+    if (registeredCards.some(c => c.claimCode === code)) {
+      showMsg(msgEl, 'This card is already registered to your account.', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    showMsg(msgEl, 'Verifying claim code…', 'info');
+
+    try {
+      // Verify claim code against Living Card sheet
+      const url  = LIVING_API + '?action=verify_claim_code&claim_code=' + encodeURIComponent(code);
+      const data = await jsonpFetch(url, 10000);
+
+      if (data && data.success && data.cardId) {
+        const newCard = {
+          cardId:      data.cardId,
+          cardName:    data.cardName   || data.cardId,
+          ownerToken:  data.ownerToken || '',
+          claimCode:   code,
+          registeredAt: new Date().toISOString()
+        };
+
+        // Save to Firestore
+        const userRef = doc(db, 'users', currentUser.uid);
+        await updateDoc(userRef, {
+          cards: arrayUnion(newCard)
+        });
+
+        registeredCards.push(newCard);
+        input.value = '';
+        renderRegisteredCards();
+        showMsg(msgEl, `✓ ${newCard.cardName} registered successfully.`, 'success');
+
+        // Show enter button now that at least one card is registered
+        document.getElementById('enter-btn').style.display = 'flex';
+
+      } else {
+        showMsg(msgEl, data.error || 'Invalid claim code. Please check and try again.', 'error');
+      }
+    } catch(err) {
+      showMsg(msgEl, 'Connection error — please try again.', 'error');
+    }
+
+    btn.disabled = false;
+  };
+
+  // ── RENDER REGISTERED CARDS ──
+  function renderRegisteredCards() {
+    const list = document.getElementById('cards-list');
+    if (registeredCards.length === 0) {
+      list.innerHTML = '';
+      return;
+    }
+    list.innerHTML = registeredCards.map(c => `
+      <div class="card-registered">
+        <span class="cr-icon">✓</span>
+        <span class="cr-name">${esc(c.cardName)}</span>
+        <span class="cr-id">${esc(c.cardId)}</span>
+      </div>
+    `).join('');
+  }
+
+  // ── SHOW REGISTER PANEL ──
+  function showRegisterPanel(cards) {
+    document.getElementById('auth-tabs').style.display   = 'none';
+    document.getElementById('panel-signin').style.display = 'none';
+    document.getElementById('panel-signup').style.display = 'none';
+    document.getElementById('register-panel').classList.add('active');
+
+    document.getElementById('header-title').textContent = 'Register Your Cards';
+    document.getElementById('header-desc').textContent  = 'Link your physical cards to start earning XP';
+
+    registeredCards = cards;
+    renderRegisteredCards();
+
+    // Hide enter btn until at least one card added
+    if (cards.length === 0) {
+      document.getElementById('enter-btn').style.display = 'none';
+    }
+  }
+
+  // ── ENTER MARKETPLACE ──
+  window.enterMarketplace = function() {
+    goToSpotlight();
+  };
+
+  window.skipRegistration = function() {
+    goToSpotlight();
+  };
+
+  function goToSpotlight() {
+    window.location.href = 'spotlight.html';
+  }
+
+  // ── HELPERS ──
+  function showMsg(el, text, type) {
+    el.textContent  = text;
+    el.className    = 'msg ' + (type || '');
+  }
+
+  function friendlyError(code) {
+    const map = {
+      'auth/invalid-email':           'Please enter a valid email address.',
+      'auth/user-not-found':          'No account found with that email.',
+      'auth/wrong-password':          'Incorrect password. Please try again.',
+      'auth/email-already-in-use':    'An account with this email already exists.',
+      'auth/weak-password':           'Password must be at least 6 characters.',
+      'auth/too-many-requests':       'Too many attempts. Please try again later.',
+      'auth/network-request-failed':  'Network error. Check your connection.',
+      'auth/invalid-credential':      'Invalid email or password.',
+    };
+    return map[code] || 'Something went wrong. Please try again.';
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  // ── TAB SWITCHING ──
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+
+    if (tab === 'signup') {
+      document.getElementById('header-title').textContent = 'Create Account';
+      document.getElementById('header-desc').textContent  = 'Join the XP Marketplace';
+    } else {
+      document.getElementById('header-title').textContent = 'Welcome Back';
+      document.getElementById('header-desc').textContent  = 'Sign in to access your card collection';
+    }
+  };
+
+  // ── ENTER KEY SUPPORT ──
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const active = document.querySelector('.panel.active');
+    if (!active) return;
+    if (active.id === 'panel-signin') window.doSignIn();
+    if (active.id === 'panel-signup') window.doSignUp();
+  });
+
+  document.getElementById('claim-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.addCard();
+  });
+</script>
+</body>
+</html>

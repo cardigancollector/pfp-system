@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XP Marketplace — Spotlight</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #111318;
+    --bg2:       #181b22;
+    --bg3:       #1e2229;
+    --text:      #e8e4dc;
+    --muted:     #a8a9ad;
+    --gold:      #c9a84c;
+    --gold-dim:  #7a6530;
+    --gold-lite: #e8c97a;
+    --green:     #2ecc71;
+    --red:       #e74c3c;
+    --border:    rgba(201,168,76,0.18);
+    --border-h:  rgba(201,168,76,0.55);
+    --glass:     rgba(17,19,24,0.82);
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Crimson Pro', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND ── */
+  .bg-fixed {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(ellipse 120% 80% at 60% 0%, rgba(201,168,76,0.08) 0%, transparent 55%),
+                radial-gradient(ellipse 80% 60% at 0% 100%, rgba(201,168,76,0.05) 0%, transparent 50%),
+                #0f1116;
+  }
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.025) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 20%, transparent 100%);
+  }
+  .bg-card-glow {
+    position: fixed;
+    top: 0; right: 0;
+    width: 700px; height: 700px;
+    background: radial-gradient(ellipse at center, rgba(201,168,76,0.07) 0%, transparent 65%);
+    z-index: 0;
+    pointer-events: none;
+    animation: slowPulse 6s ease-in-out infinite alternate;
+  }
+  @keyframes slowPulse {
+    from { opacity: 0.6; transform: scale(1); }
+    to   { opacity: 1.0; transform: scale(1.08); }
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,17,22,0.96);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    padding: 0 48px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.2rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .nav-xp {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(201,168,76,0.07);
+    border: 1px solid var(--border);
+    padding: 7px 16px;
+    cursor: default;
+  }
+  .nav-xp-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .nav-xp-value {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: var(--gold);
+    font-weight: 700;
+    min-width: 60px;
+    text-align: right;
+  }
+  .nav-link {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  .nav-link:hover { color: var(--gold); }
+  .nav-link.active { color: var(--gold); }
+
+  /* ── LOADING ── */
+  #loading {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 2px solid rgba(201,168,76,0.15);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.85s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── MAIN CONTENT ── */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 48px 100px;
+    display: none;
+  }
+  main.visible { display: block; }
+
+  /* ── SPOTLIGHT HEADER ── */
+  .spotlight-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .eyebrow-line {
+    width: 40px; height: 1px;
+    background: var(--gold);
+    opacity: 0.6;
+  }
+  .eyebrow-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .spotlight-headline {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 8px;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) 0.08s both;
+  }
+  .spotlight-headline span { color: var(--gold); }
+  .spotlight-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 56px;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) 0.15s both;
+  }
+
+  @keyframes riseIn {
+    from { opacity:0; transform: translateY(24px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  /* ── SPOTLIGHT GRID ── */
+  .spotlight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    animation: riseIn 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.5),
+      0 60px 120px rgba(0,0,0,0.5),
+      0 0 80px rgba(201,168,76,0.06);
+  }
+
+  /* ── CARD IMAGE PANEL ── */
+  .img-panel {
+    position: relative;
+    background: #0a0c10;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+    min-height: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .img-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(201,168,76,0.08) 0%, transparent 70%);
+    z-index: 1;
+    pointer-events: none;
+  }
+  .card-img-wrap {
+    position: relative;
+    z-index: 2;
+    padding: 48px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-img {
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    display: block;
+    box-shadow:
+      0 0 0 1px rgba(201,168,76,0.2),
+      0 0 40px rgba(201,168,76,0.25),
+      0 30px 80px rgba(0,0,0,0.7);
+    animation: cardFloat 5s ease-in-out infinite alternate;
+  }
+  @keyframes cardFloat {
+    from { transform: translateY(0px) rotate(-0.5deg); box-shadow: 0 0 0 1px rgba(201,168,76,0.2), 0 0 40px rgba(201,168,76,0.2), 0 30px 80px rgba(0,0,0,0.7); }
+    to   { transform: translateY(-12px) rotate(0.5deg); box-shadow: 0 0 0 1px rgba(201,168,76,0.35), 0 0 60px rgba(201,168,76,0.35), 0 50px 100px rgba(0,0,0,0.6); }
+  }
+  .format-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 3;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid var(--gold);
+    padding: 5px 14px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  /* ── INFO PANEL ── */
+  .info-panel {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    padding: 52px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .info-top {}
+
+  .card-eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 2.4rem;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .card-id {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 28px;
+  }
+
+  .card-desc {
+    font-size: 1.05rem;
+    color: var(--muted);
+    line-height: 1.75;
+    font-style: italic;
+    margin-bottom: 36px;
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 36px;
+  }
+  .stat-cell {
+    background: rgba(17,19,24,0.9);
+    padding: 18px 16px;
+    text-align: center;
+  }
+  .stat-cell-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .stat-cell-value {
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    color: var(--text);
+    font-weight: 700;
+    line-height: 1;
+  }
+  .stat-cell-value.gold { color: var(--gold); }
+  .stat-cell-sub {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* ── XP PRICE ── */
+  .xp-price-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding: 20px 24px;
+    background: rgba(201,168,76,0.05);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+  }
+  .xp-price-icon { font-size: 1.6rem; }
+  .xp-price-info {}
+  .xp-price-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .xp-price-number {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 2rem;
+    color: var(--gold);
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  }
+  .xp-price-number span {
+    font-size: 0.9rem;
+    color: var(--gold-dim);
+    font-family: 'Cinzel', serif;
+    margin-left: 4px;
+  }
+  .xp-afford {
+    margin-left: auto;
+    font-size: 0.82rem;
+    font-style: italic;
+  }
+  .xp-afford.can { color: var(--green); }
+  .xp-afford.cannot { color: var(--red); }
+
+  /* ── AVAILABILITY BAR ── */
+  .avail-wrap { margin-bottom: 32px; }
+  .avail-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .avail-label-row span:last-child { color: var(--text); }
+  .avail-track {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .avail-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    border-radius: 2px;
+    transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 8px rgba(201,168,76,0.5);
+  }
+
+  /* ── DATE ISSUED ── */
+  .date-issued {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 36px;
+  }
+  .date-issued strong { color: var(--text); font-style: normal; }
+
+  /* ── CTA BUTTONS ── */
+  .cta-stack { display: flex; flex-direction: column; gap: 12px; }
+  .btn-cta {
+    width: 100%;
+    padding: 17px 24px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: none;
+    outline: none;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: #0e1015;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--gold), var(--gold-lite));
+    box-shadow: 0 0 40px rgba(201,168,76,0.35);
+    transform: translateY(-1px);
+  }
+  .btn-primary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-secondary:hover {
+    border-color: var(--border-h);
+    color: var(--text);
+    background: rgba(255,255,255,0.03);
+  }
+
+  /* ── SOLD OUT STATE ── */
+  .sold-out-banner {
+    display: none;
+    background: rgba(231,76,60,0.08);
+    border: 1px solid rgba(231,76,60,0.3);
+    border-left: 3px solid var(--red);
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: #f1948a;
+    margin-bottom: 16px;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── ERROR STATE ── */
+  #error-state {
+    display: none;
+    text-align: center;
+    padding: 120px 40px;
+  }
+  .error-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .error-desc { color: var(--muted); font-style: italic; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .spotlight-grid { grid-template-columns: 1fr; }
+    .img-panel { border-right: none; border-bottom: 1px solid var(--border); min-height: 380px; }
+    main { padding: 40px 20px 80px; }
+    nav { padding: 0 20px; }
+    .info-panel { padding: 36px 24px; }
+    .card-title { font-size: 1.8rem; }
+    .spotlight-headline { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-fixed"></div>
+<div class="bg-grid"></div>
+<div class="bg-card-glow"></div>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading Spotlight</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">XP</div>
+  <div class="nav-right">
+    <div class="nav-xp">
+      <div class="nav-xp-label">Your XP</div>
+      <div class="nav-xp-value" id="nav-xp">—</div>
+    </div>
+    <a class="nav-link active" href="spotlight.html">Spotlight</a>
+    <a class="nav-link" href="marketplace.html">Marketplace</a>
+    <a class="nav-link" href="living-cards.html">My Cards</a>
+    <button class="nav-link" onclick="doSignOut()">Sign Out</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+
+  <div class="spotlight-eyebrow">
+    <div class="eyebrow-line"></div>
+    <div class="eyebrow-text">Featured Offering</div>
+    <div class="eyebrow-line"></div>
+  </div>
+  <div class="spotlight-headline">This Week's <span>Spotlight</span></div>
+  <div class="spotlight-subtitle">A limited edition redemption — claim it before it's gone.</div>
+
+  <div id="error-state">
+    <div class="error-title">No Spotlight Available</div>
+    <div class="error-desc">Check back soon for the next featured offering.</div>
+  </div>
+
+  <div class="spotlight-grid" id="spotlight-grid" style="display:none;">
+
+    <!-- IMAGE PANEL -->
+    <div class="img-panel">
+      <div class="format-badge" id="format-badge">Card</div>
+      <div class="card-img-wrap">
+        <img class="card-img" id="card-img" src="" alt="">
+      </div>
+    </div>
+
+    <!-- INFO PANEL -->
+    <div class="info-panel">
+      <div class="info-top">
+        <div class="card-eyebrow">XP Redemption · Spotlight Edition</div>
+        <div class="card-title" id="card-title">—</div>
+        <div class="card-id" id="card-id">—</div>
+        <div class="card-desc" id="card-desc">—</div>
+
+        <div class="stats-row">
+          <div class="stat-cell">
+            <div class="stat-cell-label">Edition</div>
+            <div class="stat-cell-value" id="stat-edition">—</div>
+            <div class="stat-cell-sub">total issued</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-cell-label">Remaining</div>
+            <div class="stat-cell-value gold" id="stat-remaining">—</div>
+            <div class="stat-cell-sub">available now</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-cell-label">Format</div>
+            <div class="stat-cell-value" id="stat-format">—</div>
+            <div class="stat-cell-sub">physical type</div>
+          </div>
+        </div>
+
+        <div class="xp-price-wrap">
+          <div class="xp-price-icon">✦</div>
+          <div class="xp-price-info">
+            <div class="xp-price-label">Redemption Cost</div>
+            <div class="xp-price-number" id="xp-price">—<span>XP</span></div>
+          </div>
+          <div class="xp-afford" id="xp-afford"></div>
+        </div>
+
+        <div class="avail-wrap">
+          <div class="avail-label-row">
+            <span>Availability</span>
+            <span id="avail-text">— of — remaining</span>
+          </div>
+          <div class="avail-track">
+            <div class="avail-fill" id="avail-fill" style="width:100%"></div>
+          </div>
+        </div>
+
+        <div class="date-issued" id="date-issued"></div>
+
+      </div>
+
+      <div>
+        <div class="sold-out-banner" id="sold-out-banner">✦ &nbsp; Sold Out</div>
+        <div class="cta-stack">
+          <button class="btn-cta btn-primary" id="redeem-btn" onclick="goToItemDetail()">
+            ✦ &nbsp; Redeem This Card
+          </button>
+          <a class="btn-cta btn-secondary" href="marketplace.html">
+            Browse All Offerings
+          </a>
+          <a class="btn-cta btn-secondary" href="living-cards.html">
+            View My Collection &amp; XP
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain:        "pfp-system.firebaseapp.com",
+    projectId:         "pfp-system",
+    storageBucket:     "pfp-system.appspot.com",
+    messagingSenderId: "643360345707",
+    appId:             "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+
+  let currentUser   = null;
+  let userXP        = 0;
+  let spotlightCard = null;
+
+  // ── JSONP ──
+  function jsonpFetch(url, timeout) {
+    return new Promise((resolve, reject) => {
+      const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+      const script = document.createElement('script');
+      const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 10000);
+      function cleanup() {
+        clearTimeout(timer);
+        delete window[cb];
+        if (document.body.contains(script)) document.body.removeChild(script);
+      }
+      window[cb]     = data => { cleanup(); resolve(data); };
+      script.onerror = ()   => { cleanup(); reject(new Error('script error')); };
+      script.src     = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
+      document.body.appendChild(script);
+    });
+  }
+
+  // ── AUTH GUARD ──
+  onAuthStateChanged(auth, async user => {
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+    currentUser = user;
+    await Promise.all([loadUserXP(user), loadSpotlight()]);
+    hideLoading();
+  });
+
+  // ── LOAD USER XP ──
+  async function loadUserXP(user) {
+    try {
+      const userRef  = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) return;
+
+      const data  = userSnap.data();
+      const cards = data.cards || [];
+
+      if (cards.length === 0) {
+        updateXPDisplay(0);
+        return;
+      }
+
+      // Fetch XP for each registered card from the sheet
+      let total = 0;
+      const fetches = cards.map(async c => {
+        try {
+          const res = await jsonpFetch(
+            LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(c.cardId), 8000
+          );
+          if (res && res.success && res.card) {
+            return parseInt(res.card['Current XP']) || 0;
+          }
+        } catch(e) {}
+        return 0;
+      });
+
+      const xpValues = await Promise.all(fetches);
+      total = xpValues.reduce((sum, xp) => sum + xp, 0);
+      userXP = total;
+      updateXPDisplay(total);
+
+    } catch(err) {
+      console.warn('XP load error:', err);
+      updateXPDisplay(0);
+    }
+  }
+
+  function updateXPDisplay(xp) {
+    userXP = xp;
+    document.getElementById('nav-xp').textContent = xp.toLocaleString();
+  }
+
+  // ── LOAD SPOTLIGHT ──
+  async function loadSpotlight() {
+    try {
+      const data = await jsonpFetch(LIVING_API + '?action=get_spotlight', 10000);
+      if (!data || !data.success || !data.card) {
+        showError();
+        return;
+      }
+      spotlightCard = data.card;
+      renderSpotlight(data.card);
+    } catch(err) {
+      showError();
+    }
+  }
+
+  // ── RENDER SPOTLIGHT ──
+  function renderSpotlight(card) {
+    const remaining  = parseInt(card.remaining)   || 0;
+    const edition    = parseInt(card.editionSize) || 0;
+    const xpPrice    = parseInt(card.xpPrice)     || 0;
+    const canAfford  = userXP >= xpPrice;
+    const soldOut    = remaining <= 0;
+    const availPct   = edition > 0 ? Math.round((remaining / edition) * 100) : 0;
+
+    // Image
+    const img = document.getElementById('card-img');
+    img.src = card.imageUrl || '';
+    img.alt = card.cardName || '';
+
+    // Text fields
+    document.getElementById('card-title').textContent    = card.cardName   || '—';
+    document.getElementById('card-id').textContent       = card.cardId     || '—';
+    document.getElementById('card-desc').textContent     = card.description || '—';
+    document.getElementById('format-badge').textContent  = card.format     || 'Card';
+    document.getElementById('stat-edition').textContent  = edition.toLocaleString();
+    document.getElementById('stat-remaining').textContent = remaining.toLocaleString();
+    document.getElementById('stat-format').textContent   = card.format     || '—';
+    document.getElementById('xp-price').innerHTML        = xpPrice.toLocaleString() + '<span>XP</span>';
+    document.getElementById('avail-text').textContent    = remaining + ' of ' + edition + ' remaining';
+
+    // Date
+    if (card.dateAdded) {
+      const d = new Date(card.dateAdded);
+      document.getElementById('date-issued').innerHTML =
+        'Listed <strong>' + d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }) + '</strong>';
+    }
+
+    // Availability bar — delay for animation
+    setTimeout(() => {
+      document.getElementById('avail-fill').style.width = availPct + '%';
+    }, 600);
+
+    // Afford indicator (only show if XP is loaded)
+    const affordEl = document.getElementById('xp-afford');
+    if (userXP > 0 || document.getElementById('nav-xp').textContent !== '—') {
+      if (soldOut) {
+        affordEl.textContent = '';
+      } else if (canAfford) {
+        affordEl.textContent  = '✓ You can afford this';
+        affordEl.className    = 'xp-afford can';
+      } else {
+        const needed = xpPrice - userXP;
+        affordEl.textContent = needed.toLocaleString() + ' XP needed';
+        affordEl.className   = 'xp-afford cannot';
+      }
+    }
+
+    // Sold out state
+    const redeemBtn = document.getElementById('redeem-btn');
+    if (soldOut) {
+      document.getElementById('sold-out-banner').style.display = 'block';
+      redeemBtn.disabled = true;
+      redeemBtn.textContent = 'Sold Out';
+    } else if (!canAfford && userXP > 0) {
+      redeemBtn.disabled = true;
+      redeemBtn.innerHTML = '✦ &nbsp; Insufficient XP';
+    }
+
+    // Show grid
+    document.getElementById('spotlight-grid').style.display = 'grid';
+  }
+
+  function showError() {
+    document.getElementById('error-state').style.display = 'block';
+  }
+
+  function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('main').classList.add('visible');
+  }
+
+  // ── NAVIGATE TO ITEM DETAIL ──
+  window.goToItemDetail = function() {
+    if (!spotlightCard) return;
+    const params = new URLSearchParams({
+      card_id: spotlightCard.cardId,
+      from:    'spotlight'
+    });
+    window.location.href = 'item-detail.html?' + params.toString();
+  };
+
+  // ── SIGN OUT ──
+  window.doSignOut = async function() {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  };
+</script>
+</body>
+</html>

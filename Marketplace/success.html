@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XP Marketplace — Redemption Complete</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #111318;
+      --surface:   #1c1f27;
+      --border:    rgba(232, 228, 220, 0.12);
+      --border-md: rgba(232, 228, 220, 0.28);
+      --text:      #e8e4dc;
+      --muted:     #a8a9ad;
+      --font-display: 'Cinzel Decorative', serif;
+      --font-body:    'Crimson Pro', Georgia, serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 0 60px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 20px 18px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--text);
+    }
+
+    .xp-wrap { text-align: right; }
+    .xp-label {
+      display: block;
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+    .xp-value {
+      font-family: var(--font-display);
+      font-size: 14px;
+      color: var(--text);
+      letter-spacing: 1px;
+    }
+
+    /* Main content — centered vertically in remaining space */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px 32px;
+    }
+
+    /* Animated checkmark */
+    .check-wrap {
+      margin-bottom: 32px;
+      animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .check-ring {
+      width: 64px;
+      height: 64px;
+      border: 0.5px solid rgba(74, 187, 120, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .check-ring::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 0.5px solid rgba(74, 187, 120, 0.25);
+      border-radius: 50%;
+    }
+
+    .check-ring svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .check-ring svg polyline {
+      stroke-dasharray: 40;
+      stroke-dashoffset: 40;
+      animation: drawCheck 0.4s ease 0.3s forwards;
+    }
+
+    /* Headline */
+    .success-eyebrow {
+      font-size: 9px;
+      letter-spacing: 6px;
+      color: var(--muted);
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 10px;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    .success-title {
+      font-family: var(--font-display);
+      font-size: clamp(16px, 4vw, 22px);
+      color: var(--text);
+      letter-spacing: 2px;
+      text-align: center;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      animation: fadeUp 0.6s ease 0.28s both;
+    }
+
+    .success-message {
+      font-size: 16px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.75;
+      font-style: italic;
+      max-width: 320px;
+      animation: fadeUp 0.6s ease 0.34s both;
+    }
+
+    /* Rule */
+    .rule {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+      margin: 32px 0;
+      animation: fadeUp 0.6s ease 0.4s both;
+    }
+
+    .rule::before,
+    .rule::after {
+      content: '';
+      flex: 1;
+      height: 0.5px;
+      background: var(--border-md);
+    }
+
+    .rule-diamond {
+      width: 5px;
+      height: 5px;
+      border: 0.5px solid var(--muted);
+      transform: rotate(45deg);
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+
+    /* Remaining XP panel */
+    .xp-panel {
+      width: 100%;
+      max-width: 320px;
+      border: 0.5px solid var(--border-md);
+      background: var(--surface);
+      padding: 24px 20px;
+      text-align: center;
+      animation: fadeUp 0.6s ease 0.46s both;
+    }
+
+    .xp-panel-label {
+      font-size: 8px;
+      letter-spacing: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .xp-panel-value {
+      font-family: var(--font-display);
+      font-size: 32px;
+      color: var(--text);
+      letter-spacing: 2px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .xp-panel-sub {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* Order reference */
+    .order-ref {
+      margin-top: 20px;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-align: center;
+      opacity: 0.5;
+      animation: fadeUp 0.6s ease 0.52s both;
+    }
+
+    /* CTA buttons */
+    .cta-wrap {
+      width: 100%;
+      max-width: 320px;
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: fadeUp 0.6s ease 0.56s both;
+    }
+
+    .btn-browse {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      font-family: var(--font-display);
+      font-size: 9px;
+      letter-spacing: 4px;
+      text-align: center;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn-browse:hover { opacity: 0.9; }
+    .btn-browse:active { transform: scale(0.99); }
+
+    .btn-cards {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      border: 0.5px solid var(--border-md);
+      color: var(--muted);
+      font-family: var(--font-display);
+      font-size: 9px;
+      letter-spacing: 3px;
+      text-align: center;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-cards:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    /* Shipping confirmation note */
+    .shipping-note {
+      margin-top: 24px;
+      padding: 14px 16px;
+      border: 0.5px solid var(--border);
+      background: var(--surface);
+      width: 100%;
+      max-width: 320px;
+      animation: fadeUp 0.6s ease 0.6s both;
+    }
+
+    .shipping-note-eyebrow {
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .shipping-note-text {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .shipping-name {
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.7); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes drawCheck {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="header">
+    <span class="logo">XP Marketplace</span>
+    <div class="xp-wrap">
+      <span class="xp-label">Available XP</span>
+      <span class="xp-value" id="header-xp">—</span>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <div class="check-wrap">
+      <div class="check-ring">
+        <svg viewBox="0 0 24 24" fill="none">
+          <polyline points="4,12 9,17 20,6" stroke="#4abb78" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="success-eyebrow">Confirmed</div>
+    <div class="success-title" id="success-title">Redemption Complete</div>
+    <p class="success-message" id="success-message">Your redemption has been confirmed. We'll be in touch shortly.</p>
+
+    <div class="rule"><div class="rule-diamond"></div></div>
+
+    <div class="xp-panel">
+      <span class="xp-panel-label">Remaining Balance</span>
+      <span class="xp-panel-value" id="remaining-xp">—</span>
+      <span class="xp-panel-sub">available to spend</span>
+    </div>
+
+    <div class="order-ref" id="order-ref"></div>
+
+    <div class="shipping-note" id="shipping-note" style="display:none;">
+      <div class="shipping-note-eyebrow">Shipping To</div>
+      <div class="shipping-note-text">
+        <span class="shipping-name" id="ship-name"></span><br/>
+        <span id="ship-address"></span><br/>
+        <span id="ship-city-country"></span>
+      </div>
+    </div>
+
+    <div class="cta-wrap">
+      <a class="btn-browse" href="marketplace.html">Continue Browsing</a>
+      <a class="btn-cards" href="living-cards.html">View My Cards</a>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function fmt(n) { return Number(n || 0).toLocaleString(); }
+
+  function generateRef() {
+    return 'XP-' + Date.now().toString(36).toUpperCase().slice(-6);
+  }
+
+  function render() {
+    const data = sessionStorage.getItem('redemption');
+    if (!data) {
+      window.location.href = 'marketplace.html';
+      return;
+    }
+
+    const r = JSON.parse(data);
+    sessionStorage.removeItem('redemption');
+
+    // Header XP
+    document.getElementById('header-xp').textContent = fmt(r.newTotalXP) + ' XP';
+
+    // Remaining XP panel
+    document.getElementById('remaining-xp').textContent = fmt(r.newTotalXP) + ' XP';
+
+    // Title and message
+    document.getElementById('success-title').textContent = r.itemName + ' — Redeemed';
+
+    if (r.isDigital) {
+      document.getElementById('success-message').textContent =
+        'Your digital item is confirmed. Check your registered email — delivery will arrive shortly.';
+    } else {
+      document.getElementById('success-message').textContent =
+        'Your ' + r.itemName + ' is confirmed. We\'ll be in touch with shipping details and tracking shortly.';
+    }
+
+    // Order reference
+    document.getElementById('order-ref').textContent = 'Order ref: ' + generateRef();
+
+    // Shipping summary
+    if (r.shipping && !r.isDigital && r.shipping.name) {
+      const note = document.getElementById('shipping-note');
+      note.style.display = 'block';
+      document.getElementById('ship-name').textContent = r.shipping.name;
+      document.getElementById('ship-address').textContent = r.shipping.address;
+      const cityCountry = [r.shipping.city, r.shipping.postcode, r.shipping.country]
+        .filter(Boolean).join(', ');
+      document.getElementById('ship-city-country').textContent = cityCountry;
+    }
+  }
+
+  render();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XP Marketplace — Item Detail</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #111318;
+      --surface:   #1c1f27;
+      --border:    rgba(232, 228, 220, 0.12);
+      --border-md: rgba(232, 228, 220, 0.28);
+      --text:      #e8e4dc;
+      --muted:     #a8a9ad;
+      --font-display: 'Cinzel Decorative', serif;
+      --font-body:    'Crimson Pro', Georgia, serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 0 60px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 20px 18px;
+      border-bottom: 0.5px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--text);
+    }
+
+    .xp-wrap { text-align: right; }
+    .xp-label {
+      display: block;
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+    .xp-value {
+      font-family: var(--font-display);
+      font-size: 14px;
+      color: var(--text);
+      letter-spacing: 1px;
+    }
+
+    /* Image area */
+    .image-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 28px 20px 0;
+      animation: fadeDown 0.7s ease both;
+    }
+
+    .item-image {
+      position: relative;
+      background: var(--surface);
+      border: 0.5px solid var(--border-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Poker card proportions */
+    .item-image.poker {
+      width: 200px;
+      aspect-ratio: 2.5 / 3.5;
+    }
+
+    /* Square for prints and jerseys */
+    .item-image.square {
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 1 / 1;
+    }
+
+    .item-image svg { opacity: 0.2; }
+
+    .item-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Corner brackets */
+    .corner {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+    }
+    .corner.tl { top: 8px; left: 8px; border-top: 0.5px solid var(--muted); border-left: 0.5px solid var(--muted); }
+    .corner.tr { top: 8px; right: 8px; border-top: 0.5px solid var(--muted); border-right: 0.5px solid var(--muted); }
+    .corner.bl { bottom: 8px; left: 8px; border-bottom: 0.5px solid var(--muted); border-left: 0.5px solid var(--muted); }
+    .corner.br { bottom: 8px; right: 8px; border-bottom: 0.5px solid var(--muted); border-right: 0.5px solid var(--muted); }
+
+    /* Type badge on image */
+    .type-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 7px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      background: var(--bg);
+      border: 0.5px solid var(--border-md);
+      color: var(--muted);
+    }
+
+    /* Item title area */
+    .item-title-wrap {
+      padding: 24px 20px 0;
+      animation: fadeUp 0.7s ease 0.08s both;
+    }
+
+    .item-eyebrow {
+      font-size: 8px;
+      letter-spacing: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .item-title {
+      font-family: var(--font-display);
+      font-size: clamp(14px, 3.5vw, 18px);
+      color: var(--text);
+      letter-spacing: 1px;
+      line-height: 1.4;
+    }
+
+    /* Metadata strip */
+    .meta-strip {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin: 20px 20px 0;
+      padding: 16px 0;
+      border-top: 0.5px solid var(--border);
+      border-bottom: 0.5px solid var(--border);
+      animation: fadeUp 0.7s ease 0.14s both;
+    }
+
+    .meta-item { text-align: center; }
+
+    .meta-val {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .meta-lbl {
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .meta-divider {
+      width: 0.5px;
+      height: 32px;
+      background: var(--border-md);
+    }
+
+    /* Description */
+    .description {
+      padding: 22px 20px;
+      animation: fadeUp 0.7s ease 0.2s both;
+    }
+
+    .desc-eyebrow {
+      font-size: 8px;
+      letter-spacing: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .desc-text {
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.75;
+      font-style: italic;
+    }
+
+    /* Cost + redeem section */
+    .redeem-section {
+      margin: 0 20px;
+      border: 0.5px solid var(--border);
+      background: var(--surface);
+      padding: 20px;
+      animation: fadeUp 0.7s ease 0.26s both;
+    }
+
+    .redeem-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .redeem-label {
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .redeem-cost {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .btn-redeem {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      font-family: var(--font-display);
+      font-size: 9px;
+      letter-spacing: 4px;
+      text-align: center;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn-redeem:hover { opacity: 0.9; }
+    .btn-redeem:active { transform: scale(0.99); }
+
+    /* Back link */
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-decoration: none;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .back-link:hover { opacity: 1; }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="header">
+    <span class="logo">XP Marketplace</span>
+    <div class="xp-wrap">
+      <span class="xp-label">Available XP</span>
+      <span class="xp-value" id="header-xp">7,150 XP</span>
+    </div>
+  </header>
+
+  <div class="image-wrap">
+    <div class="item-image" id="item-image">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+      <div class="type-badge" id="type-badge">Card</div>
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <rect x="1" y="1" width="46" height="46" stroke="#e8e4dc" stroke-width="0.5"/>
+        <line x1="1" y1="1" x2="47" y2="47" stroke="#e8e4dc" stroke-width="0.5"/>
+        <line x1="47" y1="1" x2="1" y2="47" stroke="#e8e4dc" stroke-width="0.5"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="item-title-wrap">
+    <div class="item-eyebrow" id="item-eyebrow">Card</div>
+    <div class="item-title" id="item-title">The Founder's Edition</div>
+  </div>
+
+  <div class="meta-strip">
+    <div class="meta-item">
+      <span class="meta-val" id="editions-issued">47</span>
+      <span class="meta-lbl">Editions Issued</span>
+    </div>
+    <div class="meta-divider"></div>
+    <div class="meta-item">
+      <span class="meta-val" id="editions-remaining">12</span>
+      <span class="meta-lbl">Remaining</span>
+    </div>
+    <div class="meta-divider"></div>
+    <div class="meta-item">
+      <span class="meta-val" id="date-issued">Apr 29, 2026</span>
+      <span class="meta-lbl">Date Issued</span>
+    </div>
+  </div>
+
+  <div class="description">
+    <div class="desc-eyebrow">Description</div>
+    <p class="desc-text" id="item-description">Loading...</p>
+  </div>
+
+  <div class="redeem-section">
+    <div class="redeem-row">
+      <span class="redeem-label">Redeem for</span>
+      <span class="redeem-cost" id="redeem-cost">2,500 XP</span>
+    </div>
+    <a class="btn-redeem" id="btn-redeem" href="#">Redeem This Item</a>
+  </div>
+
+  <a class="back-link" href="marketplace.html">&#8592; Back to Marketplace</a>
+
+</div>
+
+ <script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain:        "pfp-system.firebaseapp.com",
+    projectId:         "pfp-system",
+    storageBucket:     "pfp-system.appspot.com",
+    messagingSenderId: "643360345707",
+    appId:             "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+
+  let currentUser = null;
+  let userXP      = 0;
+  let userCards   = [];
+  let cardData    = null;
+
+  function jsonpFetch(url, timeout) {
+    return new Promise((resolve, reject) => {
+      const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+      const script = document.createElement('script');
+      const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 10000);
+      function cleanup() {
+        clearTimeout(timer);
+        delete window[cb];
+        if (document.body.contains(script)) document.body.removeChild(script);
+      }
+      window[cb]     = data => { cleanup(); resolve(data); };
+      script.onerror = ()   => { cleanup(); reject(new Error('script error')); };
+      script.src     = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
+      document.body.appendChild(script);
+    });
+  }
+
+  function fmt(n) { return Number(n || 0).toLocaleString(); }
+
+  function getCardIdFromURL() {
+    return new URLSearchParams(window.location.search).get('card_id') || '';
+  }
+
+  function getFromParam() {
+    return new URLSearchParams(window.location.search).get('from') || 'marketplace';
+  }
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    await Promise.all([loadUserData(user), loadCardData()]);
+    render();
+  });
+
+  async function loadUserData(user) {
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (!snap.exists()) return;
+      const cards = snap.data().cards || [];
+      userCards = cards.map(c => c.cardId);
+
+      if (userCards.length === 0) { updateXPDisplay(0); return; }
+
+      const fetches = userCards.map(async id => {
+        try {
+          const res = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(id), 8000);
+          if (res && res.success && res.card) return parseInt(res.card['Current XP']) || 0;
+        } catch(e) {}
+        return 0;
+      });
+
+      userXP = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
+      updateXPDisplay(userXP);
+    } catch(err) {
+      updateXPDisplay(0);
+    }
+  }
+
+  function updateXPDisplay(xp) {
+    userXP = xp;
+    document.getElementById('header-xp').textContent = fmt(xp) + ' XP';
+  }
+
+  async function loadCardData() {
+    const cardId = getCardIdFromURL();
+    if (!cardId) { showError(); return; }
+
+    try {
+      const data = await jsonpFetch(LIVING_API + '?action=get_marketplace', 12000);
+      if (!data || !data.success || !data.cards) { showError(); return; }
+      cardData = data.cards.find(c => c.cardId === cardId);
+      if (!cardData) showError();
+    } catch(err) {
+      showError();
+    }
+  }
+
+  function render() {
+    if (!cardData) return;
+
+    const remaining = parseInt(cardData.remaining)  || 0;
+    const edition   = parseInt(cardData.editionSize) || 0;
+    const xpPrice   = parseInt(cardData.xpPrice)    || 0;
+    const format    = cardData.format || 'Card';
+    const label     = format.charAt(0).toUpperCase() + format.slice(1);
+    const soldOut   = remaining <= 0;
+    const canAfford = userXP >= xpPrice;
+
+    const imageEl = document.getElementById('item-image');
+    imageEl.classList.add(format.toLowerCase() === 'card' ? 'poker' : 'square');
+
+    if (cardData.imageUrl) {
+      imageEl.innerHTML = `
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div class="type-badge">${label}</div>
+        <img src="${cardData.imageUrl}" alt="${cardData.cardName}" />
+      `;
+    } else {
+      document.getElementById('type-badge').textContent = label;
+    }
+
+    document.getElementById('item-eyebrow').textContent       = label;
+    document.getElementById('item-title').textContent         = cardData.cardName  || '—';
+    document.getElementById('item-description').textContent   = cardData.description || '—';
+    document.getElementById('editions-issued').textContent    = fmt(edition);
+    document.getElementById('editions-remaining').textContent = fmt(remaining);
+    document.getElementById('redeem-cost').textContent        = fmt(xpPrice) + ' XP';
+
+    if (cardData.dateAdded) {
+      const d = new Date(cardData.dateAdded);
+      document.getElementById('date-issued').textContent =
+        d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+    }
+
+    document.getElementById('back-link').href =
+      getFromParam() === 'spotlight' ? 'spotlight.html' : 'marketplace.html';
+
+    const btn = document.getElementById('btn-redeem');
+    if (soldOut) {
+      btn.textContent = 'Sold Out';
+      btn.style.opacity = '0.4';
+      btn.style.pointerEvents = 'none';
+    } else if (!canAfford) {
+      btn.textContent = 'Insufficient XP';
+      btn.style.opacity = '0.4';
+      btn.style.pointerEvents = 'none';
+    } else {
+      const params = new URLSearchParams({
+        card_id:   cardData.cardId,
+        name:      cardData.cardName,
+        xp:        xpPrice,
+        edition:   edition,
+        remaining: remaining,
+        format:    format
+      });
+      btn.href = 'confirmation.html?' + params.toString();
+    }
+  }
+
+  function showError() {
+    document.getElementById('item-title').textContent       = 'Item not found';
+    document.getElementById('item-description').textContent = 'This item could not be loaded.';
+  }
+</script>
+
+</body>
+</html>
