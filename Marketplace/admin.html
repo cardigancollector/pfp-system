@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XP Marketplace — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #111318;
+    --bg2:       #181b22;
+    --bg3:       #1e2229;
+    --text:      #e8e4dc;
+    --muted:     #a8a9ad;
+    --gold:      #c9a84c;
+    --gold-dim:  #7a6530;
+    --gold-lite: #e8c97a;
+    --green:     #2ecc71;
+    --red:       #e74c3c;
+    --border:    rgba(201,168,76,0.18);
+    --border-h:  rgba(201,168,76,0.55);
+    --glass:     rgba(17,19,24,0.85);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Crimson Pro', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── BACKGROUND ── */
+  .bg-fixed {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 100% 0%, rgba(201,168,76,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 70% at 0% 100%, rgba(201,168,76,0.04) 0%, transparent 60%),
+      #0f1116;
+  }
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 20%, transparent 100%);
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,17,22,0.97);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    padding: 0 48px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.1rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  }
+  .nav-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+  }
+
+  /* ── PASSWORD GATE ── */
+  #gate {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .gate-box {
+    width: 100%;
+    max-width: 380px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--gold);
+    padding: 48px 40px;
+    text-align: center;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .gate-logo {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.8rem;
+    color: var(--gold);
+    text-shadow: 0 0 40px rgba(201,168,76,0.5);
+    margin-bottom: 4px;
+  }
+  .gate-sub {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .gate-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--gold-dim);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.1rem;
+    padding: 12px 16px;
+    outline: none;
+    text-align: center;
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .gate-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+  }
+  .gate-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: #0e1015;
+    border: none;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .gate-btn:hover { background: linear-gradient(135deg, var(--gold), var(--gold-lite)); }
+  .gate-err {
+    font-size: 0.82rem;
+    color: var(--red);
+    font-style: italic;
+    margin-top: 10px;
+    min-height: 20px;
+  }
+
+  /* ── MAIN ── */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 48px 100px;
+    display: none;
+  }
+  main.visible { display: block; }
+
+  /* ── PAGE HEADER ── */
+  .page-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .eyebrow-line { width: 40px; height: 1px; background: var(--gold); opacity: 0.6; }
+  .eyebrow-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .page-headline {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    color: var(--text);
+    margin-bottom: 6px;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) 0.06s both;
+  }
+  .page-headline span { color: var(--gold); }
+  .page-subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 52px;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) 0.12s both;
+  }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── EXISTING ITEMS TABLE ── */
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 52px;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) 0.18s both;
+  }
+  .items-table th {
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .items-table td {
+    padding: 14px;
+    border-bottom: 1px solid rgba(201,168,76,0.07);
+    font-size: 0.92rem;
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .items-table tr:last-child td { border-bottom: none; }
+  .items-table tr:hover td { background: rgba(201,168,76,0.03); }
+
+  .status-pill {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border: 1px solid;
+  }
+  .status-pill.spotlight { color: var(--gold); border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .status-pill.marketplace { color: var(--muted); border-color: var(--border); }
+  .status-pill.hidden { color: #555; border-color: #333; }
+
+  .remaining-low  { color: #e8a84c; }
+  .remaining-zero { color: var(--red); }
+
+  .btn-edit {
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-edit:hover { color: var(--gold); border-color: var(--gold); }
+
+  .table-loading {
+    padding: 40px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-style: italic;
+    letter-spacing: 0.15em;
+  }
+
+  /* ── FORM CARD ── */
+  .form-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--gold);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.4), 0 0 60px rgba(201,168,76,0.04);
+    animation: riseIn 0.7s cubic-bezier(0.16,1,0.3,1) 0.22s both;
+  }
+
+  .form-header {
+    padding: 28px 36px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .form-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .form-mode-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    padding: 4px 12px;
+  }
+
+  .form-body { padding: 32px 36px 36px; }
+
+  /* Two-column grid */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 28px;
+    margin-bottom: 20px;
+  }
+  .field-grid .full { grid-column: 1 / -1; }
+
+  .field { display: flex; flex-direction: column; }
+
+  .field-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .field-required { color: var(--gold); margin-left: 2px; }
+
+  .field-input,
+  .field-select,
+  .field-textarea {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--gold-dim);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .field-input:focus,
+  .field-select:focus,
+  .field-textarea:focus {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.04);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.07);
+  }
+  .field-input::placeholder,
+  .field-textarea::placeholder { color: rgba(168,169,173,0.4); }
+  .field-input.error { border-bottom-color: var(--red); }
+
+  .field-select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a8a9ad' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+  .field-select option { background: #1e2229; }
+
+  .field-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+
+  .field-hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 5px;
+    line-height: 1.4;
+  }
+
+  /* Image preview */
+  .img-preview-wrap {
+    margin-top: 10px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .img-preview {
+    width: 42px;
+    height: 60px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    display: none;
+  }
+  .img-preview.visible { display: block; }
+  .img-preview-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* ── FORM ACTIONS ── */
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    padding: 24px 36px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+  }
+
+  .btn-submit {
+    padding: 14px 36px;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: #0e1015;
+    border: none;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--gold), var(--gold-lite));
+    box-shadow: 0 0 30px rgba(201,168,76,0.3);
+    transform: translateY(-1px);
+  }
+  .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-reset {
+    padding: 14px 24px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-reset:hover { border-color: var(--border-h); color: var(--text); }
+
+  .form-msg {
+    margin-left: auto;
+    font-size: 0.88rem;
+    font-style: italic;
+    min-height: 20px;
+    transition: all 0.3s;
+  }
+  .form-msg.success { color: var(--green); }
+  .form-msg.error   { color: var(--red); }
+
+  /* ── SPINNER ── */
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid rgba(14,16,21,0.3);
+    border-top-color: #0e1015;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .spinner.visible { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 700px) {
+    nav { padding: 0 20px; }
+    main { padding: 40px 20px 80px; }
+    .field-grid { grid-template-columns: 1fr; }
+    .field-grid .full { grid-column: 1; }
+    .form-header, .form-body, .form-actions { padding-left: 20px; padding-right: 20px; }
+    .form-actions { flex-wrap: wrap; }
+    .form-msg { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-fixed"></div>
+<div class="bg-grid"></div>
+
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">XP</div>
+    <div class="gate-sub">Admin Access</div>
+    <input class="gate-input" type="password" id="gate-input" placeholder="••••••••" autocomplete="current-password">
+    <button class="gate-btn" onclick="checkPassword()">Enter</button>
+    <div class="gate-err" id="gate-err"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">XP</div>
+  <div class="nav-badge">Admin Panel</div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+
+  <div class="page-eyebrow">
+    <div class="eyebrow-line"></div>
+    <div class="eyebrow-text">Marketplace Admin</div>
+    <div class="eyebrow-line"></div>
+  </div>
+  <h1 class="page-headline">Manage <span>Offerings</span></h1>
+  <p class="page-subtitle">Add new items, edit existing listings, and control what appears in the marketplace.</p>
+
+  <!-- EXISTING ITEMS -->
+  <div class="section-title">Current Listings</div>
+  <table class="items-table" id="items-table">
+    <thead>
+      <tr>
+        <th>Card ID</th>
+        <th>Name</th>
+        <th>Format</th>
+        <th>XP Price</th>
+        <th>Edition</th>
+        <th>Remaining</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="items-tbody">
+      <tr><td colspan="8" class="table-loading">Loading listings…</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ADD / EDIT FORM -->
+  <div class="section-title" id="form-section-title">Add New Item</div>
+  <div class="form-card">
+
+    <div class="form-header">
+      <div class="form-title" id="form-title-text">New Marketplace Item</div>
+      <div class="form-mode-badge" id="form-mode-badge">New</div>
+    </div>
+
+    <div class="form-body">
+      <div class="field-grid">
+
+        <div class="field">
+          <label class="field-label">Card ID <span class="field-required">*</span></label>
+          <input class="field-input" type="text" id="f-card-id" placeholder="e.g. EVO-ART-1-108">
+        </div>
+
+        <div class="field">
+          <label class="field-label">Card Name <span class="field-required">*</span></label>
+          <input class="field-input" type="text" id="f-card-name" placeholder="e.g. Art 1">
+        </div>
+
+        <div class="field">
+          <label class="field-label">Format <span class="field-required">*</span></label>
+          <select class="field-select" id="f-format">
+            <option value="">Select format…</option>
+            <option value="Card">Card</option>
+            <option value="Print">Print</option>
+            <option value="Original">Original</option>
+            <option value="Jersey">Jersey</option>
+            <option value="Digital">Digital</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Status <span class="field-required">*</span></label>
+          <select class="field-select" id="f-status">
+            <option value="marketplace">Marketplace</option>
+            <option value="spotlight">Spotlight</option>
+            <option value="hidden">Hidden</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label">XP Price <span class="field-required">*</span></label>
+          <input class="field-input" type="number" id="f-xp-price" placeholder="e.g. 500" min="0">
+        </div>
+
+        <div class="field">
+          <label class="field-label">Edition Size <span class="field-required">*</span></label>
+          <input class="field-input" type="number" id="f-edition-size" placeholder="e.g. 10" min="1">
+        </div>
+
+        <div class="field">
+          <label class="field-label">Remaining <span class="field-required">*</span></label>
+          <input class="field-input" type="number" id="f-remaining" placeholder="e.g. 10" min="0">
+        </div>
+
+        <div class="field">
+          <label class="field-label">Date Added</label>
+          <input class="field-input" type="date" id="f-date-added">
+          <span class="field-hint">Leave blank to use today's date.</span>
+        </div>
+
+        <div class="field full">
+          <label class="field-label">Image URL</label>
+          <input class="field-input" type="url" id="f-image-url" placeholder="https://drive.google.com/…" oninput="previewImage()">
+          <div class="img-preview-wrap">
+            <img class="img-preview" id="img-preview" src="" alt="Preview">
+            <span class="img-preview-label" id="img-preview-label">Paste a URL above to preview the image.</span>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label class="field-label">Description</label>
+          <textarea class="field-textarea" id="f-description" placeholder="Describe the item…"></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-submit" id="btn-submit" onclick="submitForm()">
+        <span class="spinner" id="submit-spinner"></span>
+        <span id="submit-label">✦ Add to Marketplace</span>
+      </button>
+      <button class="btn-reset" onclick="resetForm()">Clear</button>
+      <div class="form-msg" id="form-msg"></div>
+    </div>
+
+  </div>
+
+</main>
+
+<script>
+  const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+  const ADMIN_PASSWORD = 'ZacwT2!'; // Change this to your preferred password
+
+  let editingCardId = null; // null = adding new, string = editing existing
+
+  // ── PASSWORD GATE ──
+  function checkPassword() {
+    const val = document.getElementById('gate-input').value;
+    if (val === ADMIN_PASSWORD) {
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('main').classList.add('visible');
+      loadListings();
+    } else {
+      document.getElementById('gate-err').textContent = 'Incorrect password.';
+      document.getElementById('gate-input').value = '';
+      document.getElementById('gate-input').focus();
+    }
+  }
+
+  document.getElementById('gate-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkPassword();
+  });
+
+  // ── JSONP ──
+  function jsonpFetch(url, timeout) {
+    return new Promise((resolve, reject) => {
+      const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+      const script = document.createElement('script');
+      const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 12000);
+      function cleanup() {
+        clearTimeout(timer);
+        delete window[cb];
+        if (document.body.contains(script)) document.body.removeChild(script);
+      }
+      window[cb]     = data => { cleanup(); resolve(data); };
+      script.onerror = ()   => { cleanup(); reject(new Error('script error')); };
+      script.src     = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
+      document.body.appendChild(script);
+    });
+  }
+
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── LOAD LISTINGS ──
+  async function loadListings() {
+    try {
+      const data = await jsonpFetch(LIVING_API + '?action=get_marketplace_admin', 12000);
+      if (!data || !data.success || !data.cards) {
+        renderTableError('Could not load listings.');
+        return;
+      }
+      renderTable(data.cards);
+    } catch(err) {
+      renderTableError('Connection error loading listings.');
+    }
+  }
+
+  function renderTable(cards) {
+    const tbody = document.getElementById('items-tbody');
+    if (!cards.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="table-loading">No items in the marketplace yet.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = cards.map(card => {
+      const remaining  = parseInt(card.remaining) || 0;
+      const edition    = parseInt(card.editionSize) || 0;
+      const remClass   = remaining === 0 ? 'remaining-zero' : remaining <= 3 ? 'remaining-low' : '';
+      const statusLower = (card.status || '').toLowerCase();
+
+      return `
+        <tr>
+          <td style="font-family:monospace;font-size:0.8rem;color:var(--muted)">${esc(card.cardId)}</td>
+          <td style="font-weight:600">${esc(card.cardName)}</td>
+          <td style="color:var(--muted)">${esc(card.format)}</td>
+          <td>${Number(card.xpPrice || 0).toLocaleString()} XP</td>
+          <td style="color:var(--muted)">${edition}</td>
+          <td class="${remClass}">${remaining}</td>
+          <td><span class="status-pill ${statusLower}">${esc(card.status)}</span></td>
+          <td><button class="btn-edit" onclick="loadForEdit(${JSON.stringify(card).replace(/"/g, '&quot;')})">Edit</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderTableError(msg) {
+    document.getElementById('items-tbody').innerHTML =
+      `<tr><td colspan="8" class="table-loading" style="color:var(--red)">${msg}</td></tr>`;
+  }
+
+  // ── LOAD ITEM INTO FORM FOR EDITING ──
+  function loadForEdit(card) {
+    editingCardId = card.cardId;
+
+    document.getElementById('f-card-id').value       = card.cardId    || '';
+    document.getElementById('f-card-name').value     = card.cardName  || '';
+    document.getElementById('f-format').value        = card.format    || '';
+    document.getElementById('f-status').value        = (card.status || '').toLowerCase();
+    document.getElementById('f-xp-price').value      = card.xpPrice   || '';
+    document.getElementById('f-edition-size').value  = card.editionSize || '';
+    document.getElementById('f-remaining').value     = card.remaining  || '';
+    document.getElementById('f-image-url').value     = card.imageUrl   || '';
+    document.getElementById('f-description').value   = card.description || '';
+
+    if (card.dateAdded) {
+      const d = new Date(card.dateAdded);
+      if (!isNaN(d)) {
+        document.getElementById('f-date-added').value = d.toISOString().split('T')[0];
+      }
+    }
+
+    // Lock card ID when editing
+    document.getElementById('f-card-id').readOnly = true;
+    document.getElementById('f-card-id').style.opacity = '0.5';
+
+    document.getElementById('form-title-text').textContent  = 'Editing: ' + card.cardName;
+    document.getElementById('form-mode-badge').textContent  = 'Edit';
+    document.getElementById('form-section-title').textContent = 'Edit Item';
+    document.getElementById('submit-label').textContent     = '✦ Save Changes';
+    document.getElementById('form-msg').textContent         = '';
+
+    previewImage();
+
+    // Scroll to form
+    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── RESET FORM ──
+  function resetForm() {
+    editingCardId = null;
+    document.getElementById('f-card-id').value       = '';
+    document.getElementById('f-card-name').value     = '';
+    document.getElementById('f-format').value        = '';
+    document.getElementById('f-status').value        = 'marketplace';
+    document.getElementById('f-xp-price').value      = '';
+    document.getElementById('f-edition-size').value  = '';
+    document.getElementById('f-remaining').value     = '';
+    document.getElementById('f-image-url').value     = '';
+    document.getElementById('f-description').value   = '';
+    document.getElementById('f-date-added').value    = '';
+
+    document.getElementById('f-card-id').readOnly   = false;
+    document.getElementById('f-card-id').style.opacity = '1';
+
+    document.getElementById('form-title-text').textContent  = 'New Marketplace Item';
+    document.getElementById('form-mode-badge').textContent  = 'New';
+    document.getElementById('form-section-title').textContent = 'Add New Item';
+    document.getElementById('submit-label').textContent     = '✦ Add to Marketplace';
+    document.getElementById('form-msg').textContent         = '';
+
+    document.querySelectorAll('.field-input').forEach(i => i.classList.remove('error'));
+    previewImage();
+  }
+
+  // ── IMAGE PREVIEW ──
+  function previewImage() {
+    const url     = document.getElementById('f-image-url').value.trim();
+    const preview = document.getElementById('img-preview');
+    const label   = document.getElementById('img-preview-label');
+    if (url) {
+      preview.src = url;
+      preview.classList.add('visible');
+      preview.onerror = () => {
+        preview.classList.remove('visible');
+        label.textContent = 'Could not load image from that URL.';
+      };
+      preview.onload = () => {
+        label.textContent = 'Image loaded successfully.';
+      };
+    } else {
+      preview.classList.remove('visible');
+      label.textContent = 'Paste a URL above to preview the image.';
+    }
+  }
+
+  // ── SUBMIT ──
+  async function submitForm() {
+    const cardId     = document.getElementById('f-card-id').value.trim();
+    const cardName   = document.getElementById('f-card-name').value.trim();
+    const format     = document.getElementById('f-format').value;
+    const status     = document.getElementById('f-status').value;
+    const xpPrice    = document.getElementById('f-xp-price').value.trim();
+    const editionSize = document.getElementById('f-edition-size').value.trim();
+    const remaining  = document.getElementById('f-remaining').value.trim();
+    const imageUrl   = document.getElementById('f-image-url').value.trim();
+    const description = document.getElementById('f-description').value.trim();
+    let   dateAdded  = document.getElementById('f-date-added').value;
+
+    // Validation
+    let valid = true;
+    const required = [
+      { id: 'f-card-id',      val: cardId },
+      { id: 'f-card-name',    val: cardName },
+      { id: 'f-xp-price',     val: xpPrice },
+      { id: 'f-edition-size', val: editionSize },
+      { id: 'f-remaining',    val: remaining },
+    ];
+    required.forEach(f => {
+      const el = document.getElementById(f.id);
+      if (!f.val) {
+        el.classList.add('error');
+        valid = false;
+      } else {
+        el.classList.remove('error');
+      }
+    });
+    if (!format) {
+      document.getElementById('f-format').classList.add('error');
+      valid = false;
+    }
+    if (!valid) {
+      showMsg('Please fill in all required fields.', 'error');
+      return;
+    }
+
+    if (!dateAdded) {
+      dateAdded = new Date().toISOString().split('T')[0];
+    }
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    document.getElementById('submit-spinner').classList.add('visible');
+    document.getElementById('submit-label').textContent = editingCardId ? 'Saving…' : 'Adding…';
+    showMsg('', '');
+
+    const action = editingCardId ? 'update_marketplace_item' : 'add_marketplace_item';
+
+    const params = new URLSearchParams({
+      action:       action,
+      card_id:      cardId,
+      card_name:    cardName,
+      format:       format,
+      status:       status,
+      xp_price:     xpPrice,
+      edition_size: editionSize,
+      remaining:    remaining,
+      image_url:    imageUrl,
+      description:  description,
+      date_added:   dateAdded
+    });
+
+    try {
+      const result = await jsonpFetch(LIVING_API + '?' + params.toString(), 15000);
+
+      if (!result || !result.success) {
+        showMsg(result ? result.error : 'Something went wrong.', 'error');
+      } else {
+        showMsg(editingCardId ? 'Item updated successfully.' : 'Item added to marketplace.', 'success');
+        resetForm();
+        await loadListings();
+      }
+    } catch(err) {
+      showMsg('Connection error — please try again.', 'error');
+    }
+
+    btn.disabled = false;
+    document.getElementById('submit-spinner').classList.remove('visible');
+    document.getElementById('submit-label').textContent = editingCardId ? '✦ Save Changes' : '✦ Add to Marketplace';
+  }
+
+  function showMsg(text, type) {
+    const el = document.getElementById('form-msg');
+    el.textContent = text;
+    el.className   = 'form-msg ' + type;
+  }
+</script>
+
+</body>
+</html>
