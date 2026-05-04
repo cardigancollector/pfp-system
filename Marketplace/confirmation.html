@@ -37,13 +37,49 @@
       z-index: 0;
     }
 
+    /* ── LOADING ── */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid rgba(201,168,76,0.15);
+      border-top-color: #c9a84c;
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-label {
+      font-size: 9px;
+      letter-spacing: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* ── PAGE ── */
     .page {
       position: relative;
       z-index: 1;
       max-width: 480px;
       margin: 0 auto;
       padding: 0 0 60px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
     }
+
+    .page.visible { opacity: 1; }
 
     /* Header */
     .header {
@@ -63,6 +99,7 @@
       font-size: 10px;
       letter-spacing: 3px;
       color: var(--text);
+      text-decoration: none;
     }
 
     .xp-wrap { text-align: right; }
@@ -144,19 +181,9 @@
       max-width: 60%;
     }
 
-    .summary-row.total .summary-label {
-      font-size: 12px;
-      color: var(--text);
-    }
-
-    .summary-row.total .summary-value {
-      font-size: 13px;
-      color: var(--text);
-    }
-
-    .summary-row.remaining .summary-value {
-      color: var(--muted);
-    }
+    .summary-row.total .summary-label { font-size: 12px; color: var(--text); }
+    .summary-row.total .summary-value { font-size: 13px; color: var(--text); }
+    .summary-row.remaining .summary-value { color: var(--muted); }
 
     /* Section divider */
     .section-rule {
@@ -197,12 +224,10 @@
       margin-bottom: 16px;
     }
 
-    /* Digital notice — shown instead of form for digital items */
     .digital-notice {
       background: var(--surface);
       border: 0.5px solid var(--border);
       padding: 16px;
-      margin-bottom: 0;
       display: none;
     }
 
@@ -215,9 +240,7 @@
 
     .shipping-form { display: block; }
 
-    .field {
-      margin-bottom: 12px;
-    }
+    .field { margin-bottom: 12px; }
 
     .field label {
       display: block;
@@ -243,7 +266,6 @@
 
     .field input::placeholder { color: rgba(168, 169, 173, 0.35); }
     .field input:focus { border-color: var(--border-md); }
-
     .field input.error { border-color: var(--error); }
 
     .field-error {
@@ -282,12 +304,12 @@
       cursor: pointer;
       text-decoration: none;
       transition: border-color 0.2s, color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .btn-back:hover {
-      border-color: var(--text);
-      color: var(--text);
-    }
+    .btn-back:hover { border-color: var(--text); color: var(--text); }
 
     .btn-confirm {
       flex: 2;
@@ -303,8 +325,9 @@
       transition: opacity 0.2s, transform 0.15s;
     }
 
-    .btn-confirm:hover { opacity: 0.9; }
-    .btn-confirm:active { transform: scale(0.99); }
+    .btn-confirm:hover:not(:disabled) { opacity: 0.9; }
+    .btn-confirm:active:not(:disabled) { transform: scale(0.99); }
+    .btn-confirm:disabled { opacity: 0.45; cursor: not-allowed; }
 
     @keyframes fadeDown {
       from { opacity: 0; transform: translateY(-10px); }
@@ -319,13 +342,18 @@
 </head>
 <body>
 
-<div class="page">
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div class="loading-label">Loading…</div>
+</div>
+
+<div class="page" id="page">
 
   <header class="header">
-    <span class="logo">XP Marketplace</span>
+    <a class="logo" href="spotlight.html">XP Marketplace</a>
     <div class="xp-wrap">
       <span class="xp-label">Available XP</span>
-      <span class="xp-value" id="header-xp">7,150 XP</span>
+      <span class="xp-value" id="header-xp">—</span>
     </div>
   </header>
 
@@ -362,12 +390,10 @@
 
   <div class="form-block">
 
-    <!-- Shown for digital items -->
     <div class="digital-notice" id="digital-notice">
       <p>This is a digital item. No shipping address is required — your file will be delivered to your registered email address after confirmation.</p>
     </div>
 
-    <!-- Shown for physical items -->
     <div class="shipping-form" id="shipping-form">
       <div class="form-eyebrow">Shipping Address</div>
 
@@ -405,16 +431,16 @@
   </div>
 
   <div class="btn-row">
-    <a class="btn-back" id="btn-back" href="item-detail.html">Go Back</a>
-    <button class="btn-confirm" onclick="handleConfirm()">Confirm Redemption</button>
+    <a class="btn-back" id="btn-back" href="marketplace.html">Go Back</a>
+    <button class="btn-confirm" id="btn-confirm" onclick="handleConfirm()">Confirm Redemption</button>
   </div>
 
 </div>
 
 <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeApp }     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, doc, getDoc }  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
@@ -431,10 +457,12 @@
 
   const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 
-  let currentUser = null;
-  let userXP      = 0;
-  let userCards   = [];
+  let currentUser  = null;
+  let userXP       = 0;
+  let userCardIds  = [];  // plain card ID strings for the redeem call
+  let itemData     = null;
 
+  // ── JSONP ──
   function jsonpFetch(url, timeout) {
     return new Promise((resolve, reject) => {
       const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
@@ -458,61 +486,93 @@
     return new URLSearchParams(window.location.search).get(key) || '';
   }
 
+  function hideLoading() {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('page').classList.add('visible');
+  }
+
   // ── AUTH GUARD ──
   onAuthStateChanged(auth, async user => {
     if (!user) { window.location.href = 'login.html'; return; }
     currentUser = user;
-    await loadUserData(user);
-    render();
+
+    const cardId = getParam('card_id');
+    if (!cardId) { window.location.href = 'marketplace.html'; return; }
+
+    // Load user data and item data in parallel
+    await Promise.all([loadUserData(user), loadItemData(cardId)]);
+
+    render(cardId);
+    hideLoading();
   });
 
-  // ── LOAD USER XP & CARDS ──
+  // ── LOAD USER XP & CARD IDS ──
   async function loadUserData(user) {
     try {
-      const snap = await getDoc(doc(db, 'users', user.uid));
+      const snap  = await getDoc(doc(db, 'users', user.uid));
       if (!snap.exists()) return;
       const cards = snap.data().cards || [];
-      userCards = cards.map(c => c.cardId);
 
-      if (userCards.length === 0) { updateXPDisplay(0); return; }
+      // Handle both plain string IDs and legacy object format
+      userCardIds = cards.map(c => typeof c === 'string' ? c : c.cardId);
 
-      const fetches = userCards.map(async id => {
+      if (userCardIds.length === 0) return;
+
+      const fetches = userCardIds.map(async id => {
         try {
           const res = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(id), 8000);
-          if (res && res.success && res.card) return parseInt(res.card['Current XP']) || 0;
+          if (res && res.success && res.card) {
+            return (parseInt(res.card['Current XP']) || 0) + (parseInt(res.card['Gaming XP']) || 0);
+          }
         } catch(e) {}
         return 0;
       });
 
       userXP = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
-      updateXPDisplay(userXP);
+      document.getElementById('header-xp').textContent = fmt(userXP) + ' XP';
+
     } catch(err) {
-      updateXPDisplay(0);
+      console.warn('loadUserData error:', err);
     }
   }
 
-  function updateXPDisplay(xp) {
-    userXP = xp;
-    document.getElementById('header-xp').textContent = fmt(xp) + ' XP';
+  // ── LOAD ITEM FROM MARKETPLACE ──
+  async function loadItemData(cardId) {
+    try {
+      const data = await jsonpFetch(LIVING_API + '?action=get_marketplace', 12000);
+      if (!data || !data.success || !data.cards) return;
+      itemData = data.cards.find(c => String(c.cardId) === String(cardId)) || null;
+    } catch(err) {
+      console.warn('loadItemData error:', err);
+    }
   }
 
   // ── RENDER SUMMARY ──
-  function render() {
-    const cardId    = getParam('card_id');
-    const name      = getParam('name');
-    const xpPrice   = parseInt(getParam('xp'))        || 0;
-    const edition   = parseInt(getParam('edition'))   || 0;
-    const remaining = parseInt(getParam('remaining')) || 0;
-    const format    = getParam('format') || 'Card';
-    const isDigital = format.toLowerCase() === 'digital';
-    const balanceAfter = userXP - xpPrice;
+  function render(cardId) {
+    if (!itemData) {
+      // If item not found, go back to marketplace
+      window.location.href = 'marketplace.html';
+      return;
+    }
 
-    document.getElementById('summary-name').textContent    = name;
+    const xpPrice    = parseInt(itemData.xpPrice)     || 0;
+    const edition    = parseInt(itemData.editionSize) || 0;
+    const remaining  = parseInt(itemData.remaining)   || 0;
+    const format     = itemData.format || 'Card';
+    const isDigital  = format.toLowerCase() === 'digital';
+    const balAfter   = userXP - xpPrice;
+    const from       = getParam('from') || 'marketplace';
+
+    document.getElementById('summary-name').textContent    = itemData.cardName || '—';
     document.getElementById('summary-type').textContent    = format;
     document.getElementById('summary-edition').textContent = remaining + ' of ' + edition + ' remaining';
     document.getElementById('summary-cost').textContent    = fmt(xpPrice) + ' XP';
-    document.getElementById('summary-remaining').textContent = fmt(balanceAfter) + ' XP';
-    document.getElementById('btn-back').href = 'item-detail.html?card_id=' + encodeURIComponent(cardId);
+    document.getElementById('summary-remaining').textContent = fmt(balAfter) + ' XP';
+    document.getElementById('header-xp').textContent       = fmt(userXP) + ' XP';
+
+    // Back link preserves where they came from
+    document.getElementById('btn-back').href =
+      'item-detail.html?card_id=' + encodeURIComponent(cardId) + '&from=' + from;
 
     if (isDigital) {
       document.getElementById('digital-notice').style.display = 'block';
@@ -520,13 +580,11 @@
     }
   }
 
-  // ── HANDLE CONFIRM ──
+  // ── CONFIRM REDEMPTION ──
   window.handleConfirm = async function() {
-    const cardId    = getParam('card_id');
-    const name      = getParam('name');
-    const xpPrice   = parseInt(getParam('xp')) || 0;
-    const format    = getParam('format') || 'Card';
-    const isDigital = format.toLowerCase() === 'digital';
+    if (!itemData || !currentUser) return;
+
+    const isDigital = (itemData.format || '').toLowerCase() === 'digital';
 
     if (!isDigital && !validateShipping()) return;
 
@@ -538,23 +596,22 @@
       country:  document.getElementById('country').value.trim(),
     };
 
-    // Build redeem URL
-    const params = new URLSearchParams({
-      action:       'redeem',
-      user_email:   currentUser.email,
-      user_uid:     currentUser.uid,
-      card_ids:     userCards.join(','),
-      item_id:      cardId,
-      ship_name:    shipping.name    || '',
-      ship_address: shipping.address || '',
-      ship_city:    shipping.city    || '',
-      ship_postcode:shipping.postcode|| '',
-      ship_country: shipping.country || ''
-    });
-
-    const btn = document.querySelector('.btn-confirm');
+    const btn = document.getElementById('btn-confirm');
     btn.textContent = 'Processing…';
     btn.disabled    = true;
+
+    const params = new URLSearchParams({
+      action:        'redeem',
+      user_email:    currentUser.email || '',
+      user_uid:      currentUser.uid,
+      card_ids:      userCardIds.join(','),
+      item_id:       itemData.cardId,
+      ship_name:     shipping.name     || '',
+      ship_address:  shipping.address  || '',
+      ship_city:     shipping.city     || '',
+      ship_postcode: shipping.postcode || '',
+      ship_country:  shipping.country  || ''
+    });
 
     try {
       const result = await jsonpFetch(LIVING_API + '?' + params.toString(), 15000);
@@ -566,13 +623,13 @@
         return;
       }
 
-      // Store for success page
+      // Pass result to success page via sessionStorage
       sessionStorage.setItem('redemption', JSON.stringify({
-        itemName:   name,
-        xpSpent:    xpPrice,
+        itemName:   itemData.cardName,
+        xpSpent:    parseInt(itemData.xpPrice) || 0,
         newTotalXP: result.newTotalXP,
         cardsUsed:  result.cardsUsed,
-        shipping:   shipping,
+        shipping:   isDigital ? null : shipping,
         isDigital:  isDigital
       }));
 
@@ -585,6 +642,7 @@
     }
   };
 
+  // ── VALIDATE SHIPPING ──
   function validateShipping() {
     let valid = true;
     const fields = [

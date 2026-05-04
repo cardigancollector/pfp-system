@@ -389,43 +389,49 @@
   }
 
   function render() {
-    const data = sessionStorage.getItem('redemption');
-    if (!data) {
+    // All data comes from sessionStorage set by confirmation.html
+    const raw = sessionStorage.getItem('redemption');
+
+    if (!raw) {
+      // No redemption data — they arrived here directly, send them back
       window.location.href = 'marketplace.html';
       return;
     }
 
-    const r = JSON.parse(data);
+    const data      = JSON.parse(raw);
+    const itemName  = data.itemName  || 'Item';
+    const newXP     = data.newTotalXP != null ? data.newTotalXP : 0;
+    const isDigital = data.isDigital || false;
+    const shipping  = data.shipping  || null;
+
+    // Clear immediately so refreshing doesn't reuse stale data
     sessionStorage.removeItem('redemption');
 
-    // Header XP
-    document.getElementById('header-xp').textContent = fmt(r.newTotalXP) + ' XP';
+    // Header & remaining XP
+    document.getElementById('header-xp').textContent    = fmt(newXP) + ' XP';
+    document.getElementById('remaining-xp').textContent = fmt(newXP) + ' XP';
 
-    // Remaining XP panel
-    document.getElementById('remaining-xp').textContent = fmt(r.newTotalXP) + ' XP';
+    // Title & message
+    document.getElementById('success-title').textContent = itemName + ' — Redeemed';
 
-    // Title and message
-    document.getElementById('success-title').textContent = r.itemName + ' — Redeemed';
-
-    if (r.isDigital) {
+    if (isDigital) {
       document.getElementById('success-message').textContent =
         'Your digital item is confirmed. Check your registered email — delivery will arrive shortly.';
     } else {
       document.getElementById('success-message').textContent =
-        'Your ' + r.itemName + ' is confirmed. We\'ll be in touch with shipping details and tracking shortly.';
+        'Your ' + itemName + ' is confirmed. We\'ll be in touch with shipping details and tracking shortly.';
     }
 
     // Order reference
     document.getElementById('order-ref').textContent = 'Order ref: ' + generateRef();
 
     // Shipping summary
-    if (r.shipping && !r.isDigital && r.shipping.name) {
+    if (shipping && !isDigital && shipping.name) {
       const note = document.getElementById('shipping-note');
       note.style.display = 'block';
-      document.getElementById('ship-name').textContent = r.shipping.name;
-      document.getElementById('ship-address').textContent = r.shipping.address;
-      const cityCountry = [r.shipping.city, r.shipping.postcode, r.shipping.country]
-        .filter(Boolean).join(', ');
+      document.getElementById('ship-name').textContent = shipping.name;
+      document.getElementById('ship-address').textContent = shipping.address || '';
+      const cityCountry = [shipping.city, shipping.postcode, shipping.country].filter(Boolean).join(', ');
       document.getElementById('ship-city-country').textContent = cityCountry;
     }
   }
