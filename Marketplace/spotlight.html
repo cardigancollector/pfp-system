@@ -720,9 +720,10 @@
       // Fetch XP for each registered card from the sheet
       let total = 0;
       const fetches = cards.map(async c => {
+        const cardId = typeof c === 'string' ? c : c.cardId;
         try {
           const res = await jsonpFetch(
-            LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(c.cardId), 8000
+            LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(cardId), 8000
           );
           if (res && res.success && res.card) {
             return parseInt(res.card['Current XP']) || 0;
