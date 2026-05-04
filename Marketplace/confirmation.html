@@ -627,7 +627,7 @@
       sessionStorage.setItem('redemption', JSON.stringify({
         itemName:   itemData.cardName,
         xpSpent:    parseInt(itemData.xpPrice) || 0,
-        newTotalXP: result.newTotalXP,
+        newTotalXP: userXP - (parseInt(itemData.xpPrice) || 0),
         cardsUsed:  result.cardsUsed,
         shipping:   isDigital ? null : shipping,
         isDigital:  isDigital
