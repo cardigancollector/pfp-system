@@ -39,7 +39,6 @@
       z-index: 0;
     }
 
-    /* ── LOADING SCREEN ── */
     #loading-screen {
       position: fixed;
       inset: 0;
@@ -70,7 +69,6 @@
       text-transform: uppercase;
     }
 
-    /* ── ERROR SCREEN ── */
     #error-screen {
       display: none;
       position: fixed;
@@ -113,7 +111,6 @@
 
     .error-back:hover { opacity: 1; }
 
-    /* ── PAGE ── */
     .page {
       position: relative;
       z-index: 1;
@@ -126,7 +123,6 @@
 
     .page.visible { opacity: 1; }
 
-    /* ── HEADER ── */
     .header {
       display: flex;
       justify-content: space-between;
@@ -163,7 +159,6 @@
       letter-spacing: 1px;
     }
 
-    /* ── IMAGE ── */
     .image-wrap {
       display: flex;
       justify-content: center;
@@ -201,11 +196,7 @@
       display: block;
     }
 
-    .corner {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-    }
+    .corner { position: absolute; width: 14px; height: 14px; }
     .corner.tl { top: 8px; left: 8px; border-top: 0.5px solid var(--muted); border-left: 0.5px solid var(--muted); }
     .corner.tr { top: 8px; right: 8px; border-top: 0.5px solid var(--muted); border-right: 0.5px solid var(--muted); }
     .corner.bl { bottom: 8px; left: 8px; border-bottom: 0.5px solid var(--muted); border-left: 0.5px solid var(--muted); }
@@ -224,7 +215,6 @@
       color: var(--muted);
     }
 
-    /* Sold out overlay on image */
     .sold-out-overlay {
       display: none;
       position: absolute;
@@ -240,7 +230,6 @@
     }
     .sold-out-overlay.visible { display: flex; }
 
-    /* ── TITLE ── */
     .item-title-wrap {
       padding: 24px 20px 0;
       animation: fadeUp 0.7s ease 0.08s both;
@@ -262,7 +251,6 @@
       line-height: 1.4;
     }
 
-    /* ── META STRIP ── */
     .meta-strip {
       display: flex;
       justify-content: space-around;
@@ -297,7 +285,6 @@
       background: var(--border-md);
     }
 
-    /* ── AVAILABILITY BAR ── */
     .avail-wrap {
       margin: 16px 20px 0;
       animation: fadeUp 0.7s ease 0.18s both;
@@ -326,7 +313,6 @@
       transition: width 1s cubic-bezier(0.16,1,0.3,1);
     }
 
-    /* ── DESCRIPTION ── */
     .description {
       padding: 22px 20px;
       animation: fadeUp 0.7s ease 0.2s both;
@@ -347,7 +333,6 @@
       font-style: italic;
     }
 
-    /* ── REDEEM SECTION ── */
     .redeem-section {
       margin: 0 20px;
       border: 0.5px solid var(--border);
@@ -376,7 +361,6 @@
       color: var(--text);
     }
 
-    /* Afford status line */
     .afford-row {
       display: flex;
       justify-content: flex-end;
@@ -385,7 +369,7 @@
       font-style: italic;
     }
 
-    .afford-row.can   { color: var(--green); }
+    .afford-row.can    { color: var(--green); }
     .afford-row.cannot { color: var(--red); }
 
     .btn-redeem {
@@ -404,7 +388,7 @@
       transition: opacity 0.2s, transform 0.15s;
     }
 
-    .btn-redeem:hover:not(.disabled) { opacity: 0.9; }
+    .btn-redeem:hover:not(.disabled)  { opacity: 0.9; }
     .btn-redeem:active:not(.disabled) { transform: scale(0.99); }
 
     .btn-redeem.disabled {
@@ -413,7 +397,6 @@
       pointer-events: none;
     }
 
-    /* ── BACK LINK ── */
     .back-link {
       display: block;
       text-align: center;
@@ -440,20 +423,17 @@
 </head>
 <body>
 
-<!-- Loading -->
 <div id="loading-screen">
   <div class="spinner"></div>
   <div class="loading-label">Loading item…</div>
 </div>
 
-<!-- Error -->
 <div id="error-screen">
   <div class="error-title">Item Not Found</div>
   <div class="error-msg" id="error-msg">This item could not be loaded.</div>
   <a class="error-back" href="marketplace.html">← Back to Marketplace</a>
 </div>
 
-<!-- Page -->
 <div class="page" id="page">
 
   <header class="header">
@@ -550,7 +530,6 @@
 
   const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 
-  // ── JSONP ──
   function jsonpFetch(url, timeout) {
     return new Promise((resolve, reject) => {
       const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
@@ -589,27 +568,9 @@
     document.getElementById('page').classList.add('visible');
   }
 
-  // ── AUTH GUARD ──
-  onAuthStateChanged(auth, async user => {
-    if (!user) {
-      window.location.href = 'login.html';
-      return;
-    }
-
-    const cardId = getCardIdFromURL();
-    if (!cardId) {
-      showError('No item ID provided.');
-      return;
-    }
-
-    // Load user XP and marketplace data in parallel
-    const [userXP] = await Promise.all([
-      loadUserXP(user),
-      loadAndRender(cardId, user)
-    ]);
-  });
-
   // ── LOAD USER XP ──
+  // Current XP from get_card is already the combined total (Life + Gaming).
+  // We just sum Current XP across all cards — no Gaming XP addition needed.
   async function loadUserXP(user) {
     try {
       const userSnap = await getDoc(doc(db, 'users', user.uid));
@@ -623,62 +584,53 @@
           const res = await jsonpFetch(
             LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(cardId), 8000
           );
-          if (res && res.success && res.card) return (parseInt(res.card['Current XP']) || 0) + (parseInt(res.card['Gaming XP']) || 0);
+          if (res && res.success && res.card) return parseInt(res.card['Current XP']) || 0;
         } catch(e) {}
         return 0;
       });
 
-      const total = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
-      document.getElementById('header-xp').textContent = fmt(total) + ' XP';
-      return total;
+      return (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
     } catch(err) {
       return 0;
     }
   }
 
-  // ── LOAD MARKETPLACE AND RENDER ──
-  async function loadAndRender(cardId, user) {
-    try {
-      const data = await jsonpFetch(LIVING_API + '?action=get_marketplace', 12000);
+  // ── AUTH GUARD ──
+  onAuthStateChanged(auth, async user => {
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
 
-      if (!data || !data.success || !data.cards) {
+    const cardId = getCardIdFromURL();
+    if (!cardId) {
+      showError('No item ID provided.');
+      return;
+    }
+
+    try {
+      const [userXP, marketData] = await Promise.all([
+        loadUserXP(user),
+        jsonpFetch(LIVING_API + '?action=get_marketplace', 12000)
+      ]);
+
+      if (!marketData || !marketData.success || !marketData.cards) {
         showError('Could not load marketplace data. Please try again.');
         return;
       }
 
-      const card = data.cards.find(c => String(c.cardId) === String(cardId));
-
+      const card = marketData.cards.find(c => String(c.cardId) === String(cardId));
       if (!card) {
         showError('Item not found in the marketplace.');
         return;
       }
-
-      // Get current XP from header (may still be loading, so we re-fetch)
-      let userXP = 0;
-      try {
-        const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (userSnap.exists()) {
-          const registeredCards = userSnap.data().cards || [];
-          const fetches = registeredCards.map(async c => {
-            const cardId = typeof c === 'string' ? c : c.cardId;
-            try {
-              const res = await jsonpFetch(
-                LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(cardId), 8000
-              );
-              if (res && res.success && res.card) return (parseInt(res.card['Current XP']) || 0) + (parseInt(res.card['Gaming XP']) || 0);
-            } catch(e) {}
-            return 0;
-          });
-          userXP = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
-        }
-      } catch(e) {}
 
       render(card, userXP);
 
     } catch(err) {
       showError('Connection error — please refresh and try again.');
     }
-  }
+  });
 
   // ── RENDER ──
   function render(card, userXP) {
@@ -703,7 +655,7 @@
     document.getElementById('item-image').classList.add(imageShape);
 
     // Type badge
-    document.getElementById('type-badge').textContent  = label;
+    document.getElementById('type-badge').textContent   = label;
     document.getElementById('item-eyebrow').textContent = label;
 
     // Sold out overlay
@@ -725,7 +677,7 @@
     document.getElementById('item-title').textContent = card.cardName || '—';
 
     // Meta strip
-    document.getElementById('editions-issued').textContent   = fmt(edition);
+    document.getElementById('editions-issued').textContent    = fmt(edition);
     document.getElementById('editions-remaining').textContent = fmt(remaining);
 
     if (card.dateAdded) {
@@ -774,7 +726,7 @@
       btn.textContent = 'Redeem This Item';
     }
 
-    // Header XP (update now that we have it)
+    // Header XP
     document.getElementById('header-xp').textContent = fmt(userXP) + ' XP';
 
     hideLoading();
