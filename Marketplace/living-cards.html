@@ -465,9 +465,10 @@
       list.appendChild(row);
     });
 
-    document.getElementById('total-grand').textContent   = fmt(totalLife);
-    document.getElementById('header-xp').textContent     = fmt(totalLife) + ' XP';
-    document.getElementById('header-xp').textContent     = fmt(grand) + ' XP';
+    document.getElementById('total-life').textContent    = fmt(totalLife);
+document.getElementById('total-gaming').textContent  = fmt(totalLife);
+document.getElementById('total-grand').textContent   = fmt(totalLife);
+document.getElementById('header-xp').textContent     = fmt(totalLife) + ' XP';
   }
 
   function showError(msg) {
