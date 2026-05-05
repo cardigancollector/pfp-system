@@ -439,12 +439,9 @@
       const cardName  = card['Card Name']  || card['Card ID'] || '—';
       const cardId    = card['Card ID']    || '—';
       const printRun  = card['Print Run']  || '—';
-      const lifeXP    = Number(card['Current XP'])  || 0;
-      const gamingXP  = Number(card['Gaming XP'])   || 0;
-      const total     = lifeXP + gamingXP;
+      const total = Number(card['Current XP']) || 0;
 
-      totalLife   += lifeXP;
-      totalGaming += gamingXP;
+      totalLife += total;
 
       const row = document.createElement('div');
       row.className = 'card-row';
@@ -463,17 +460,13 @@
             <div class="card-edition">${cardId} &nbsp;·&nbsp; ${printRun}</div>
           </div>
         </div>
-        <div class="xp-cell life">${fmt(lifeXP)}</div>
-        <div class="xp-cell gaming">${fmt(gamingXP)}</div>
-        <div class="xp-cell total">${fmt(total)}</div>
+        <div class="xp-cell total" style="grid-column: 2 / -1;">${fmt(total)}</div>
       `;
       list.appendChild(row);
     });
 
-    const grand = totalLife + totalGaming;
-    document.getElementById('total-life').textContent    = fmt(totalLife);
-    document.getElementById('total-gaming').textContent  = fmt(totalGaming);
-    document.getElementById('total-grand').textContent   = fmt(grand);
+    document.getElementById('total-grand').textContent   = fmt(totalLife);
+    document.getElementById('header-xp').textContent     = fmt(totalLife) + ' XP';
     document.getElementById('header-xp').textContent     = fmt(grand) + ' XP';
   }
 
