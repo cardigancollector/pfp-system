@@ -16,6 +16,7 @@
       --text:      #e8e4dc;
       --muted:     #a8a9ad;
       --error:     #c97b6e;
+      --gold:      #c9a84c;
       --font-display: 'Cinzel Decorative', serif;
       --font-body:    'Crimson Pro', Georgia, serif;
     }
@@ -54,7 +55,7 @@
       width: 36px;
       height: 36px;
       border: 1.5px solid rgba(201,168,76,0.15);
-      border-top-color: #c9a84c;
+      border-top-color: var(--gold);
       border-radius: 50%;
       animation: spin 0.85s linear infinite;
     }
@@ -68,7 +69,49 @@
       text-transform: uppercase;
     }
 
-    /* ── PAGE ── */
+    /* ── ERROR SCREEN ── */
+    #error-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--bg);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    #error-screen.visible { display: flex; }
+
+    .error-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      color: var(--text);
+      letter-spacing: 1px;
+    }
+
+    .error-msg {
+      font-size: 14px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .error-back {
+      margin-top: 12px;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .error-back:hover { opacity: 1; }
+
     .page {
       position: relative;
       z-index: 1;
@@ -81,7 +124,7 @@
 
     .page.visible { opacity: 1; }
 
-    /* Header */
+    /* ── HEADER ── */
     .header {
       display: flex;
       justify-content: space-between;
@@ -118,7 +161,7 @@
       letter-spacing: 1px;
     }
 
-    /* Page intro */
+    /* ── PAGE INTRO ── */
     .page-intro {
       padding: 28px 20px 20px;
       animation: fadeDown 0.7s ease both;
@@ -139,7 +182,7 @@
       letter-spacing: 1px;
     }
 
-    /* Order summary */
+    /* ── ORDER SUMMARY ── */
     .summary-block {
       margin: 0 20px;
       background: var(--surface);
@@ -185,7 +228,7 @@
     .summary-row.total .summary-value { font-size: 13px; color: var(--text); }
     .summary-row.remaining .summary-value { color: var(--muted); }
 
-    /* Section divider */
+    /* ── SECTION DIVIDER ── */
     .section-rule {
       display: flex;
       align-items: center;
@@ -210,7 +253,7 @@
       flex-shrink: 0;
     }
 
-    /* Shipping form */
+    /* ── SHIPPING FORM ── */
     .form-block {
       margin: 0 20px;
       animation: fadeUp 0.7s ease 0.16s both;
@@ -283,7 +326,7 @@
       gap: 10px;
     }
 
-    /* Buttons */
+    /* ── BUTTONS ── */
     .btn-row {
       display: flex;
       gap: 10px;
@@ -327,7 +370,20 @@
 
     .btn-confirm:hover:not(:disabled) { opacity: 0.9; }
     .btn-confirm:active:not(:disabled) { transform: scale(0.99); }
-    .btn-confirm:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── SUBMIT MESSAGE ── */
+    .submit-msg {
+      margin: 16px 20px 0;
+      font-size: 12px;
+      font-style: italic;
+      text-align: center;
+      min-height: 18px;
+      color: var(--error);
+      display: none;
+    }
+
+    .submit-msg.visible { display: block; }
 
     @keyframes fadeDown {
       from { opacity: 0; transform: translateY(-10px); }
@@ -344,7 +400,13 @@
 
 <div id="loading-screen">
   <div class="spinner"></div>
-  <div class="loading-label">Loading…</div>
+  <div class="loading-label" id="loading-label">Loading…</div>
+</div>
+
+<div id="error-screen">
+  <div class="error-title">Something Went Wrong</div>
+  <div class="error-msg" id="error-msg">This item could not be loaded.</div>
+  <a class="error-back" href="marketplace.html">← Back to Marketplace</a>
 </div>
 
 <div class="page" id="page">
@@ -435,10 +497,12 @@
     <button class="btn-confirm" id="btn-confirm" onclick="handleConfirm()">Confirm Redemption</button>
   </div>
 
+  <div class="submit-msg" id="submit-msg"></div>
+
 </div>
 
 <script type="module">
-  import { initializeApp }     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeApp }  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, doc, getDoc }  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -457,10 +521,11 @@
 
   const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 
+  // ── State ──
   let currentUser  = null;
   let userXP       = 0;
-  let userCardIds  = [];  // plain card ID strings for the redeem call
-  let itemData     = null;
+  let userCardIds  = [];
+  let marketItem   = null;
 
   // ── JSONP ──
   function jsonpFetch(url, timeout) {
@@ -482,167 +547,137 @@
 
   function fmt(n) { return Number(n || 0).toLocaleString(); }
 
-  function getParam(key) {
-    return new URLSearchParams(window.location.search).get(key) || '';
+  function getCardIdFromURL() {
+    return new URLSearchParams(window.location.search).get('card_id') || '';
   }
 
-  function hideLoading() {
+  function getFromParam() {
+    return new URLSearchParams(window.location.search).get('from') || 'marketplace';
+  }
+
+  function setLoadingLabel(text) {
+    document.getElementById('loading-label').textContent = text;
+  }
+
+  function showError(msg) {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('error-msg').textContent = msg || 'This item could not be loaded.';
+    document.getElementById('error-screen').classList.add('visible');
+  }
+
+  function showPage() {
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('page').classList.add('visible');
   }
 
   // ── AUTH GUARD ──
   onAuthStateChanged(auth, async user => {
-    if (!user) { window.location.href = 'login.html'; return; }
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
     currentUser = user;
 
-    const cardId = getParam('card_id');
-    if (!cardId) { window.location.href = 'marketplace.html'; return; }
+    const cardId = getCardIdFromURL();
+    if (!cardId) {
+      showError('No item ID provided.');
+      return;
+    }
 
-    // Load user data and item data in parallel
-    await Promise.all([loadUserData(user), loadItemData(cardId)]);
-
-    render(cardId);
-    hideLoading();
-  });
-
-  // ── LOAD USER XP & CARD IDS ──
-  async function loadUserData(user) {
     try {
-      const snap  = await getDoc(doc(db, 'users', user.uid));
-      if (!snap.exists()) return;
-      const cards = snap.data().cards || [];
+      setLoadingLabel('Loading your account…');
 
-      // Handle both plain string IDs and legacy object format
-      userCardIds = cards.map(c => typeof c === 'string' ? c : c.cardId);
+      // Load Firestore user doc
+      const userSnap = await getDoc(doc(db, 'users', user.uid));
+      if (!userSnap.exists()) {
+        showError('Account not found. Please sign in again.');
+        return;
+      }
 
-      if (userCardIds.length === 0) return;
+      const userData = userSnap.data();
+      const cards    = userData.cards || [];
 
-      const fetches = userCardIds.map(async id => {
+      // Extract card IDs (handle both string and object shapes)
+      userCardIds = cards.map(c => typeof c === 'string' ? c : c.cardId).filter(Boolean);
+
+      if (userCardIds.length === 0) {
+        showError('You have no registered cards. Register a card first to redeem XP.');
+        return;
+      }
+
+      setLoadingLabel('Calculating your XP…');
+
+      // Fetch XP for each card
+      const xpFetches = userCardIds.map(async id => {
         try {
-          const res = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(id), 8000);
-          if (res && res.success && res.card) {
-            return (parseInt(res.card['Current XP']) || 0) + (parseInt(res.card['Gaming XP']) || 0);
-          }
+          const res = await jsonpFetch(
+            LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(id), 8000
+          );
+          if (res && res.success && res.card) return parseInt(res.card['Current XP']) || 0;
         } catch(e) {}
         return 0;
       });
 
-      userXP = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
-      document.getElementById('header-xp').textContent = fmt(userXP) + ' XP';
+      userXP = (await Promise.all(xpFetches)).reduce((s, x) => s + x, 0);
+
+      setLoadingLabel('Loading item details…');
+
+      // Fetch marketplace data
+      const marketData = await jsonpFetch(LIVING_API + '?action=get_marketplace', 12000);
+      if (!marketData || !marketData.success || !marketData.cards) {
+        showError('Could not load marketplace data. Please try again.');
+        return;
+      }
+
+      const card = marketData.cards.find(c => String(c.cardId) === String(cardId));
+      if (!card) {
+        showError('Item not found in the marketplace.');
+        return;
+      }
+
+      marketItem = card;
+      render(card);
 
     } catch(err) {
-      console.warn('loadUserData error:', err);
+      console.error(err);
+      showError('Connection error — please refresh and try again.');
     }
-  }
+  });
 
-  // ── LOAD ITEM FROM MARKETPLACE ──
-  async function loadItemData(cardId) {
-    try {
-      const data = await jsonpFetch(LIVING_API + '?action=get_marketplace', 12000);
-      if (!data || !data.success || !data.cards) return;
-      itemData = data.cards.find(c => String(c.cardId) === String(cardId)) || null;
-    } catch(err) {
-      console.warn('loadItemData error:', err);
-    }
-  }
+  // ── RENDER ──
+  function render(card) {
+    const xpPrice    = parseInt(card.xpPrice)     || 0;
+    const remaining  = parseInt(card.remaining)   || 0;
+    const edition    = parseInt(card.editionSize) || 0;
+    const isDigital  = (card.format || '').toLowerCase() === 'digital';
+    const balanceAfter = userXP - xpPrice;
+    const typeLabel  = card.format || 'Card';
+    const from       = getFromParam();
 
-  // ── RENDER SUMMARY ──
-  function render(cardId) {
-    if (!itemData) {
-      // If item not found, go back to marketplace
-      window.location.href = 'marketplace.html';
-      return;
-    }
+    // Header XP
+    document.getElementById('header-xp').textContent = fmt(userXP) + ' XP';
 
-    const xpPrice    = parseInt(itemData.xpPrice)     || 0;
-    const edition    = parseInt(itemData.editionSize) || 0;
-    const remaining  = parseInt(itemData.remaining)   || 0;
-    const format     = itemData.format || 'Card';
-    const isDigital  = format.toLowerCase() === 'digital';
-    const balAfter   = userXP - xpPrice;
-    const from       = getParam('from') || 'marketplace';
-
-    document.getElementById('summary-name').textContent    = itemData.cardName || '—';
-    document.getElementById('summary-type').textContent    = format;
+    // Order summary
+    document.getElementById('summary-name').textContent    = card.cardName || '—';
+    document.getElementById('summary-type').textContent    = typeLabel;
     document.getElementById('summary-edition').textContent = remaining + ' of ' + edition + ' remaining';
     document.getElementById('summary-cost').textContent    = fmt(xpPrice) + ' XP';
-    document.getElementById('summary-remaining').textContent = fmt(balAfter) + ' XP';
-    document.getElementById('header-xp').textContent       = fmt(userXP) + ' XP';
+    document.getElementById('summary-remaining').textContent = fmt(balanceAfter) + ' XP';
 
-    // Back link preserves where they came from
-    document.getElementById('btn-back').href =
-      'item-detail.html?card_id=' + encodeURIComponent(cardId) + '&from=' + from;
+    // Back link
+    const backLink = document.getElementById('btn-back');
+    backLink.href = 'item-detail.html?card_id=' + encodeURIComponent(card.cardId) + '&from=' + from;
 
+    // Digital vs physical
     if (isDigital) {
       document.getElementById('digital-notice').style.display = 'block';
       document.getElementById('shipping-form').style.display  = 'none';
     }
+
+    showPage();
   }
 
-  // ── CONFIRM REDEMPTION ──
-  window.handleConfirm = async function() {
-    if (!itemData || !currentUser) return;
-
-    const isDigital = (itemData.format || '').toLowerCase() === 'digital';
-
-    if (!isDigital && !validateShipping()) return;
-
-    const shipping = isDigital ? {} : {
-      name:     document.getElementById('full-name').value.trim(),
-      address:  document.getElementById('address').value.trim(),
-      city:     document.getElementById('city').value.trim(),
-      postcode: document.getElementById('postcode').value.trim(),
-      country:  document.getElementById('country').value.trim(),
-    };
-
-    const btn = document.getElementById('btn-confirm');
-    btn.textContent = 'Processing…';
-    btn.disabled    = true;
-
-    const params = new URLSearchParams({
-      action:        'redeem',
-      user_email:    currentUser.email || '',
-      user_uid:      currentUser.uid,
-      card_ids:      userCardIds.join(','),
-      item_id:       itemData.cardId,
-      ship_name:     shipping.name     || '',
-      ship_address:  shipping.address  || '',
-      ship_city:     shipping.city     || '',
-      ship_postcode: shipping.postcode || '',
-      ship_country:  shipping.country  || ''
-    });
-
-    try {
-      const result = await jsonpFetch(LIVING_API + '?' + params.toString(), 15000);
-
-      if (!result || !result.success) {
-        btn.textContent = 'Confirm Redemption';
-        btn.disabled    = false;
-        alert(result ? result.error : 'Something went wrong. Please try again.');
-        return;
-      }
-
-      // Pass result to success page via sessionStorage
-      sessionStorage.setItem('redemption', JSON.stringify({
-        itemName:   itemData.cardName,
-        xpSpent:    parseInt(itemData.xpPrice) || 0,
-        newTotalXP: userXP - (parseInt(itemData.xpPrice) || 0),
-        cardsUsed:  result.cardsUsed,
-        shipping:   isDigital ? null : shipping,
-        isDigital:  isDigital
-      }));
-
-      window.location.href = 'success.html';
-
-    } catch(err) {
-      btn.textContent = 'Confirm Redemption';
-      btn.disabled    = false;
-      alert('Connection error — please try again.');
-    }
-  };
-
-  // ── VALIDATE SHIPPING ──
+  // ── VALIDATION ──
   function validateShipping() {
     let valid = true;
     const fields = [
@@ -666,6 +701,74 @@
     return valid;
   }
 
+  // ── CONFIRM ──
+  window.handleConfirm = async function() {
+    if (!marketItem || !currentUser) return;
+
+    const isDigital = (marketItem.format || '').toLowerCase() === 'digital';
+    if (!isDigital && !validateShipping()) return;
+
+    const btn    = document.getElementById('btn-confirm');
+    const msgEl  = document.getElementById('submit-msg');
+    btn.disabled = true;
+    btn.textContent = 'Processing…';
+    msgEl.classList.remove('visible');
+
+    const shipping = isDigital ? {} : {
+      name:     document.getElementById('full-name').value.trim(),
+      address:  document.getElementById('address').value.trim(),
+      city:     document.getElementById('city').value.trim(),
+      postcode: document.getElementById('postcode').value.trim(),
+      country:  document.getElementById('country').value.trim(),
+    };
+
+    // Build redeem URL
+    const params = new URLSearchParams({
+      action:        'redeem',
+      user_uid:      currentUser.uid,
+      user_email:    currentUser.email || '',
+      card_ids:      userCardIds.join(','),
+      item_id:       marketItem.cardId,
+      ship_name:     shipping.name     || '',
+      ship_address:  shipping.address  || '',
+      ship_city:     shipping.city     || '',
+      ship_postcode: shipping.postcode || '',
+      ship_country:  shipping.country  || '',
+    });
+
+    try {
+      const result = await jsonpFetch(LIVING_API + '?' + params.toString(), 20000);
+
+      if (!result || !result.success) {
+        const errText = result && result.error ? result.error : 'Redemption failed. Please try again.';
+        msgEl.textContent = errText;
+        msgEl.classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = 'Confirm Redemption';
+        return;
+      }
+
+      // Success — store result for success.html and redirect
+      sessionStorage.setItem('redemption', JSON.stringify({
+        itemName:   result.itemName,
+        xpSpent:    result.xpSpent,
+        newTotalXP: result.newTotalXP,
+        shipping:   isDigital ? null : shipping,
+        orderRef:   'XP-' + Date.now().toString(36).toUpperCase().slice(-6),
+      }));
+
+      window.location.href = 'success.html';
+
+    } catch(err) {
+      console.error(err);
+      msgEl.textContent = 'Connection error — please try again.';
+      msgEl.classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'Confirm Redemption';
+    }
+  };
+
+  // Clear error state on input
   document.querySelectorAll('.field input').forEach(input => {
     input.addEventListener('input', function() {
       this.classList.remove('error');
