@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XP Marketplace — My Cards</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #111318;
+      --surface:   #1c1f27;
+      --border:    rgba(232, 228, 220, 0.12);
+      --border-md: rgba(232, 228, 220, 0.28);
+      --text:      #e8e4dc;
+      --muted:     #a8a9ad;
+      --font-display: 'Cinzel Decorative', serif;
+      --font-body:    'Crimson Pro', Georgia, serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 0 60px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 20px 18px;
+      border-bottom: 0.5px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--text);
+    }
+
+    .xp-wrap { text-align: right; }
+    .xp-label {
+      display: block;
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+    .xp-value {
+      font-family: var(--font-display);
+      font-size: 14px;
+      color: var(--text);
+      letter-spacing: 1px;
+    }
+
+    .page-intro {
+      padding: 28px 20px 20px;
+      border-bottom: 0.5px solid var(--border);
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .page-eyebrow {
+      font-size: 9px;
+      letter-spacing: 5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: var(--text);
+      letter-spacing: 1px;
+    }
+
+    .col-headers {
+      display: grid;
+      grid-template-columns: 1fr 80px 80px 80px;
+      gap: 0;
+      padding: 10px 20px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .col-hdr {
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      text-align: right;
+    }
+
+    .col-hdr:first-child { text-align: left; }
+
+    .cards-list { padding: 0 20px; }
+
+    .card-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 80px 80px;
+      gap: 0;
+      padding: 18px 0;
+      border-bottom: 0.5px solid var(--border);
+      align-items: center;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .card-row:last-child { border-bottom: none; }
+
+    .card-name-wrap { display: flex; align-items: center; gap: 12px; }
+
+    .card-thumb {
+      width: 32px;
+      height: 45px;
+      background: var(--surface);
+      border: 0.5px solid var(--border-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-thumb svg { opacity: 0.3; }
+
+    .card-name {
+      font-family: var(--font-display);
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .card-edition {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .xp-cell {
+      text-align: right;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .xp-cell.total {
+      font-family: var(--font-display);
+      font-size: 11px;
+      color: var(--text);
+    }
+
+    .totals-bar {
+      margin: 0 20px;
+      border: 0.5px solid var(--border-md);
+      background: var(--surface);
+      padding: 20px;
+      animation: fadeUp 0.8s ease 0.2s both;
+    }
+
+    .totals-eyebrow {
+      font-size: 8px;
+      letter-spacing: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .totals-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+    }
+
+    .total-item { text-align: center; }
+
+    .total-item:not(:last-child) {
+      border-right: 0.5px solid var(--border);
+    }
+
+    .total-label {
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .total-value {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: var(--text);
+      display: block;
+    }
+
+    .total-item.grand .total-value { font-size: 20px; }
+
+    .section-rule {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 20px 20px;
+    }
+
+    .section-rule::before,
+    .section-rule::after {
+      content: '';
+      flex: 1;
+      height: 0.5px;
+      background: var(--border-md);
+    }
+
+    .rule-diamond {
+      width: 5px;
+      height: 5px;
+      border: 0.5px solid var(--muted);
+      transform: rotate(45deg);
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+
+    .cta-wrap {
+      padding: 24px 20px 0;
+      animation: fadeUp 0.9s ease 0.3s both;
+    }
+
+    .btn-marketplace {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      font-family: var(--font-display);
+      font-size: 9px;
+      letter-spacing: 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      text-decoration: none;
+    }
+
+    .btn-marketplace:hover { opacity: 0.9; }
+    .btn-marketplace:active { transform: scale(0.99); }
+
+    .loading-row {
+      padding: 40px 20px;
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      opacity: 0.5;
+    }
+
+    .error-row {
+      padding: 40px 20px;
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: #c97b6e;
+      text-transform: uppercase;
+      display: none;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="header">
+    <span class="logo">XP Marketplace</span>
+    <div class="xp-wrap">
+      <span class="xp-label">Available XP</span>
+      <span class="xp-value" id="header-xp">—</span>
+    </div>
+  </header>
+
+  <div class="page-intro">
+    <div class="page-eyebrow">Your Collection</div>
+    <div class="page-title">Living Cards</div>
+  </div>
+
+  <div class="col-headers">
+    <div class="col-hdr">Card</div>
+    <div class="col-hdr">Life XP</div>
+    <div class="col-hdr">Gaming XP</div>
+    <div class="col-hdr">Total XP</div>
+  </div>
+
+  <div class="cards-list" id="cards-list">
+    <div class="loading-row" id="loading-row">Loading your cards...</div>
+    <div class="error-row" id="error-row">Could not load cards. Please try again.</div>
+  </div>
+
+  <div class="section-rule"><div class="rule-diamond"></div></div>
+
+  <div class="totals-bar">
+    <div class="totals-eyebrow">All Cards Combined</div>
+    <div class="totals-grid">
+      <div class="total-item">
+        <span class="total-label">Life XP</span>
+        <span class="total-value" id="total-life">—</span>
+      </div>
+      <div class="total-item">
+        <span class="total-label">Gaming XP</span>
+        <span class="total-value" id="total-gaming">—</span>
+      </div>
+      <div class="total-item grand">
+        <span class="total-label">Spendable XP</span>
+        <span class="total-value" id="total-grand">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-wrap">
+    <a class="btn-marketplace" href="spotlight.html">Enter the Marketplace</a>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain: "pfp-system.firebaseapp.com",
+    projectId: "pfp-system",
+    storageBucket: "pfp-system.firebasestorage.app",
+    messagingSenderId: "643360345707",
+    appId: "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const SHEETS_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+
+  function jsonpFetch(url, timeout) {
+    return new Promise((resolve, reject) => {
+      const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+      const script = document.createElement('script');
+      const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 10000);
+      function cleanup() {
+        clearTimeout(timer);
+        delete window[cb];
+        if (document.body.contains(script)) document.body.removeChild(script);
+      }
+      window[cb]     = data => { cleanup(); resolve(data); };
+      script.onerror = ()   => { cleanup(); reject(new Error('script error')); };
+      script.src     = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
+      document.body.appendChild(script);
+    });
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+    await loadUserCards(user.uid);
+  });
+
+  async function loadUserCards(uid) {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', uid));
+
+      if (!userDoc.exists()) {
+        showError('No card collection found for this account.');
+        return;
+      }
+
+      const rawCards = userDoc.data().cards || [];
+
+      if (rawCards.length === 0) {
+        showError('You have no cards yet.');
+        return;
+      }
+
+      // Handle both plain string IDs and legacy object shape
+      const cardIds = rawCards.map(c => c.cardId || c);
+
+      const cardPromises = cardIds.map(id => fetchCard(id));
+      const cards = await Promise.all(cardPromises);
+
+      renderCards(cards.filter(c => c !== null));
+
+    } catch (err) {
+      console.error(err);
+      showError('Something went wrong. Please refresh.');
+    }
+  }
+
+  async function fetchCard(cardId) {
+    const url = SHEETS_API + '?action=get_card&card_id=' + encodeURIComponent(cardId);
+    try {
+      const data = await jsonpFetch(url, 10000);
+      if (data && data.success) return data.card;
+      return null;
+    } catch (e) {
+      console.warn('Could not fetch card:', cardId, e);
+      return null;
+    }
+  }
+
+  function fmt(n) {
+    return Number(n || 0).toLocaleString();
+  }
+
+  function renderCards(cards) {
+    const list = document.getElementById('cards-list');
+    document.getElementById('loading-row').style.display = 'none';
+
+    let totalLife = 0, totalGaming = 0;
+
+    cards.forEach((card, i) => {
+      const cardName = card['Card Name'] || card['Card ID'] || '—';
+      const cardId   = card['Card ID']   || '—';
+      const printRun = card['Print Run'] || '—';
+
+      // Current XP is the combined total; Gaming XP is separate.
+      // Life XP = Current XP - Gaming XP.
+      const currentXP = Number(card['Current XP']) || 0;
+      const gamingXP  = Number(card['Gaming XP'])  || 0;
+      const lifeXP    = currentXP - gamingXP;
+
+      totalLife   += lifeXP;
+      totalGaming += gamingXP;
+
+      const row = document.createElement('div');
+      row.className = 'card-row';
+      row.style.animationDelay = (i * 0.08) + 's';
+      row.innerHTML = `
+        <div class="card-name-wrap">
+          <div class="card-thumb">
+            <svg width="14" height="14" viewBox="0 0 48 48" fill="none">
+              <rect x="1" y="1" width="46" height="46" stroke="#e8e4dc" stroke-width="0.5"/>
+              <line x1="1" y1="1" x2="47" y2="47" stroke="#e8e4dc" stroke-width="0.5"/>
+              <line x1="47" y1="1" x2="1" y2="47" stroke="#e8e4dc" stroke-width="0.5"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-name">${cardName}</div>
+            <div class="card-edition">${cardId} &nbsp;·&nbsp; ${printRun}</div>
+          </div>
+        </div>
+        <div class="xp-cell life">${fmt(lifeXP)}</div>
+        <div class="xp-cell gaming">${fmt(gamingXP)}</div>
+        <div class="xp-cell total">${fmt(currentXP)}</div>
+      `;
+      list.appendChild(row);
+    });
+
+    const grand = totalLife + totalGaming;
+    document.getElementById('total-life').textContent   = fmt(totalLife);
+    document.getElementById('total-gaming').textContent = fmt(totalGaming);
+    document.getElementById('total-grand').textContent  = fmt(grand);
+    document.getElementById('header-xp').textContent    = fmt(grand) + ' XP';
+  }
+
+  function showError(msg) {
+    document.getElementById('loading-row').style.display = 'none';
+    const err = document.getElementById('error-row');
+    err.textContent = msg;
+    err.style.display = 'block';
+  }
+</script>
+
+</body>
+</html>
