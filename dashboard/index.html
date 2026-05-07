@@ -619,6 +619,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   urlCardId = params.get('card_id') || params.get('cardId') || '';
   if (urlCardId) {
+    livingCard   = null;
+    analyzerCard = null;
+    gamingData   = null;
     boot(urlCardId);
   } else {
     showError('No card ID provided in the URL.');
