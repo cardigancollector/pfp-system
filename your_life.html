@@ -159,7 +159,7 @@
 
   <div class="page-header">
     <div class="page-header-top">
-      <a class="back-btn" id="back-link" href="#">← Dashboard</a>
+      <a class="back-btn" id="back-link" href="../dashboard/">← Dashboard</a>
       <div class="header-eyebrow">PfP · Living Card</div>
     </div>
     <div class="header-title">Your Life</div>
@@ -514,7 +514,7 @@ function renderPage(events, cardId) {
 function showNoEvents(cardId) {
   document.getElementById('your-life-loading').style.display    = 'none';
   document.getElementById('your-life-no-events').style.display  = 'flex';
-  const backUrl = cardId ? 'index.html?card_id=' + encodeURIComponent(cardId) : 'index.html';
+  const backUrl = cardId ? '../dashboard/?card_id=' + encodeURIComponent(cardId) : '../dashboard/';
   document.getElementById('no-events-back').href = backUrl;
 }
 
@@ -554,8 +554,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if (backBtn) {
     backBtn.onclick = () => {
       window.location.href = cardId
-        ? 'https://cardigancollector.github.io/pfp-system/dashboard/?card_id=' + encodeURIComponent(cardId)
-        : 'https://cardigancollander.github.io/pfp-system/dashboard/';
+        ? '../dashboard/?card_id=' + encodeURIComponent(cardId)
+        : '../dashboard/';
     };
   }
 
