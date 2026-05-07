@@ -159,7 +159,8 @@
 
   <div class="page-header">
     <div class="page-header-top">
-      <a class="back-btn" id="back-link" href="dashboard/index.html">← Dashboard</a>
+      <a class="back-btn" id="back-link" href="/pfp-system/dashboard/index.html">← Dashboard</a>
+      
       <div class="header-eyebrow">PfP · Living Card</div>
     </div>
     <div class="header-title">Your Life</div>
@@ -554,8 +555,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if (backBtn) {
     backBtn.onclick = () => {
       window.location.href = cardId
-  ? 'dashboard/index.html?card_id=' + encodeURIComponent(cardId)
-  : 'dashboard/index.html';
+  ? '/pfp-system/dashboard/index.html?card_id=' + encodeURIComponent(cardId)
+  : '/pfp-system/dashboard/index.html';
     };
   }
 
