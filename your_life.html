@@ -528,7 +528,7 @@ async function loadLifeEvents(cardId) {
   try {
     const data = await jsonpFetch(LIVING_API + '?action=get_ledger&card_id=' + encodeURIComponent(cardId), 12000);
     if (!data || !data.success || !data.entries) { showNoEvents(cardId); return; }
-    const lifeEvents = data.entries.filter(e => (e.type || e['Interaction Type'] || '').toUpperCase() === 'LIFE_EVENT');
+    const lifeEvents = data.lifeEvents || data.entries.filter(e => (e.type || e['Interaction Type'] || '').toUpperCase() === 'LIFE_EVENT');
     if (lifeEvents.length === 0) { showNoEvents(cardId); return; }
     const mapped = lifeEvents.map(e => ({
       Timestamp:          e.date   || e.Timestamp        || '',
