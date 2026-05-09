@@ -8,162 +8,124 @@
 <style>
   :root {
     --green-deep:  #041a0a;
-    --green-dark:  #071f0d;
-    --green-mid:   #0d3318;
     --green-bright:#2ecc71;
-    --green-dim:   #1a6b35;
-    --green-dim2:  #0f4020;
     --gold:        #c9a84c;
-    --gold-light:  #e8c97a;
     --gold-dim:    #7a6030;
     --text:        #d4ecd8;
     --text-dim:    #6a8f70;
     --text-mid:    #9ab89e;
-    --red:         #c0392b;
     --red-bright:  #e74c3c;
     --win:         #2ecc71;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'EB Garamond',serif; background:var(--green-deep); color:var(--text); min-height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+  html, body { height:100%; overflow:hidden; }
+  body { font-family:'EB Garamond',serif; background:var(--green-deep); color:var(--text); display:flex; flex-direction:column; }
 
-  .bg-felt { position:fixed; inset:0; z-index:0; background: radial-gradient(ellipse 120% 60% at 50% 100%, rgba(10,40,16,0.98) 0%, transparent 65%), #041a0a; }
-  .bg-grid  { position:fixed; inset:0; z-index:0; background-image:linear-gradient(rgba(46,180,90,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(46,180,90,0.03) 1px,transparent 1px); background-size:64px 64px; mask-image:radial-gradient(ellipse 100% 80% at 50% 30%, black 10%, transparent 75%); }
+  .bg-felt { position:fixed; inset:0; z-index:0; background:radial-gradient(ellipse 120% 60% at 50% 100%, rgba(10,40,16,0.98) 0%, transparent 65%), #041a0a; }
+  .bg-grid  { position:fixed; inset:0; z-index:0; background-image:linear-gradient(rgba(46,180,90,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(46,180,90,0.03) 1px,transparent 1px); background-size:64px 64px; }
   .motes { position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
-  .mote { position:absolute; border-radius:50%; opacity:0; animation:mote-drift linear infinite; }
-  @keyframes mote-drift { 0%{transform:translateY(100vh) translateX(0) scale(0);opacity:0;} 8%{opacity:1;} 92%{opacity:0.4;} 100%{transform:translateY(-30px) translateX(var(--dx)) scale(0.2);opacity:0;} }
+  .mote  { position:absolute; border-radius:50%; opacity:0; animation:mote-drift linear infinite; }
+  @keyframes mote-drift { 0%{transform:translateY(100vh) scale(0);opacity:0;} 8%{opacity:1;} 92%{opacity:0.4;} 100%{transform:translateY(-30px) translateX(var(--dx)) scale(0.2);opacity:0;} }
 
-  .header { position:relative; z-index:10; padding:14px 32px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(46,180,90,0.12); background:rgba(4,26,10,0.97); backdrop-filter:blur(24px); flex-shrink:0; }
-  .header-left { display:flex; align-items:center; gap:16px; }
-  .back-btn { background:none; border:1px solid rgba(46,180,90,0.2); color:var(--text-dim); font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; padding:7px 14px; cursor:pointer; transition:all 0.3s; }
+  .header { position:relative; z-index:10; padding:10px 24px; display:flex; align-items:center; gap:14px; border-bottom:1px solid rgba(46,180,90,0.12); background:rgba(4,26,10,0.97); flex-shrink:0; }
+  .back-btn { background:none; border:1px solid rgba(46,180,90,0.2); color:var(--text-dim); font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; padding:6px 12px; cursor:pointer; transition:all 0.3s; }
   .back-btn:hover { border-color:var(--green-bright); color:var(--green-bright); }
-  .header-brand { font-family:'Cinzel Decorative',serif; font-size:1.1rem; color:var(--gold); letter-spacing:0.08em; }
-  .header-sub { font-size:0.58rem; color:var(--text-dim); letter-spacing:0.25em; text-transform:uppercase; margin-top:2px; }
+  .header-brand { font-family:'Cinzel Decorative',serif; font-size:1rem; color:var(--gold); }
+  .header-sub { font-size:0.55rem; color:var(--text-dim); letter-spacing:0.25em; text-transform:uppercase; margin-top:1px; }
 
-  /* HUD */
-  .hud { position:relative; z-index:10; display:flex; align-items:center; justify-content:space-between; padding:10px 32px; background:rgba(4,20,8,0.9); border-bottom:1px solid rgba(46,180,90,0.08); flex-shrink:0; gap:16px; }
-  .hud-block { display:flex; flex-direction:column; align-items:center; min-width:80px; }
-  .hud-label { font-size:0.55rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--text-dim); margin-bottom:2px; }
-  .hud-val { font-family:'Cinzel',serif; font-size:1.2rem; color:var(--gold); line-height:1; }
-  .hud-val.green { color:var(--win); }
-  .hud-val.red   { color:var(--red-bright); }
+  .hud { position:relative; z-index:10; display:flex; align-items:center; justify-content:space-between; padding:6px 20px; background:rgba(4,20,8,0.95); border-bottom:1px solid rgba(46,180,90,0.08); flex-shrink:0; gap:10px; }
+  .hud-block { display:flex; flex-direction:column; align-items:center; min-width:56px; }
+  .hud-label { font-size:0.48rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--text-dim); margin-bottom:1px; }
+  .hud-val { font-family:'Cinzel',serif; font-size:1rem; color:var(--gold); line-height:1; }
+  .hud-val.red { color:var(--red-bright); }
 
-  .xp-bar-wrap { flex:1; max-width:400px; }
-  .xp-bar-track { height:8px; background:rgba(46,180,90,0.08); border:1px solid rgba(46,180,90,0.15); border-radius:0; overflow:hidden; position:relative; }
-  .xp-bar-fill  { height:100%; background:linear-gradient(90deg, var(--green-bright), var(--gold)); transition:width 0.25s linear; border-radius:0; }
-  .xp-bar-fill.danger { background:linear-gradient(90deg, var(--red-bright), #ff6b6b); }
-  .xp-bar-label { display:flex; justify-content:space-between; font-size:0.58rem; color:var(--text-dim); margin-top:4px; }
+  .xp-bar-wrap { flex:1; max-width:360px; }
+  .xp-bar-track { height:6px; background:rgba(46,180,90,0.08); border:1px solid rgba(46,180,90,0.15); overflow:hidden; }
+  .xp-bar-fill  { height:100%; background:linear-gradient(90deg,var(--green-bright),var(--gold)); transition:width 0.25s linear; }
+  .xp-bar-fill.danger { background:linear-gradient(90deg,var(--red-bright),#ff6b6b); }
+  .xp-bar-label { display:flex; justify-content:space-between; font-size:0.5rem; color:var(--text-dim); margin-top:2px; }
 
-  /* Game area */
-  .game-area { position:relative; z-index:5; flex:1; display:flex; align-items:center; justify-content:center; padding:16px; overflow:hidden; }
+  .game-area { position:relative; z-index:5; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
 
-  /* Screens */
-  .screen { position:absolute; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; padding:32px; background:rgba(4,26,10,0.96); backdrop-filter:blur(24px); }
+  .screen { position:absolute; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:28px; background:rgba(4,26,10,0.96); backdrop-filter:blur(24px); }
   .screen.hidden { display:none; }
-  .screen-title { font-family:'Cinzel Decorative',serif; font-size:2.2rem; color:var(--gold); text-align:center; text-shadow:0 0 40px rgba(201,168,76,0.3); line-height:1.1; }
-  .screen-sub { font-size:1rem; color:var(--text-dim); font-style:italic; text-align:center; max-width:440px; line-height:1.6; }
-  .screen-stat { font-family:'Cinzel',serif; font-size:1.1rem; color:var(--text-mid); text-align:center; }
-  .screen-stat span { color:var(--gold); font-size:1.4rem; }
-  .screen-stat.win span { color:var(--win); }
+  .screen-title { font-family:'Cinzel Decorative',serif; font-size:2rem; color:var(--gold); text-align:center; text-shadow:0 0 40px rgba(201,168,76,0.3); }
+  .screen-sub   { font-size:0.9rem; color:var(--text-dim); font-style:italic; text-align:center; max-width:400px; line-height:1.6; }
+  .screen-stat  { font-family:'Cinzel',serif; font-size:0.95rem; color:var(--text-mid); text-align:center; }
+  .screen-stat span { color:var(--gold); font-size:1.2rem; }
+  .screen-stat.win  span { color:var(--win); }
   .screen-stat.lose span { color:var(--red-bright); }
 
-  .btn-primary { background:none; border:1px solid var(--gold-dim); color:var(--gold); font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.3em; text-transform:uppercase; padding:14px 36px; cursor:pointer; transition:all 0.3s; position:relative; overflow:hidden; }
-  .btn-primary::before { content:''; position:absolute; inset:0; background:rgba(201,168,76,0.05); transform:scaleX(0); transition:transform 0.3s; transform-origin:left; }
-  .btn-primary:hover { border-color:var(--gold); text-shadow:0 0 20px rgba(201,168,76,0.4); }
-  .btn-primary:hover::before { transform:scaleX(1); }
-  .btn-secondary { background:none; border:1px solid rgba(46,180,90,0.2); color:var(--text-dim); font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.25em; text-transform:uppercase; padding:10px 24px; cursor:pointer; transition:all 0.3s; }
+  .btn-primary   { background:none; border:1px solid var(--gold-dim); color:var(--gold); font-family:'Cinzel',serif; font-size:0.68rem; letter-spacing:0.3em; text-transform:uppercase; padding:12px 32px; cursor:pointer; transition:all 0.3s; }
+  .btn-primary:hover { border-color:var(--gold); box-shadow:0 0 20px rgba(201,168,76,0.15); }
+  .btn-secondary { background:none; border:1px solid rgba(46,180,90,0.2); color:var(--text-dim); font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; padding:8px 20px; cursor:pointer; transition:all 0.3s; }
   .btn-secondary:hover { border-color:var(--green-bright); color:var(--green-bright); }
 
-  .difficulty-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px; border:1px solid rgba(201,168,76,0.25); background:rgba(201,168,76,0.05); font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold-dim); }
-  .difficulty-dot { width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 6px var(--gold); }
+  .difficulty-badge { display:inline-flex; align-items:center; gap:8px; padding:5px 14px; border:1px solid rgba(201,168,76,0.25); background:rgba(201,168,76,0.05); font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold-dim); }
+  .difficulty-dot { width:5px; height:5px; border-radius:50%; background:var(--gold); box-shadow:0 0 5px var(--gold); }
 
-  /* Maze canvas */
-  #maze-canvas { display:block; image-rendering:pixelated; border:1px solid rgba(46,180,90,0.2); box-shadow:0 0 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(46,180,90,0.05); }
+  #maze-canvas { display:block; image-rendering:pixelated; border:1px solid rgba(46,180,90,0.25); box-shadow:0 0 40px rgba(0,0,0,0.7); }
 
-  /* Mobile controls */
-  .mobile-controls { position:relative; z-index:10; display:none; padding:12px 24px 20px; flex-shrink:0; }
-  .dpad { display:grid; grid-template-columns:repeat(3,52px); grid-template-rows:repeat(3,52px); gap:4px; margin:0 auto; width:fit-content; }
-  .dpad-btn { background:rgba(7,31,13,0.8); border:1px solid rgba(46,180,90,0.2); color:var(--text-mid); font-size:1.2rem; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; user-select:none; -webkit-tap-highlight-color:transparent; border-radius:2px; }
-  .dpad-btn:active { background:rgba(46,180,90,0.15); border-color:var(--green-bright); color:var(--green-bright); transform:scale(0.93); }
-  .dpad-center { background:none; border:none; }
+  .mobile-controls { position:relative; z-index:10; padding:8px 20px 14px; flex-shrink:0; justify-content:center; display:none; }
+  .dpad { display:grid; grid-template-columns:repeat(3,48px); grid-template-rows:repeat(3,48px); gap:3px; margin:0 auto; width:fit-content; }
+  .dpad-btn { background:rgba(7,31,13,0.8); border:1px solid rgba(46,180,90,0.2); color:var(--text-mid); font-size:1.1rem; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent; border-radius:2px; }
+  .dpad-btn:active { background:rgba(46,180,90,0.15); border-color:var(--green-bright); color:var(--green-bright); transform:scale(0.92); }
 
-  .saving-indicator { position:fixed; bottom:20px; right:20px; z-index:50; font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--text-dim); padding:8px 14px; background:rgba(4,26,10,0.9); border:1px solid rgba(46,180,90,0.15); opacity:0; transition:opacity 0.4s; }
+  .saving-indicator { position:fixed; bottom:14px; right:14px; z-index:50; font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); padding:6px 12px; background:rgba(4,26,10,0.92); border:1px solid rgba(46,180,90,0.15); opacity:0; transition:opacity 0.4s; }
   .saving-indicator.show { opacity:1; }
 
-  @media (max-width:700px) {
-    .mobile-controls { display:flex; justify-content:center; }
-    .header { padding:10px 16px; }
-    .hud { padding:8px 16px; }
-    .screen-title { font-size:1.6rem; }
-  }
-  @media (pointer:coarse) {
-    .mobile-controls { display:flex; justify-content:center; }
-  }
+  @media (max-width:700px) { .header{padding:8px 12px;} .hud{padding:5px 12px;} .screen-title{font-size:1.5rem;} .mobile-controls{display:flex;} }
+  @media (pointer:coarse)  { .mobile-controls{display:flex;} }
 </style>
 </head>
 <body>
-
 <div class="bg-felt"></div>
 <div class="bg-grid"></div>
 <div class="motes" id="motes"></div>
 
-<header class="header">
-  <div class="header-left">
-    <button class="back-btn" id="back-btn">← Games</button>
-    <div>
-      <div class="header-brand">XP Gaming</div>
-      <div class="header-sub">The Maze</div>
-    </div>
+<header class="header" id="header">
+  <button class="back-btn" id="back-btn">← Games</button>
+  <div>
+    <div class="header-brand">XP Gaming</div>
+    <div class="header-sub">The Maze</div>
   </div>
 </header>
 
 <div class="hud" id="hud" style="display:none;">
-  <div class="hud-block">
-    <div class="hud-label">Maze</div>
-    <div class="hud-val" id="hud-maze-num">1</div>
-  </div>
+  <div class="hud-block"><div class="hud-label">Maze</div><div class="hud-val" id="hud-maze-num">1</div></div>
   <div class="xp-bar-wrap">
-    <div class="hud-label" style="text-align:center;margin-bottom:4px;">XP Remaining</div>
+    <div class="hud-label" style="text-align:center;margin-bottom:3px;">XP Remaining</div>
     <div class="xp-bar-track"><div class="xp-bar-fill" id="xp-bar"></div></div>
     <div class="xp-bar-label"><span id="xp-current">0</span><span id="xp-max">0</span></div>
   </div>
-  <div class="hud-block">
-    <div class="hud-label">Drain/sec</div>
-    <div class="hud-val red" id="hud-drain">1</div>
-  </div>
-  <div class="hud-block">
-    <div class="hud-label">Difficulty</div>
-    <div class="hud-val" id="hud-diff" style="font-size:0.75rem;letter-spacing:0.1em;">Novice</div>
-  </div>
+  <div class="hud-block"><div class="hud-label">Drain/sec</div><div class="hud-val red" id="hud-drain">1</div></div>
+  <div class="hud-block"><div class="hud-label">Difficulty</div><div class="hud-val" id="hud-diff" style="font-size:0.68rem;">Novice</div></div>
 </div>
 
 <div class="game-area" id="game-area">
-
-  <!-- Start Screen -->
   <div class="screen" id="screen-start">
     <div class="screen-title">The Maze</div>
-    <div class="screen-sub">Navigate from top to bottom before your XP drains away. Every second costs you — move fast, escape faster.</div>
-    <div class="difficulty-badge" id="start-diff-badge"><div class="difficulty-dot"></div><span id="start-diff-text">Novice Chamber</span></div>
+    <div class="screen-sub">Navigate from top to bottom before your XP drains away. Move fast, escape faster.</div>
+    <div class="difficulty-badge"><div class="difficulty-dot"></div><span id="start-diff-text">Novice Chamber</span></div>
     <div class="screen-stat">Starting XP: <span id="start-xp-display">100</span> &nbsp;·&nbsp; Drain: <span id="start-drain-display">1</span>/sec</div>
     <button class="btn-primary" id="btn-start">Enter the Chamber</button>
-    <div class="screen-stat" style="font-size:0.75rem;color:var(--text-dim);" id="start-mazes-played">Mazes completed: 0</div>
+    <div class="screen-stat" style="font-size:0.68rem;color:var(--text-dim);" id="start-mazes-played">Mazes completed: 0</div>
   </div>
 
-  <!-- Win Screen -->
   <div class="screen hidden" id="screen-win">
     <div class="screen-title">Escaped!</div>
     <div class="screen-sub">You found the exit. The chamber has released you.</div>
     <div class="screen-stat win">XP Earned: <span id="win-xp">0</span></div>
-    <div class="screen-stat" id="win-total-stat">Gaming XP Balance: <span id="win-total">0</span></div>
+    <div class="screen-stat">Gaming XP Balance: <span id="win-total">0</span></div>
     <button class="btn-primary" id="btn-next">Next Chamber</button>
     <button class="btn-secondary" id="btn-win-hub">Return to Hub</button>
   </div>
 
-  <!-- Lose Screen -->
   <div class="screen hidden" id="screen-lose">
     <div class="screen-title">Time's Up</div>
     <div class="screen-sub">The chamber claimed your XP. The minimum reward has been granted.</div>
     <div class="screen-stat lose">XP Earned: <span id="lose-xp">5</span></div>
-    <div class="screen-stat" id="lose-total-stat">Gaming XP Balance: <span id="lose-total">0</span></div>
+    <div class="screen-stat">Gaming XP Balance: <span id="lose-total">0</span></div>
     <button class="btn-primary" id="btn-retry">Try Again</button>
     <button class="btn-secondary" id="btn-lose-hub">Return to Hub</button>
   </div>
@@ -171,404 +133,299 @@
   <canvas id="maze-canvas"></canvas>
 </div>
 
-<div class="mobile-controls" id="mobile-controls" style="display:none;">
+<div class="mobile-controls" id="mobile-controls">
   <div class="dpad">
-    <div></div>
-    <div class="dpad-btn" id="d-up">↑</div>
-    <div></div>
-    <div class="dpad-btn" id="d-left">←</div>
-    <div class="dpad-center"></div>
-    <div class="dpad-btn" id="d-right">→</div>
-    <div></div>
-    <div class="dpad-btn" id="d-down">↓</div>
-    <div></div>
+    <div></div><div class="dpad-btn" id="d-up">↑</div><div></div>
+    <div class="dpad-btn" id="d-left">←</div><div></div><div class="dpad-btn" id="d-right">→</div>
+    <div></div><div class="dpad-btn" id="d-down">↓</div><div></div>
   </div>
 </div>
 
 <div class="saving-indicator" id="saving-indicator">Saving XP…</div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+const API         = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+const params      = new URLSearchParams(window.location.search);
+const CARD_ID     = params.get('card_id')     || params.get('cardId')     || localStorage.getItem('pfp_gaming_card')  || '';
+const OWNER_TOKEN = params.get('owner_token') || params.get('ownerToken') || localStorage.getItem('pfp_gaming_token') || '';
+if (CARD_ID)      localStorage.setItem('pfp_gaming_card',  CARD_ID);
+if (OWNER_TOKEN)  localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
 
-/* ── URL params ── */
-const params     = new URLSearchParams(window.location.search);
-const CARD_ID    = params.get('card_id')     || params.get('cardId')     || localStorage.getItem('pfp_gaming_card')  || '';
-const OWNER_TOKEN= params.get('owner_token') || params.get('ownerToken') || localStorage.getItem('pfp_gaming_token') || '';
-if (CARD_ID)     localStorage.setItem('pfp_gaming_card',  CARD_ID);
-if (OWNER_TOKEN) localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
-
-/* ── Back button ── */
-document.getElementById('back-btn').onclick = () => {
+document.getElementById('back-btn').onclick    = goHub;
+document.getElementById('btn-win-hub').onclick  = goHub;
+document.getElementById('btn-lose-hub').onclick = goHub;
+function goHub() {
   window.location.href = CARD_ID
-    ? '../index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN)
+    ? '../index.html?card_id='+encodeURIComponent(CARD_ID)+'&owner_token='+encodeURIComponent(OWNER_TOKEN)
     : '../index.html';
-};
-document.getElementById('btn-win-hub').onclick  = () => document.getElementById('back-btn').onclick();
-document.getElementById('btn-lose-hub').onclick = () => document.getElementById('back-btn').onclick();
+}
 
-/* ── JSONP ── */
 function jsonpFetch(url, timeout) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'maze_cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
-    const script = document.createElement('script');
-    const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 14000);
-    function cleanup() { clearTimeout(timer); delete window[cbName]; if (document.body.contains(script)) document.body.removeChild(script); }
-    window[cbName] = (data) => { cleanup(); resolve(data); };
-    script.onerror = () => { cleanup(); reject(new Error('script error')); };
-    script.src = url + (url.includes('?')?'&':'?') + 'callback=' + cbName + '&_=' + Date.now();
-    document.body.appendChild(script);
+  return new Promise((resolve,reject) => {
+    const cb='maze_cb_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+    const s=document.createElement('script');
+    const t=setTimeout(()=>{cleanup();reject(new Error('timeout'));},timeout||14000);
+    function cleanup(){clearTimeout(t);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
+    window[cb]=d=>{cleanup();resolve(d);};
+    s.onerror=()=>{cleanup();reject(new Error('err'));};
+    s.src=url+(url.includes('?')?'&':'?')+'callback='+cb+'&_='+Date.now();
+    document.body.appendChild(s);
   });
 }
 
-/* ── Saving indicator ── */
 function showSaving(msg) {
-  const el = document.getElementById('saving-indicator');
-  el.textContent = msg || 'Saving XP…';
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2800);
+  const el=document.getElementById('saving-indicator');
+  el.textContent=msg||'Saving XP…'; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2800);
 }
 
-/* ── Difficulty config ── */
-function getDifficulty(mazesPlayed) {
-  if (mazesPlayed < 3)  return { name:'Novice',    gridW:11, gridH:13, startXP:100, drainPerSec:1   };
-  if (mazesPlayed < 7)  return { name:'Apprentice',gridW:13, gridH:15, startXP:120, drainPerSec:1.5 };
-  if (mazesPlayed < 13) return { name:'Adept',     gridW:15, gridH:19, startXP:150, drainPerSec:2   };
-  if (mazesPlayed < 22) return { name:'Veteran',   gridW:19, gridH:23, startXP:180, drainPerSec:2.8 };
-  if (mazesPlayed < 35) return { name:'Expert',    gridW:23, gridH:27, startXP:200, drainPerSec:3.5 };
-                        return { name:'Master',    gridW:27, gridH:33, startXP:220, drainPerSec:4.5 };
+const DAILY_CAP=100;
+
+function getDifficulty(n) {
+  if (n<3)  return {name:'Novice',     cols:21,rows:25,startXP:100,drain:1  };
+  if (n<7)  return {name:'Apprentice', cols:25,rows:29,startXP:110,drain:1.5};
+  if (n<13) return {name:'Adept',      cols:29,rows:35,startXP:120,drain:2  };
+  if (n<22) return {name:'Veteran',    cols:33,rows:41,startXP:140,drain:2.8};
+  if (n<35) return {name:'Expert',     cols:39,rows:47,startXP:160,drain:3.5};
+            return {name:'Master',     cols:45,rows:55,startXP:180,drain:4.5};
 }
 
-/* ── Maze generation (Recursive Backtracker) ── */
-function generateMaze(cols, rows) {
-  // cols and rows must be odd
-  const W = cols % 2 === 0 ? cols + 1 : cols;
-  const H = rows % 2 === 0 ? rows + 1 : rows;
-  const grid = Array.from({length:H}, () => Array(W).fill(1)); // 1=wall 0=path
-
-  function carve(cx, cy) {
-    const dirs = [[0,-2],[0,2],[-2,0],[2,0]].sort(() => Math.random()-0.5);
-    for (const [dx,dy] of dirs) {
-      const nx = cx+dx, ny = cy+dy;
-      if (nx>0 && nx<W-1 && ny>0 && ny<H-1 && grid[ny][nx]===1) {
-        grid[cy+dy/2][cx+dx/2] = 0;
-        grid[ny][nx] = 0;
-        carve(nx, ny);
-      }
-    }
+function generateMaze(cols,rows) {
+  const W=cols%2===0?cols+1:cols, H=rows%2===0?rows+1:rows;
+  const grid=Array.from({length:H},()=>Array(W).fill(1));
+  function carve(cx,cy){
+    [[0,-2],[0,2],[-2,0],[2,0]].sort(()=>Math.random()-0.5).forEach(([dx,dy])=>{
+      const nx=cx+dx,ny=cy+dy;
+      if(nx>0&&nx<W-1&&ny>0&&ny<H-1&&grid[ny][nx]===1){grid[cy+dy/2][cx+dx/2]=0;grid[ny][nx]=0;carve(nx,ny);}
+    });
   }
-  grid[1][1] = 0;
-  carve(1, 1);
-
-  // Entrance (top) and Exit (bottom)
-  grid[0][1] = 0;
-  grid[H-1][W-2] = 0;
-
-  return { grid, W, H, entrance:{col:1,row:0}, exit:{col:W-2,row:H-1} };
+  grid[1][1]=0; carve(1,1);
+  grid[0][1]=0; grid[H-1][W-2]=0;
+  return {grid,W,H,entrance:{col:1,row:0},exit:{col:W-2,row:H-1}};
 }
 
-/* ── Canvas rendering ── */
-const canvas = document.getElementById('maze-canvas');
-const ctx    = canvas.getContext('2d');
+const canvas=document.getElementById('maze-canvas');
+const ctx=canvas.getContext('2d');
+let MAZE,CELL,playerCol,playerRow;
+let xpCurrent,xpMax,drainRate,drainAccum;
+let gameActive=false,animFrame=null,lastTs=null;
+let mazesPlayed=0,gamingXP=0;
 
-let MAZE       = null;
-let CELL       = 0;
-let playerCol  = 1;
-let playerRow  = 0;
-let xpCurrent  = 0;
-let xpMax      = 0;
-let drainRate  = 1;
-let drainAccum = 0;
-let gameActive = false;
-let animFrame  = null;
-let lastTs     = null;
-let mazesPlayed= 0;
-let gamingXP   = 0;
-
-const COLORS = {
-  wall:    '#1a6b35',
-  wallBorder:'rgba(46,180,90,0.8)',
-  path:    '#020e05',
-  entrance:'rgba(46,204,113,0.25)',
-  exit:    'rgba(201,168,76,0.35)',
-  player:  '#2ecc71',
-  playerGlow:'rgba(46,204,113,0.6)',
-  exitGlow:'rgba(201,168,76,0.5)',
+const C={
+  wall:'#1a6b35', wallBorder:'rgba(46,180,90,0.7)',
+  path:'#020e05',
+  entrance:'rgba(46,204,113,0.3)', exit:'rgba(201,168,76,0.45)',
+  exitGlow:'rgba(201,168,76,0.5)', player:'#2ecc71', playerGlow:'rgba(46,204,113,0.6)'
 };
 
-function calcCellSize(W, H) {
-  const gameArea = document.getElementById('game-area');
-  const maxW = gameArea.clientWidth  - 32;
-  const maxH = gameArea.clientHeight - 32;
-  return Math.max(8, Math.floor(Math.min(maxW / W, maxH / H)));
+/* ── THE FIX: measure actual pixels taken by chrome, then size cells to fit remainder ── */
+function calcCellSize(W,H) {
+  const hdr  = document.getElementById('header');
+  const hud  = document.getElementById('hud');
+  const ctrl = document.getElementById('mobile-controls');
+  const takenH = hdr.getBoundingClientRect().height
+               + (hud.style.display!=='none' ? hud.getBoundingClientRect().height : 0)
+               + (getComputedStyle(ctrl).display!=='none' ? ctrl.getBoundingClientRect().height : 0);
+  const availW = window.innerWidth  - 4;
+  const availH = window.innerHeight - takenH - 4;
+  return Math.max(4, Math.floor(Math.min(availW/W, availH/H)));
 }
 
 function drawMaze() {
   if (!MAZE) return;
-  const { grid, W, H } = MAZE;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  for (let r=0; r<H; r++) {
-    for (let c=0; c<W; c++) {
-      const x = c * CELL, y = r * CELL;
-      if (grid[r][c] === 1) {
-        ctx.fillStyle = COLORS.wall;
-        ctx.fillRect(x, y, CELL, CELL);
-        ctx.strokeStyle = COLORS.wallBorder;
-        ctx.lineWidth = 0.5;
-        ctx.strokeRect(x+0.5, y+0.5, CELL-1, CELL-1);
-      } else {
-        ctx.fillStyle = COLORS.path;
-        ctx.fillRect(x, y, CELL, CELL);
-      }
+  const {grid,W,H}=MAZE;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for (let r=0;r<H;r++) for (let c=0;c<W;c++) {
+    const x=c*CELL,y=r*CELL;
+    if (grid[r][c]===1) {
+      ctx.fillStyle=C.wall; ctx.fillRect(x,y,CELL,CELL);
+      ctx.strokeStyle=C.wallBorder; ctx.lineWidth=0.5;
+      ctx.strokeRect(x+0.5,y+0.5,CELL-1,CELL-1);
+    } else {
+      ctx.fillStyle=C.path; ctx.fillRect(x,y,CELL,CELL);
     }
   }
-
-  // Entrance glow
-  const ex = MAZE.entrance.col * CELL, ey = MAZE.entrance.row * CELL;
-  ctx.fillStyle = COLORS.entrance;
-  ctx.fillRect(ex, ey, CELL, CELL);
-
-  // Exit glow
-  const exitX = MAZE.exit.col * CELL, exitY = MAZE.exit.row * CELL;
-  const grad = ctx.createRadialGradient(exitX+CELL/2, exitY+CELL/2, 0, exitX+CELL/2, exitY+CELL/2, CELL*2);
-  grad.addColorStop(0, COLORS.exitGlow);
-  grad.addColorStop(1, 'transparent');
-  ctx.fillStyle = grad;
-  ctx.fillRect(exitX-CELL, exitY-CELL, CELL*3, CELL*3);
-  ctx.fillStyle = COLORS.exit;
-  ctx.fillRect(exitX, exitY, CELL, CELL);
-
-  // Exit label
-  ctx.fillStyle = 'rgba(201,168,76,0.7)';
-  ctx.font = `bold ${Math.max(8, CELL*0.55)}px Cinzel, serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('▼', exitX + CELL/2, exitY + CELL/2);
-
-  // Player
-  const px = playerCol * CELL + CELL/2;
-  const py = playerRow * CELL + CELL/2;
-  const r  = CELL * 0.32;
-
-  const pGrad = ctx.createRadialGradient(px, py, 0, px, py, r*2.5);
-  pGrad.addColorStop(0, 'rgba(46,204,113,0.3)');
-  pGrad.addColorStop(1, 'transparent');
-  ctx.fillStyle = pGrad;
-  ctx.beginPath();
-  ctx.arc(px, py, r*2.5, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle = COLORS.player;
-  ctx.shadowColor = COLORS.playerGlow;
-  ctx.shadowBlur  = CELL;
-  ctx.beginPath();
-  ctx.arc(px, py, r, 0, Math.PI*2);
-  ctx.fill();
-  ctx.shadowBlur = 0;
+  // entrance
+  const enX=MAZE.entrance.col*CELL,enY=MAZE.entrance.row*CELL;
+  ctx.fillStyle=C.entrance; ctx.fillRect(enX,enY,CELL,CELL);
+  // exit glow
+  const exX=MAZE.exit.col*CELL,exY=MAZE.exit.row*CELL;
+  const g=ctx.createRadialGradient(exX+CELL/2,exY+CELL/2,0,exX+CELL/2,exY+CELL/2,CELL*2.5);
+  g.addColorStop(0,C.exitGlow); g.addColorStop(1,'transparent');
+  ctx.fillStyle=g; ctx.fillRect(exX-CELL*1.5,exY-CELL*1.5,CELL*4,CELL*4);
+  ctx.fillStyle=C.exit; ctx.fillRect(exX,exY,CELL,CELL);
+  ctx.fillStyle='rgba(201,168,76,0.85)';
+  ctx.font=`bold ${Math.max(6,Math.floor(CELL*0.55))}px sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('▼',exX+CELL/2,exY+CELL/2);
+  // player
+  const px=playerCol*CELL+CELL/2,py=playerRow*CELL+CELL/2,r=CELL*0.32;
+  const pg=ctx.createRadialGradient(px,py,0,px,py,r*2.5);
+  pg.addColorStop(0,'rgba(46,204,113,0.3)'); pg.addColorStop(1,'transparent');
+  ctx.fillStyle=pg; ctx.beginPath(); ctx.arc(px,py,r*2.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=C.player; ctx.shadowColor=C.playerGlow; ctx.shadowBlur=CELL;
+  ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
 }
 
 function updateHUD() {
-  const pct = Math.max(0, xpCurrent / xpMax * 100);
-  const bar = document.getElementById('xp-bar');
-  bar.style.width = pct + '%';
-  bar.className   = 'xp-bar-fill' + (pct < 25 ? ' danger' : '');
-  document.getElementById('xp-current').textContent = Math.max(0, Math.ceil(xpCurrent));
-  document.getElementById('xp-max').textContent     = xpMax;
+  const pct=Math.max(0,xpCurrent/xpMax*100);
+  const bar=document.getElementById('xp-bar');
+  bar.style.width=pct+'%';
+  bar.className='xp-bar-fill'+(pct<25?' danger':'');
+  document.getElementById('xp-current').textContent=Math.max(0,Math.ceil(xpCurrent));
+  document.getElementById('xp-max').textContent=xpMax;
 }
 
 function gameLoop(ts) {
   if (!gameActive) return;
-  if (!lastTs) lastTs = ts;
-  const dt = (ts - lastTs) / 1000;
-  lastTs = ts;
-
-  drainAccum += drainRate * dt;
-  if (drainAccum >= 0.05) {
-    xpCurrent -= drainAccum;
-    drainAccum = 0;
-    updateHUD();
-  }
-
-  if (xpCurrent <= 0) { endGame(false); return; }
-
+  if (!lastTs) lastTs=ts;
+  const dt=(ts-lastTs)/1000; lastTs=ts;
+  drainAccum+=drainRate*dt;
+  if (drainAccum>=0.05){xpCurrent-=drainAccum;drainAccum=0;updateHUD();}
+  if (xpCurrent<=0){endGame(false);return;}
   drawMaze();
-  animFrame = requestAnimationFrame(gameLoop);
+  animFrame=requestAnimationFrame(gameLoop);
 }
 
-function tryMove(dc, dr) {
-  if (!gameActive || !MAZE) return;
-  const nc = playerCol + dc;
-  const nr = playerRow + dr;
-  const { grid, W, H } = MAZE;
-  if (nc < 0 || nc >= W || nr < 0 || nr >= H) return;
-  if (grid[nr][nc] === 1) return;
-  playerCol = nc;
-  playerRow = nr;
-
-  if (playerCol === MAZE.exit.col && playerRow === MAZE.exit.row) {
-    endGame(true);
-  }
+function tryMove(dc,dr) {
+  if (!gameActive||!MAZE) return;
+  const nc=playerCol+dc,nr=playerRow+dr;
+  const {grid,W,H}=MAZE;
+  if (nc<0||nc>=W||nr<0||nr>=H||grid[nr][nc]===1) return;
+  playerCol=nc; playerRow=nr;
+  if (playerCol===MAZE.exit.col&&playerRow===MAZE.exit.row) endGame(true);
 }
 
 async function endGame(won) {
-  gameActive = false;
+  gameActive=false;
   if (animFrame) cancelAnimationFrame(animFrame);
   drawMaze();
-
-  const earned = won ? Math.max(5, Math.ceil(xpCurrent)) : 5;
-  gamingXP += earned;
+  const dailyUsed=parseInt(localStorage.getItem('pfp_maze_daily_xp'))||0;
+  const dailyDate=localStorage.getItem('pfp_maze_daily_date')||'';
+  const today=new Date().toDateString();
+  const usedToday=dailyDate===today?dailyUsed:0;
+  const remaining=Math.max(0,DAILY_CAP-usedToday);
+  const raw=won?Math.max(5,Math.ceil(xpCurrent)):5;
+  const earned=remaining<=0?0:Math.min(raw,remaining);
+  gamingXP+=earned;
+  localStorage.setItem('pfp_maze_daily_xp',usedToday+earned);
+  localStorage.setItem('pfp_maze_daily_date',today);
   if (won) mazesPlayed++;
-
-  // Save to API
   try {
     showSaving('Saving XP…');
-    await jsonpFetch(
-      API + '?action=mazeResult' +
-      '&card_id='     + encodeURIComponent(CARD_ID) +
-      '&owner_token=' + encodeURIComponent(OWNER_TOKEN) +
-      '&xp_earned='   + earned +
-      '&won='         + (won ? 1 : 0) +
-      '&mazes_played='+ mazesPlayed, 12000
-    );
+    await jsonpFetch(API+'?action=mazeResult&card_id='+encodeURIComponent(CARD_ID)+'&owner_token='+encodeURIComponent(OWNER_TOKEN)+'&xp_earned='+earned+'&won='+(won?1:0)+'&mazes_played='+mazesPlayed,12000);
     showSaving('XP Saved ✓');
-  } catch(e) {
-    showSaving('Saved locally');
-  }
-
-  localStorage.setItem('pfp_maze_played', mazesPlayed);
-
-  if (won) {
-    document.getElementById('win-xp').textContent    = '+' + earned;
-    document.getElementById('win-total').textContent = gamingXP.toLocaleString();
+  } catch(e){showSaving('Saved locally');}
+  localStorage.setItem('pfp_maze_played',mazesPlayed);
+  const capMsg=remaining<=0?' (daily cap reached)':earned<raw?' (daily cap — partial)':'';
+  if (won){
+    document.getElementById('win-xp').textContent='+'+earned+capMsg;
+    document.getElementById('win-total').textContent=gamingXP.toLocaleString();
     document.getElementById('screen-win').classList.remove('hidden');
   } else {
-    document.getElementById('lose-xp').textContent   = '+' + earned;
-    document.getElementById('lose-total').textContent= gamingXP.toLocaleString();
+    document.getElementById('lose-xp').textContent='+'+earned+capMsg;
+    document.getElementById('lose-total').textContent=gamingXP.toLocaleString();
     document.getElementById('screen-lose').classList.remove('hidden');
   }
 }
 
 function startMaze() {
-  const diff = getDifficulty(mazesPlayed);
-  MAZE       = generateMaze(diff.gridW, diff.gridH);
-  CELL       = calcCellSize(MAZE.W, MAZE.H);
-  canvas.width  = MAZE.W * CELL;
-  canvas.height = MAZE.H * CELL;
+  const diff=getDifficulty(mazesPlayed);
+  MAZE=generateMaze(diff.cols,diff.rows);
 
-  playerCol  = MAZE.entrance.col;
-  playerRow  = MAZE.entrance.row;
-  xpMax      = diff.startXP;
-  xpCurrent  = diff.startXP;
-  drainRate  = diff.drainPerSec;
-  drainAccum = 0;
-  lastTs     = null;
-  gameActive = true;
+  // Show HUD and controls BEFORE measuring so getBoundingClientRect is accurate
+  document.getElementById('hud').style.display='flex';
+  const isMobile=window.innerWidth<=700||navigator.maxTouchPoints>0;
+  document.getElementById('mobile-controls').style.display=isMobile?'flex':'none';
 
-  document.getElementById('hud').style.display = 'flex';
-  document.getElementById('mobile-controls').style.display = '';
-  document.getElementById('hud-maze-num').textContent = mazesPlayed + 1;
-  document.getElementById('hud-drain').textContent    = diff.drainPerSec;
-  document.getElementById('hud-diff').textContent     = diff.name;
-  updateHUD();
-  drawMaze();
+  // Force layout so measurements are current
+  document.body.offsetHeight;
 
-  animFrame = requestAnimationFrame(gameLoop);
+  CELL=calcCellSize(MAZE.W,MAZE.H);
+  canvas.width=MAZE.W*CELL; canvas.height=MAZE.H*CELL;
+
+  playerCol=MAZE.entrance.col; playerRow=MAZE.entrance.row;
+  xpMax=diff.startXP; xpCurrent=diff.startXP;
+  drainRate=diff.drain; drainAccum=0; lastTs=null; gameActive=true;
+
+  document.getElementById('hud-maze-num').textContent=mazesPlayed+1;
+  document.getElementById('hud-drain').textContent=diff.drain;
+  document.getElementById('hud-diff').textContent=diff.name;
+  updateHUD(); drawMaze();
+  animFrame=requestAnimationFrame(gameLoop);
 }
 
-function hideAllScreens() {
-  ['screen-start','screen-win','screen-lose'].forEach(id => {
-    document.getElementById(id).classList.add('hidden');
-  });
+function hideAll(){['screen-start','screen-win','screen-lose'].forEach(id=>document.getElementById(id).classList.add('hidden'));}
+
+function refreshStart(){
+  const d=getDifficulty(mazesPlayed);
+  document.getElementById('start-diff-text').textContent=d.name+' Chamber';
+  document.getElementById('start-xp-display').textContent=d.startXP;
+  document.getElementById('start-drain-display').textContent=d.drain;
+  document.getElementById('start-mazes-played').textContent='Mazes completed: '+mazesPlayed;
 }
 
-function refreshStartScreen() {
-  const diff = getDifficulty(mazesPlayed);
-  document.getElementById('start-diff-text').textContent  = diff.name + ' Chamber';
-  document.getElementById('start-xp-display').textContent = diff.startXP;
-  document.getElementById('start-drain-display').textContent = diff.drainPerSec;
-  document.getElementById('start-mazes-played').textContent  = 'Mazes completed: ' + mazesPlayed;
-}
-
-/* ── Keyboard controls ── */
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown',e=>{
   if (!gameActive) return;
-  switch(e.key) {
-    case 'ArrowUp':    case 'w': case 'W': e.preventDefault(); tryMove(0,-1); break;
-    case 'ArrowDown':  case 's': case 'S': e.preventDefault(); tryMove(0, 1); break;
-    case 'ArrowLeft':  case 'a': case 'A': e.preventDefault(); tryMove(-1,0); break;
-    case 'ArrowRight': case 'd': case 'D': e.preventDefault(); tryMove( 1,0); break;
+  const map={'ArrowUp':[0,-1],'w':[0,-1],'W':[0,-1],'ArrowDown':[0,1],'s':[0,1],'S':[0,1],'ArrowLeft':[-1,0],'a':[-1,0],'A':[-1,0],'ArrowRight':[1,0],'d':[1,0],'D':[1,0]};
+  if (map[e.key]){e.preventDefault();tryMove(...map[e.key]);}
+});
+
+let tx=0,ty=0;
+canvas.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;e.preventDefault();},{passive:false});
+canvas.addEventListener('touchend',e=>{
+  if (!gameActive) return;
+  const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  if (Math.abs(dx)<8&&Math.abs(dy)<8) return;
+  Math.abs(dx)>Math.abs(dy)?tryMove(dx>0?1:-1,0):tryMove(0,dy>0?1:-1);
+  e.preventDefault();
+},{passive:false});
+
+[['d-up',0,-1],['d-down',0,1],['d-left',-1,0],['d-right',1,0]].forEach(([id,dc,dr])=>{
+  const b=document.getElementById(id);
+  b.addEventListener('touchstart',e=>{tryMove(dc,dr);e.preventDefault();},{passive:false});
+  b.addEventListener('mousedown',()=>tryMove(dc,dr));
+});
+
+document.getElementById('btn-start').onclick=()=>{hideAll();startMaze();};
+document.getElementById('btn-next').onclick =()=>{hideAll();startMaze();};
+document.getElementById('btn-retry').onclick=()=>{hideAll();startMaze();};
+
+window.addEventListener('resize',()=>{
+  if (gameActive&&MAZE){
+    document.body.offsetHeight;
+    CELL=calcCellSize(MAZE.W,MAZE.H);
+    canvas.width=MAZE.W*CELL; canvas.height=MAZE.H*CELL;
+    drawMaze();
   }
 });
 
-/* ── Touch / D-pad ── */
-let touchStartX=0, touchStartY=0;
-canvas.addEventListener('touchstart', e => { touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; e.preventDefault(); }, {passive:false});
-canvas.addEventListener('touchend',   e => {
-  if (!gameActive) return;
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  const dy = e.changedTouches[0].clientY - touchStartY;
-  if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-  if (Math.abs(dx) > Math.abs(dy)) tryMove(dx>0?1:-1, 0);
-  else tryMove(0, dy>0?1:-1);
-  e.preventDefault();
-}, {passive:false});
-
-function bindDpad(id, dc, dr) {
-  const btn = document.getElementById(id);
-  btn.addEventListener('touchstart', e => { tryMove(dc,dr); e.preventDefault(); }, {passive:false});
-  btn.addEventListener('mousedown',  e => { tryMove(dc,dr); });
-}
-bindDpad('d-up',   0,-1);
-bindDpad('d-down', 0, 1);
-bindDpad('d-left',-1, 0);
-bindDpad('d-right',1, 0);
-
-/* ── Button wiring ── */
-document.getElementById('btn-start').onclick = () => { hideAllScreens(); startMaze(); };
-document.getElementById('btn-next').onclick  = () => { hideAllScreens(); startMaze(); };
-document.getElementById('btn-retry').onclick = () => { hideAllScreens(); startMaze(); };
-
-/* ── Init ── */
-async function init() {
+async function init(){
   spawnMotes();
-  mazesPlayed = parseInt(localStorage.getItem('pfp_maze_played')) || 0;
-
-  // Try to get fresh data from API
-  if (CARD_ID && OWNER_TOKEN) {
-    try {
-      const resp = await jsonpFetch(
-        API + '?action=getGamingData&card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN), 10000
-      );
-      if (resp && resp.success && resp.gaming) {
-        gamingXP    = parseInt(resp.gaming['Gaming XP']) || 0;
-        mazesPlayed = parseInt(resp.gaming['Maze Rounds']) || mazesPlayed;
-        localStorage.setItem('pfp_maze_played', mazesPlayed);
+  mazesPlayed=parseInt(localStorage.getItem('pfp_maze_played'))||0;
+  if (CARD_ID&&OWNER_TOKEN){
+    try{
+      const r=await jsonpFetch(API+'?action=getGamingData&card_id='+encodeURIComponent(CARD_ID)+'&owner_token='+encodeURIComponent(OWNER_TOKEN),10000);
+      if(r&&r.success&&r.gaming){
+        gamingXP=parseInt(r.gaming['Gaming XP'])||0;
+        mazesPlayed=parseInt(r.gaming['Maze Rounds'])||mazesPlayed;
+        localStorage.setItem('pfp_maze_played',mazesPlayed);
       }
-    } catch(e) {}
+    }catch(e){}
   }
-
-  refreshStartScreen();
+  refreshStart();
 }
 
-function spawnMotes() {
-  const c = document.getElementById('motes');
-  for (let i=0;i<18;i++) {
-    const m=document.createElement('div'); const gold=Math.random()>0.7;
+function spawnMotes(){
+  const c=document.getElementById('motes');
+  for(let i=0;i<18;i++){
+    const m=document.createElement('div'),gold=Math.random()>0.7;
     m.className='mote';
     m.style.cssText=`left:${Math.random()*100}%;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;background:${gold?'#c9a84c':'#2ecc71'};animation-duration:${8+Math.random()*10}s;animation-delay:${Math.random()*10}s;--dx:${(Math.random()-0.5)*100}px;box-shadow:0 0 4px ${gold?'rgba(201,168,76,0.5)':'rgba(46,204,113,0.4)'};`;
     c.appendChild(m);
   }
 }
-
-window.addEventListener('resize', () => {
-  if (gameActive && MAZE) {
-    CELL = calcCellSize(MAZE.W, MAZE.H);
-    canvas.width  = MAZE.W * CELL;
-    canvas.height = MAZE.H * CELL;
-    drawMaze();
-  }
-});
 
 init();
 </script>
