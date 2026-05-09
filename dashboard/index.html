@@ -967,7 +967,7 @@ function buildDashboard(asOwner) {
 
   const scanArea = document.getElementById('scan-area');
   if (asOwner) {
-    scanArea.innerHTML = `<button class="scan-btn" id="scan-btn" onclick="logScan()"><span>📱</span> Log Today's Scan — +10 XP</button>`;
+    scanArea.innerHTML = `<button class="scan-btn" id="scan-btn" onclick="logScan()"><span>📱</span> Log Today's Life — +10 XP</button>`;
   } else {
     scanArea.innerHTML = `<div class="scan-locked glass" onclick="showClaimScreen('readonly')">🔒 &nbsp; Claim this card to earn XP &nbsp;·&nbsp; <span style="color:var(--gold);text-decoration:underline;cursor:pointer;">Enter Claim Code</span></div>`;
   }
@@ -1069,14 +1069,14 @@ async function logScan() {
         feedback.textContent = 'Come back tomorrow for your next XP reward.';
         feedback.className = 'scan-feedback success';
       } else {
-        btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
+        btn.innerHTML = '<span>📱</span> Log Today\'s Life — +10 XP';
         feedback.textContent = data.error || 'Scan could not be logged.';
         feedback.className = 'scan-feedback error';
         btn.disabled = false;
       }
     }
   } catch(e) {
-    btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
+    btn.innerHTML = '<span>📱</span> Log Today\'s Life — +10 XP';
     feedback.textContent = 'Connection error — try again.';
     feedback.className = 'scan-feedback error';
     btn.disabled = false;
