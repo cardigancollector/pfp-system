@@ -463,7 +463,10 @@
 
 <!-- Nav -->
 <nav>
-  <a class="nav-logo" href="spotlight.html">XP</a>
+  <div style="display:flex;align-items:center;gap:24px;">
+    <a class="nav-logo" href="spotlight.html">XP</a>
+    <a class="nav-link" onclick="goBack()" style="cursor:pointer;">← Back to Dashboard</a>
+  </div>
   <div class="nav-right">
     <div class="nav-xp">
       <span class="nav-xp-label">XP</span>
@@ -508,6 +511,17 @@
   import { initializeApp }       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  // ── BACK TO DASHBOARD ──
+  window.goBack = function() {
+    const params = new URLSearchParams(window.location.search);
+    const refCard = params.get('ref_card');
+    if (refCard) {
+      window.location.href = '../dashboard/?card_id=' + encodeURIComponent(refCard);
+    } else {
+      window.history.back();
+    }
+  };
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
