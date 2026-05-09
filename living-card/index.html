@@ -1,743 +1,1346 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PfP Living Card</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --dormant-bg: #0d0d0f;
-      --dormant-accent: #3a3a4a;
-      --dormant-glow: #1a1a2e;
-      --awakened-bg: #0a0f1a;
-      --awakened-accent: #b87333;
-      --awakened-glow: #b8733333;
-      --growing-bg: #0a1a0f;
-      --growing-accent: #7ab648;
-      --growing-glow: #7ab64833;
-      --established-bg: #0f0f1a;
-      --established-accent: #8888cc;
-      --established-glow: #8888cc33;
-      --renowned-bg: #1a0f00;
-      --renowned-accent: #ffd700;
-      --renowned-glow: #ffd70044;
-      --legendary-bg: #1a0a1a;
-      --legendary-accent: #df80ff;
-      --legendary-glow: #df80ff55;
-      --mythic-bg: #050510;
-      --mythic-accent: #ffffff;
-      --mythic-glow: #ffffff66;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>PfP — Living Card</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c; --gold-light: #e8c97a; --gold-dim: #7a6030;
+    --dark: #0e0c09; --dark2: #1a1710; --dark3: #251f14;
+    --charcoal: #2a2520; --text: #e8d9b8; --text-dim: #9a8a6a;
+    --red: #c0392b; --green: #2ecc71;
+    --copper: #b87333; --nickel: #9e9e9e; --silver: #c0c0c0; --diamond: #a8d8ea;
+    --glass: rgba(14,12,9,0.72); --glass-border: rgba(201,168,76,0.25);
+    --glass-border-hover: rgba(201,168,76,0.6);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'EB Garamond',serif; background:var(--dark); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  .bg-layer { position:fixed; inset:0; background-image:url('pfp_bg.jpg'); background-size:cover; background-position:center top; background-attachment:fixed; z-index:0; }
+  .bg-overlay { position:fixed; inset:0; background:linear-gradient(160deg,rgba(14,12,9,0.88) 0%,rgba(14,12,9,0.75) 40%,rgba(14,12,9,0.82) 100%); z-index:1; }
 
-      --copper-badge: #b87333;
-      --nickel-badge: #a8a9ad;
-      --silver-badge: #c0c0c0;
-      --gold-badge: #ffd700;
-      --diamond-badge: #b9f2ff;
-    }
+  #loading-screen { position:fixed; inset:0; z-index:300; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--dark); gap:24px; }
+  .loading-logo { font-family:'Cinzel Decorative',serif; font-size:2.5rem; color:var(--gold); letter-spacing:0.08em; text-shadow:0 0 40px rgba(201,168,76,0.4); }
+  .loading-spinner { width:48px; height:48px; border:3px solid rgba(201,168,76,0.2); border-top-color:var(--gold); border-radius:50%; animation:spin 0.9s linear infinite; }
+  .loading-text { font-size:0.78rem; color:var(--text-dim); letter-spacing:0.25em; text-transform:uppercase; }
+  .loading-sub { font-size:0.72rem; color:var(--gold-dim); font-style:italic; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+  #error-screen { position:fixed; inset:0; z-index:300; display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--dark); gap:16px; text-align:center; padding:2rem; }
+  .error-title { font-family:'Cinzel',serif; font-size:1.4rem; color:var(--gold); }
+  .error-msg { color:var(--text-dim); font-size:0.9rem; max-width:440px; line-height:1.7; }
 
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Crimson Pro', Georgia, serif;
-      background: #050508;
-      overflow-x: hidden;
-    }
+  #claim-screen { position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; padding:2rem; }
+  .claim-box {
+    position:relative; z-index:2; background:rgba(14,12,9,0.95);
+    border:1px solid var(--glass-border); border-top:2px solid var(--gold);
+    padding:48px 44px 40px; width:100%; max-width:440px; text-align:center;
+    box-shadow:0 0 80px rgba(201,168,76,0.08),0 40px 80px rgba(0,0,0,0.7);
+    animation:fadeUp 0.6s ease both;
+  }
+  .claim-logo { font-family:'Cinzel Decorative',serif; font-size:2rem; color:var(--gold); letter-spacing:0.08em; margin-bottom:4px; text-shadow:0 0 40px rgba(201,168,76,0.4); }
+  .claim-card-name { font-family:'Cinzel',serif; font-size:1.15rem; color:var(--text); margin-bottom:4px; }
+  .claim-evo-id { font-family:monospace; font-size:0.75rem; color:var(--gold-dim); letter-spacing:1px; margin-bottom:28px; }
+  .claim-label { display:block; text-align:left; font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
+  .claim-input-wrap { position:relative; margin-bottom:16px; }
+  .claim-input { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-bottom:1px solid var(--gold-dim); color:var(--text); font-family:'EB Garamond',serif; font-size:1.1rem; padding:12px 16px; outline:none; transition:border-color 0.3s,background 0.3s; letter-spacing:1px; text-align:center; }
+  .claim-input:focus { border-color:var(--gold); background:rgba(201,168,76,0.05); }
+  .claim-btn { width:100%; margin-top:8px; padding:14px; background:linear-gradient(135deg,var(--gold-dim),var(--gold)); border:none; color:var(--dark); font-family:'Cinzel',serif; font-size:0.85rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; }
+  .claim-btn:hover { background:linear-gradient(135deg,var(--gold),var(--gold-light)); }
+  .claim-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .claim-error { color:var(--red); font-size:0.82rem; margin-top:10px; min-height:18px; letter-spacing:0.05em; }
+  .claim-divider { height:1px; background:var(--glass-border); margin:24px 0; }
+  .claim-hint { font-size:0.78rem; color:var(--text-dim); line-height:1.6; font-style:italic; }
 
-    #bg-canvas {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-    }
+  #readonly-banner { display:none; position:sticky; top:0; z-index:200; background:rgba(14,12,9,0.97); border-bottom:1px solid rgba(201,168,76,0.3); padding:10px 40px; align-items:center; justify-content:space-between; gap:16px; backdrop-filter:blur(12px); }
+  #readonly-banner .banner-text { font-size:0.78rem; color:var(--text-dim); letter-spacing:0.08em; }
+  #readonly-banner .banner-text strong { color:var(--gold); }
+  #readonly-banner .banner-claim-btn { background:none; border:1px solid var(--gold); color:var(--gold); font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; padding:7px 18px; cursor:pointer; transition:all 0.3s; white-space:nowrap; }
+  #readonly-banner .banner-claim-btn:hover { background:rgba(201,168,76,0.1); }
 
-    .card-container {
-      position: relative;
-      z-index: 1;
-      width: min(420px, 94vw);
-      padding: 20px 0 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-    }
+  #owner-banner { display:none; position:sticky; top:0; z-index:200; background:rgba(14,12,9,0.97); border-bottom:1px solid rgba(46,204,113,0.25); padding:10px 40px; align-items:center; justify-content:space-between; gap:16px; backdrop-filter:blur(12px); }
+  #owner-banner .owner-text { font-size:0.78rem; color:#8ee4b2; letter-spacing:0.08em; }
+  #owner-banner .owner-text strong { color:var(--green); }
+  #owner-banner .signout-btn { background:none; border:1px solid rgba(46,204,113,0.3); color:#8ee4b2; font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; padding:7px 18px; cursor:pointer; transition:all 0.3s; white-space:nowrap; }
+  #owner-banner .signout-btn:hover { border-color:var(--green); color:var(--green); }
 
-    .card-frame {
-      width: 100%;
-      border-radius: 18px;
-      padding: 3px;
-      position: relative;
-      transition: all 1.2s ease;
-    }
+  #dashboard { position:relative; z-index:2; display:none; min-height:100vh; }
+  .header { position:sticky; top:0; z-index:50; background:rgba(10,9,6,0.95); border-bottom:1px solid var(--glass-border); padding:0 40px; height:64px; display:flex; align-items:center; justify-content:space-between; backdrop-filter:blur(12px); }
+  .header-logo { font-family:'Cinzel Decorative',serif; font-size:1.3rem; color:var(--gold); letter-spacing:0.06em; }
+  .header-card-name { font-family:'Cinzel',serif; font-size:0.85rem; color:var(--text-dim); letter-spacing:0.1em; }
 
-    .card-frame::before {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      border-radius: 20px;
-      background: var(--frame-gradient, conic-gradient(from 0deg, #3a3a4a, #1a1a2e, #3a3a4a));
-      z-index: -1;
-      animation: rotateGradient 6s linear infinite;
-      opacity: var(--frame-opacity, 0.4);
-    }
+  .content { max-width:1400px; margin:0 auto; padding:40px 40px 80px; }
 
-    @keyframes rotateGradient {
-      to { filter: hue-rotate(360deg); }
-    }
+  .owner-hero { display:grid; grid-template-columns:1fr auto; gap:32px; margin-bottom:32px; align-items:end; }
+  .owner-greeting { font-family:'Cinzel Decorative',serif; font-size:0.72rem; color:var(--gold-dim); letter-spacing:0.35em; text-transform:uppercase; margin-bottom:6px; }
+  .owner-name { font-family:'Cinzel',serif; font-size:2.4rem; color:var(--text); font-weight:700; line-height:1; margin-bottom:8px; }
+  .owner-meta { font-size:0.88rem; color:var(--text-dim); font-style:italic; }
+  .owner-art-badge { position:relative; width:260px; height:355px; flex-shrink:0; }
+  .owner-art-badge img { width:100%; height:100%; object-fit:cover; }
+  .owner-art-badge .no-image { width:100%; height:100%; background:var(--dark3); border:4px solid #1a1510; display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:0.8rem; letter-spacing:0.1em; }
 
-    .card-inner {
-      border-radius: 16px;
-      overflow: hidden;
-      background: var(--card-bg, #0d0d0f);
-      position: relative;
-    }
+  .stage-wrap { position:relative; }
+  .owner-art-badge::before,
+  .owner-art-badge::after { content:''; position:absolute; pointer-events:none; z-index:3; border-radius:2px; }
 
-    .card-top {
-      padding: 18px 22px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      position: relative;
-    }
+  .stage-dormant img { filter: saturate(0) brightness(0.6) contrast(0.9); }
+  .stage-dormant::before { inset: 0; border: 4px solid #1e1a14; box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,0,0,0.6); }
+  .stage-dormant::after { display:none; }
 
-    .card-id {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--accent, #3a3a4a);
-      opacity: 0.7;
-    }
+  .stage-awakened img { filter: saturate(0.7) brightness(0.9); }
+  .stage-awakened::before { inset: 0; border: 4px solid #b87333; box-shadow: 0 0 0 1px rgba(184,115,51,0.4), 0 0 20px rgba(184,115,51,0.35), 0 0 50px rgba(184,115,51,0.15), inset 0 0 20px rgba(184,115,51,0.08); animation: pulse-awakened 3.5s ease-in-out infinite; }
+  .stage-awakened::after { display:none; }
+  @keyframes pulse-awakened {
+    0%,100% { box-shadow: 0 0 0 1px rgba(184,115,51,0.3), 0 0 18px rgba(184,115,51,0.25), 0 0 40px rgba(184,115,51,0.1), inset 0 0 14px rgba(184,115,51,0.06); }
+    50%      { box-shadow: 0 0 0 1px rgba(184,115,51,0.6), 0 0 35px rgba(184,115,51,0.55), 0 0 70px rgba(184,115,51,0.25), inset 0 0 28px rgba(184,115,51,0.12); }
+  }
 
-    .grade-badge {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 10px;
-      letter-spacing: 2px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid var(--grade-color, #3a3a4a);
-      color: var(--grade-color, #3a3a4a);
-      text-transform: uppercase;
-    }
+  .stage-growing img { filter: saturate(1.1) brightness(1.0); }
+  .stage-growing::before { inset: 0; border: 5px solid #c97a2a; box-shadow: 0 0 0 2px rgba(201,122,42,0.5), 0 0 30px rgba(201,122,42,0.6), 0 0 80px rgba(201,122,42,0.25), 0 0 120px rgba(201,122,42,0.1), inset 0 0 30px rgba(201,122,42,0.12); animation: pulse-growing 2.8s ease-in-out infinite; }
+  .stage-growing::after { inset: -6px; border: 1px solid rgba(201,122,42,0.3); animation: pulse-growing 2.8s ease-in-out infinite reverse; }
+  @keyframes pulse-growing { 0%,100% { opacity: 0.7; } 50% { opacity: 1.0; } }
 
-    .card-visual {
-      width: 100%;
-      height: 280px;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  .stage-established img { filter: saturate(1.05) brightness(1.05); }
+  .stage-established::before { inset: 0; border: 5px solid #d0d0d0; box-shadow: 0 0 0 2px rgba(200,200,200,0.5), 0 0 35px rgba(200,200,200,0.45), 0 0 90px rgba(200,200,200,0.18), inset 0 0 25px rgba(200,200,200,0.08); animation: shimmer-established 3s ease-in-out infinite; }
+  .stage-established::after { inset: -7px; border: 1px solid rgba(200,200,200,0.25); animation: shimmer-established 3s ease-in-out infinite reverse; }
+  @keyframes shimmer-established {
+    0%,100% { box-shadow: 0 0 0 2px rgba(200,200,200,0.4), 0 0 30px rgba(200,200,200,0.35), 0 0 70px rgba(200,200,200,0.14), inset 0 0 20px rgba(200,200,200,0.06); }
+    50%      { box-shadow: 0 0 0 2px rgba(220,220,220,0.7), 0 0 55px rgba(220,220,220,0.6), 0 0 110px rgba(220,220,220,0.28), inset 0 0 35px rgba(220,220,220,0.12); }
+  }
 
-    #card-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
+  .stage-renowned img { filter: saturate(1.15) brightness(1.08); }
+  .stage-renowned::before { inset: 0; border: 6px solid var(--gold); box-shadow: 0 0 0 2px rgba(201,168,76,0.6), 0 0 40px rgba(201,168,76,0.7), 0 0 100px rgba(201,168,76,0.35), 0 0 160px rgba(201,168,76,0.15), inset 0 0 35px rgba(201,168,76,0.15); animation: pulse-renowned 2.2s ease-in-out infinite; }
+  .stage-renowned::after { inset: -8px; border: 2px solid rgba(201,168,76,0.4); box-shadow: 0 0 20px rgba(201,168,76,0.2); animation: pulse-renowned 2.2s ease-in-out infinite reverse; }
+  @keyframes pulse-renowned {
+    0%,100% { box-shadow: 0 0 0 2px rgba(201,168,76,0.5), 0 0 30px rgba(201,168,76,0.55), 0 0 80px rgba(201,168,76,0.25), 0 0 130px rgba(201,168,76,0.1), inset 0 0 25px rgba(201,168,76,0.1); }
+    50%      { box-shadow: 0 0 0 2px rgba(232,201,122,0.8), 0 0 60px rgba(232,201,122,0.85), 0 0 140px rgba(201,168,76,0.45), 0 0 220px rgba(201,168,76,0.2), inset 0 0 50px rgba(201,168,76,0.2); }
+  }
 
-    .stage-label {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-    }
+  .stage-legendary img { filter: saturate(1.25) brightness(1.12) contrast(1.05); }
+  .stage-legendary::before { inset: 0; border: 7px solid var(--gold-light); box-shadow: 0 0 0 3px rgba(232,201,122,0.7), 0 0 50px rgba(232,201,122,0.9), 0 0 120px rgba(201,168,76,0.55), 0 0 200px rgba(201,168,76,0.25), 0 0 300px rgba(201,168,76,0.1), inset 0 0 50px rgba(232,201,122,0.2); animation: burst-legendary 1.8s ease-in-out infinite; }
+  .stage-legendary::after { inset: -10px; border: 2px solid rgba(232,201,122,0.5); box-shadow: 0 0 30px rgba(232,201,122,0.3), 0 0 80px rgba(201,168,76,0.2); animation: burst-legendary 1.8s ease-in-out infinite reverse; }
+  @keyframes burst-legendary {
+    0%   { box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 40px rgba(232,201,122,0.7), 0 0 100px rgba(201,168,76,0.4), 0 0 180px rgba(201,168,76,0.2), inset 0 0 40px rgba(232,201,122,0.15); }
+    35%  { box-shadow: 0 0 0 3px rgba(255,235,150,0.9), 0 0 70px rgba(255,235,150,1.0), 0 0 160px rgba(232,201,122,0.7), 0 0 280px rgba(201,168,76,0.35), inset 0 0 70px rgba(255,235,150,0.3); }
+    70%  { box-shadow: 0 0 0 3px rgba(232,201,122,0.5), 0 0 35px rgba(232,201,122,0.55), 0 0 90px rgba(201,168,76,0.35), 0 0 160px rgba(201,168,76,0.15), inset 0 0 35px rgba(232,201,122,0.1); }
+    100% { box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 40px rgba(232,201,122,0.7), 0 0 100px rgba(201,168,76,0.4), 0 0 180px rgba(201,168,76,0.2), inset 0 0 40px rgba(232,201,122,0.15); }
+  }
 
-    .stage-name {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: clamp(22px, 6vw, 32px);
-      font-weight: 900;
-      color: var(--accent, #3a3a4a);
-      text-shadow: 0 0 40px var(--glow, transparent), 0 0 80px var(--glow, transparent);
-      letter-spacing: 4px;
-      animation: pulseText 3s ease-in-out infinite;
-    }
+  .stage-mythic img { filter: saturate(1.35) brightness(1.15) contrast(1.08); }
+  .stage-mythic::before { inset: 0; border: 8px solid var(--diamond); animation: aurora-mythic 2.5s linear infinite; }
+  .stage-mythic::after { inset: -12px; border: 3px solid rgba(168,216,234,0.4); animation: aurora-mythic-outer 2.5s linear infinite reverse; }
+  @keyframes aurora-mythic {
+    0%   { border-color:#a8d8ea; box-shadow: 0 0 0 3px rgba(168,216,234,0.6), 0 0 60px rgba(168,216,234,0.85), 0 0 140px rgba(201,168,76,0.4), 0 0 240px rgba(168,85,247,0.25), inset 0 0 60px rgba(168,216,234,0.18); }
+    33%  { border-color:#e8c97a; box-shadow: 0 0 0 3px rgba(232,201,122,0.6), 0 0 60px rgba(232,201,122,0.85), 0 0 140px rgba(168,85,247,0.4), 0 0 240px rgba(168,216,234,0.25), inset 0 0 60px rgba(232,201,122,0.18); }
+    66%  { border-color:#d4a8f0; box-shadow: 0 0 0 3px rgba(212,168,240,0.6), 0 0 60px rgba(212,168,240,0.85), 0 0 140px rgba(168,216,234,0.4), 0 0 240px rgba(201,168,76,0.25), inset 0 0 60px rgba(212,168,240,0.18); }
+    100% { border-color:#a8d8ea; box-shadow: 0 0 0 3px rgba(168,216,234,0.6), 0 0 60px rgba(168,216,234,0.85), 0 0 140px rgba(201,168,76,0.4), 0 0 240px rgba(168,85,247,0.25), inset 0 0 60px rgba(168,216,234,0.18); }
+  }
+  @keyframes aurora-mythic-outer {
+    0%   { border-color:rgba(168,216,234,0.5); box-shadow: 0 0 25px rgba(168,216,234,0.3); }
+    33%  { border-color:rgba(232,201,122,0.5); box-shadow: 0 0 25px rgba(232,201,122,0.3); }
+    66%  { border-color:rgba(212,168,240,0.5); box-shadow: 0 0 25px rgba(212,168,240,0.3); }
+    100% { border-color:rgba(168,216,234,0.5); box-shadow: 0 0 25px rgba(168,216,234,0.3); }
+  }
 
-    @keyframes pulseText {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.75; }
-    }
+  .card-canvas { position:absolute; inset:0; pointer-events:none; z-index:2; }
 
-    .stage-level {
-      font-family: 'Crimson Pro', serif;
-      font-size: 12px;
-      letter-spacing: 5px;
-      color: var(--accent, #3a3a4a);
-      opacity: 0.5;
-      margin-top: 6px;
-      text-transform: uppercase;
-    }
+  .live-value-wrap { margin-top:6px; display:flex; align-items:baseline; gap:8px; }
+  .live-value-num { font-family:'Cinzel',serif; font-size:1.1rem; color:var(--gold-light); font-weight:700; }
+  .live-value-label { font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold-dim); }
+  .live-value-mult { font-size:0.72rem; color:var(--green); letter-spacing:0.05em; }
+  .cas-live { background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.16)); border:1px solid rgba(201,168,76,0.4) !important; }
 
-    .card-stats {
-      padding: 16px 22px;
-      border-top: 1px solid var(--accent-dim, #1a1a2e);
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 4px;
-    }
+  .evo-id-pill { display:inline-flex; align-items:center; gap:8px; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.35); border-radius:4px; padding:5px 12px; margin-top:10px; font-family:monospace; font-size:0.82rem; color:#d8b4fe; letter-spacing:1px; }
+  .evo-id-pill span { color:rgba(196,181,253,0.5); font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; font-family:'Cinzel',serif; }
 
-    .stat { text-align: center; }
+  .card-analyzer-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:32px; }
+  .cas-item { background:var(--glass); border:1px solid var(--glass-border); padding:14px 16px; backdrop-filter:blur(12px); }
+  .cas-label { font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; }
+  .cas-value { font-family:'Cinzel',serif; font-size:0.95rem; color:var(--text); }
+  .cas-value.gold { color:var(--gold); }
 
-    .stat-value {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 16px;
-      color: var(--accent, #3a3a4a);
-    }
+  .section-title { font-family:'Cinzel',serif; font-size:0.7rem; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:16px; display:flex; align-items:center; gap:12px; }
+  .section-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--glass-border),transparent); }
 
-    .stat-label {
-      font-size: 10px;
-      letter-spacing: 2px;
-      color: var(--accent, #3a3a4a);
-      opacity: 0.45;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
+  .glass { background:var(--glass); border:1px solid var(--glass-border); backdrop-filter:blur(16px); transition:border-color 0.3s,box-shadow 0.3s; }
+  .glass:hover { border-color:var(--glass-border-hover); box-shadow:0 0 30px rgba(201,168,76,0.06); }
 
-    .xp-section { padding: 4px 22px 18px; }
+  .stat-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:32px; }
+  .stat-card { padding:22px 20px 18px; position:relative; overflow:hidden; }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0.5; }
+  .stat-label { font-size:0.65rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
+  .stat-value { font-family:'Cinzel',serif; font-size:2rem; font-weight:700; color:var(--gold); line-height:1; margin-bottom:4px; }
+  .stat-sub { font-size:0.78rem; color:var(--text-dim); font-style:italic; }
+  .stat-icon { position:absolute; right:16px; top:16px; font-size:1.4rem; opacity:0.25; }
 
-    .xp-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 7px;
-    }
+  .scan-btn-wrap { margin-bottom:32px; }
+  .scan-btn { width:100%; padding:18px 24px; background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.14)); border:1px solid var(--gold); color:var(--gold); font-family:'Cinzel',serif; font-size:0.9rem; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; display:flex; align-items:center; justify-content:center; gap:12px; }
+  .scan-btn:hover { background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.28)); box-shadow:0 0 40px rgba(201,168,76,0.2); }
+  .scan-btn:disabled { opacity:0.5; cursor:not-allowed; border-color:var(--glass-border); color:var(--text-dim); }
+  .scan-locked { width:100%; padding:18px 24px; background:rgba(14,12,9,0.6); border:1px solid var(--glass-border); color:var(--text-dim); font-family:'Cinzel',serif; font-size:0.82rem; letter-spacing:0.2em; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:12px; cursor:pointer; transition:all 0.3s; }
+  .scan-locked:hover { border-color:var(--gold); color:var(--gold-dim); }
+  .scan-feedback { margin-top:10px; text-align:center; font-size:0.8rem; font-style:italic; min-height:20px; transition:all 0.3s; }
+  .scan-feedback.success { color:var(--green); }
+  .scan-feedback.error { color:var(--red); }
+  #active-event-indicator {
+    margin: 16px 0;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+  }
+  .aei-label { font-size: 0.62rem; letter-spacing: 0.12em; color: var(--gold); margin-bottom: 6px; opacity: 0.8; }
+  .aei-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+  .aei-flavour { font-size: 0.82rem; font-style: italic; opacity: 0.75; margin-bottom: 6px; }
+  .aei-meta { font-size: 0.75rem; opacity: 0.6; letter-spacing: 0.04em; }
+  .scan-event-line  { margin-top: 6px; font-size: 0.95em; }
+  .scan-flavour-line { font-style: italic; font-size: 0.88em; opacity: 0.85; margin-top: 2px; }
+  .scan-xp-line     { margin-bottom: 2px; }
 
-    .xp-label {
-      font-size: 10px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--accent, #3a3a4a);
-      opacity: 0.5;
-    }
+  .evo-strip { padding:24px; margin-bottom:32px; }
+  .evo-stages { display:flex; align-items:center; margin-top:20px; }
+  .evo-stage { flex:1; text-align:center; position:relative; }
+  .evo-stage::after { content:''; position:absolute; top:18px; right:-50%; width:100%; height:2px; background:var(--charcoal); z-index:0; }
+  .evo-stage:last-child::after { display:none; }
+  .evo-dot { width:36px; height:36px; border-radius:50%; border:2px solid var(--charcoal); background:var(--dark2); margin:0 auto 8px; display:flex; align-items:center; justify-content:center; font-size:1rem; position:relative; z-index:1; transition:all 0.4s; }
+  .evo-dot.active { border-color:var(--gold); background:rgba(201,168,76,0.15); box-shadow:0 0 16px rgba(201,168,76,0.4); }
+  .evo-dot.past { border-color:var(--gold-dim); background:rgba(201,168,76,0.08); }
+  .evo-name { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-dim); }
+  .evo-name.active { color:var(--gold); font-weight:600; }
+  .xp-bar-wrap { margin-top:20px; }
+  .xp-bar-labels { display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-dim); margin-bottom:6px; }
+  .xp-bar-track { height:8px; background:var(--charcoal); border-radius:4px; overflow:hidden; }
+  .xp-bar-fill { height:100%; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius:4px; transition:width 1.2s cubic-bezier(0.4,0,0.2,1); box-shadow:0 0 10px rgba(201,168,76,0.4); }
 
-    .xp-value {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 11px;
-      color: var(--accent, #3a3a4a);
-    }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px; }
+  .chart-wrap { padding:24px; }
+  .chart-title { font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:16px; }
 
-    .xp-track {
-      height: 4px;
-      background: rgba(255,255,255,0.07);
-      border-radius: 2px;
-      overflow: hidden;
-    }
+  .streak-grid { display:grid; grid-template-columns:repeat(14,1fr); gap:4px; margin-top:8px; }
+  .streak-day { aspect-ratio:1; border-radius:2px; background:var(--charcoal); transition:background 0.3s; }
+  .streak-day.active { background:var(--gold); box-shadow:0 0 6px rgba(201,168,76,0.5); }
+  .streak-day.partial { background:var(--gold-dim); }
+  .streak-day.decay { background:rgba(192,57,43,0.4); }
 
-    .xp-fill {
-      height: 100%;
-      border-radius: 2px;
-      background: var(--accent, #3a3a4a);
-      box-shadow: 0 0 8px var(--glow, transparent);
-      transition: width 1.4s cubic-bezier(0.4, 0, 0.2, 1);
-      width: 0%;
-    }
+  .log-wrap { padding:24px; }
+  .log-list { display:flex; flex-direction:column; gap:0; }
+  .log-item { display:grid; grid-template-columns:36px 1fr auto auto; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid rgba(201,168,76,0.07); font-size:0.85rem; }
+  .log-item:last-child { border-bottom:none; }
+  .log-icon { width:32px; height:32px; border-radius:50%; background:rgba(201,168,76,0.08); border:1px solid var(--glass-border); display:flex; align-items:center; justify-content:center; font-size:0.9rem; }
+  .log-type { color:var(--text); }
+  .log-date { color:var(--text-dim); font-size:0.75rem; }
+  .log-xp { font-family:'Cinzel',serif; font-size:0.82rem; }
+  .log-xp.pos { color:var(--green); }
+  .log-xp.neg { color:var(--red); }
 
-    .owner-strip {
-      padding: 14px 22px;
-      border-top: 1px solid var(--accent-dim, #1a1a2e);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+  .health-wrap { padding:24px; }
+  .health-ring-wrap { display:flex; justify-content:center; margin:16px 0; position:relative; }
+  .health-ring { transform:rotate(-90deg); }
+  .health-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+  .health-pct { font-family:'Cinzel',serif; font-size:1.8rem; color:var(--gold); line-height:1; }
+  .health-label { font-size:0.65rem; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
+  .decay-warning { background:rgba(192,57,43,0.08); border:1px solid rgba(192,57,43,0.3); border-left:3px solid var(--red); padding:12px 16px; font-size:0.82rem; color:#e8a09a; display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .decay-ok { background:rgba(46,204,113,0.06); border:1px solid rgba(46,204,113,0.2); border-left:3px solid var(--green); padding:12px 16px; font-size:0.82rem; color:#8ee4b2; display:flex; align-items:center; gap:10px; margin-top:12px; }
 
-    .owner-label {
-      font-size: 10px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--accent, #3a3a4a);
-      opacity: 0.4;
-    }
+  .milestone-list { padding:24px; display:flex; flex-direction:column; gap:14px; }
+  .milestone-item { display:flex; align-items:center; gap:14px; }
+  .m-icon { font-size:1.2rem; width:36px; text-align:center; flex-shrink:0; }
+  .m-info { flex:1; }
+  .m-name { font-size:0.85rem; color:var(--text); margin-bottom:3px; }
+  .m-desc { font-size:0.72rem; color:var(--text-dim); font-style:italic; }
+  .m-bar-track { height:4px; background:var(--charcoal); border-radius:2px; margin-top:5px; }
+  .m-bar-fill { height:100%; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius:2px; }
+  .m-xp { font-family:'Cinzel',serif; font-size:0.75rem; color:var(--gold-dim); flex-shrink:0; }
+  .m-done { color:var(--green); font-size:0.75rem; flex-shrink:0; }
 
-    .owner-id {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 11px;
-      color: var(--accent, #3a3a4a);
-      opacity: 0.8;
-    }
+  .grade-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px 6px 10px; border:1px solid; font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; }
+  .grade-copper { border-color:var(--copper); color:var(--copper); }
+  .grade-nickel { border-color:var(--nickel); color:var(--nickel); }
+  .grade-silver { border-color:var(--silver); color:var(--silver); }
+  .grade-gold { border-color:var(--gold); color:var(--gold); }
+  .grade-diamond { border-color:var(--diamond); color:var(--diamond); }
 
-    .last-seen {
-      margin-top: 16px;
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.18);
-      text-align: center;
-    }
+  .card-mini-grid { display:flex; flex-direction:column; gap:0; padding:24px; }
+  .card-mini-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(201,168,76,0.07); font-size:0.85rem; }
+  .card-mini-row:last-child { border-bottom:none; }
+  .card-mini-label { color:var(--text-dim); font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; }
+  .card-mini-val { color:var(--text); font-family:'Cinzel',serif; font-size:0.82rem; }
 
-    .decay-warning {
-      margin-top: 10px;
-      padding: 10px 18px;
-      border: 1px solid #ff444444;
-      border-radius: 8px;
-      background: #ff000011;
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #ff6666;
-      text-align: center;
-      display: none;
-    }
+  .rank-wrap { padding:24px; }
+  .rank-number { font-family:'Cinzel Decorative',serif; font-size:4rem; color:var(--gold); line-height:1; text-shadow:0 0 40px rgba(201,168,76,0.3); }
+  .rank-label { font-size:0.72rem; color:var(--text-dim); letter-spacing:0.2em; text-transform:uppercase; margin-top:4px; }
+  .rank-divider { height:1px; background:var(--glass-border); margin:16px 0; }
+  .rank-stat { display:flex; justify-content:space-between; font-size:0.82rem; padding:5px 0; }
+  .rank-stat-label { color:var(--text-dim); }
+  .rank-stat-val { color:var(--text); font-family:'Cinzel',serif; font-size:0.78rem; }
 
-    .scan-toast {
-      margin-top: 14px;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      text-align: center;
-      display: none;
-    }
-    .scan-toast.success {
-      border: 1px solid #44ff8844;
-      background: #00ff4411;
-      color: #66ff99;
-    }
-    .scan-toast.already {
-      border: 1px solid #ffaa0044;
-      background: #ffaa0011;
-      color: #ffcc66;
-    }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .animate-in { animation:fadeUp 0.6s ease both; }
+  .delay-1 { animation-delay:0.1s; }
+  .delay-2 { animation-delay:0.2s; }
+  .delay-3 { animation-delay:0.3s; }
+  .delay-4 { animation-delay:0.4s; }
+  .delay-5 { animation-delay:0.5s; }
 
-    .state-screen {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #050508;
-      z-index: 100;
-      gap: 16px;
-      transition: opacity 0.6s ease;
-    }
+  /* ── YOUR LIFE BUTTON ─────────────────────────────────────────────────── */
+  .your-life-btn {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.06), rgba(201,168,76,0.13));
+    border: 1px solid rgba(201,168,76,0.45);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .your-life-btn:hover {
+    background: linear-gradient(135deg, rgba(201,168,76,0.14), rgba(201,168,76,0.24));
+    box-shadow: 0 0 30px rgba(201,168,76,0.12);
+    border-color: var(--gold-light);
+    color: var(--gold-light);
+  }
 
-    .state-screen.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+  /* ── GAMING HUB BUTTON ────────────────────────────────────────────────── */
+  .gaming-hub-btn { display:none; width:100%; margin-top:10px; padding:14px 24px; background:linear-gradient(135deg,rgba(46,204,113,0.06),rgba(46,204,113,0.12)); border:1px solid rgba(46,204,113,0.35); color:#2ecc71; font-family:'Cinzel',serif; font-size:0.82rem; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; text-align:center; text-decoration:none; }
+  .gaming-hub-btn:hover { background:linear-gradient(135deg,rgba(46,204,113,0.12),rgba(46,204,113,0.22)); box-shadow:0 0 30px rgba(46,204,113,0.1); border-color:#2ecc71; }
+  .gaming-hub-btn.visible { display:flex; align-items:center; justify-content:center; gap:10px; }
 
-    .loader-ring {
-      width: 48px;
-      height: 48px;
-      border: 2px solid #1a1a2e;
-      border-top-color: #8888cc;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
+  /* ── XP MARKETPLACE BUTTON ───────────────────────────────────────────── */
+  .xp-market-btn { width:100%; margin-top:10px; padding:14px 24px; background:linear-gradient(135deg,rgba(192,57,43,0.06),rgba(192,57,43,0.12)); border:1px solid rgba(192,57,43,0.35); color:#e74c3c; font-family:'Cinzel',serif; font-size:0.82rem; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; text-align:center; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:10px; }
+  .xp-market-btn:hover { background:linear-gradient(135deg,rgba(192,57,43,0.12),rgba(192,57,43,0.22)); box-shadow:0 0 30px rgba(192,57,43,0.1); border-color:#e74c3c; color:#ff6b6b; }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loader-text {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 11px;
-      letter-spacing: 4px;
-      color: #3a3a5a;
-      text-transform: uppercase;
-    }
-
-    .error-text {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 13px;
-      letter-spacing: 3px;
-      color: #ff4444;
-      text-align: center;
-      padding: 0 20px;
-    }
-  </style>
+  @media (max-width:900px) {
+    .stat-grid { grid-template-columns:repeat(2,1fr); }
+    .two-col { grid-template-columns:1fr; }
+    .content { padding:24px 16px 60px; }
+    .header { padding:0 16px; }
+    .owner-hero { grid-template-columns:1fr; }
+    .owner-art-badge { width:180px; height:246px; margin:0 auto; }
+    .card-analyzer-strip { grid-template-columns:repeat(2,1fr); }
+    #readonly-banner, #owner-banner { padding:10px 16px; }
+    .claim-box { padding:36px 24px 32px; }
+  }
+</style>
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
+<div class="bg-layer"></div>
+<div class="bg-overlay"></div>
 
-<div class="state-screen" id="loading-screen">
-  <div class="loader-ring"></div>
-  <div class="loader-text">Awakening Card</div>
+<div id="loading-screen">
+  <div class="loading-logo">PfP</div>
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading Card</div>
+  <div class="loading-sub" id="loading-sub">Connecting to database…</div>
 </div>
 
-<div class="state-screen hidden" id="error-screen">
-  <div class="error-text" id="error-msg">Card not found.</div>
+<div id="error-screen">
+  <div class="error-title">Card Not Found</div>
+  <div class="error-msg" id="error-msg">No card with that Evolution ID could be found.</div>
 </div>
 
-<div class="card-container" id="card-container" style="opacity:0; transition: opacity 0.8s ease;">
+<div id="claim-screen">
+  <div class="claim-box">
+    <div class="claim-logo">PfP</div>
+    <div class="claim-card-name" id="claim-card-name">—</div>
+    <div class="claim-evo-id" id="claim-evo-id">—</div>
 
-  <div class="card-frame" id="card-frame">
-    <div class="card-inner">
-
-      <div class="card-top">
-        <div class="card-id" id="card-id-label">—</div>
-        <div class="grade-badge" id="grade-badge">—</div>
+    <div id="claim-unclaimed-section">
+      <label class="claim-label">Claim Code <span style="color:var(--text-dim);font-size:0.68rem;">(included with your card)</span></label>
+      <div class="claim-input-wrap">
+        <input class="claim-input" id="claim-code-input" type="text" placeholder="CLAIM-XXXXXX" autocomplete="off" style="text-transform:uppercase;">
       </div>
+      <button class="claim-btn" onclick="doClaim()">Claim This Card</button>
+      <div class="claim-error" id="claim-error"></div>
+      <div class="claim-divider"></div>
+      <div class="claim-hint">Enter the claim code that came with your physical card. This links you as the owner and lets you earn XP. Your browser will remember you on this device.</div>
+    </div>
 
-      <div class="card-visual">
-        <canvas id="card-canvas"></canvas>
-        <div class="stage-label">
-          <div class="stage-name" id="stage-name">—</div>
-          <div class="stage-level" id="stage-level">—</div>
-        </div>
+    <div id="claim-returning-section" style="display:none;">
+      <div style="background:rgba(46,204,113,0.06);border:1px solid rgba(46,204,113,0.2);border-left:3px solid var(--green);padding:12px 16px;font-size:0.85rem;color:#8ee4b2;margin-bottom:20px;text-align:left;">
+        ✓ You are recognized as the owner of this card on this device.
       </div>
-
-      <div class="card-stats">
-        <div class="stat">
-          <div class="stat-value" id="stat-xp">—</div>
-          <div class="stat-label">Total XP</div>
-        </div>
-        <div class="stat">
-          <div class="stat-value" id="stat-streak">—</div>
-          <div class="stat-label">Day Streak</div>
-        </div>
-        <div class="stat">
-          <div class="stat-value" id="stat-interactions">—</div>
-          <div class="stat-label">Interactions</div>
-        </div>
+      <button class="claim-btn" onclick="enterAsSavedOwner()">Enter Dashboard</button>
+      <div class="claim-divider"></div>
+      <div class="claim-hint" style="margin-bottom:12px;">Not the owner? Enter the claim code from your physical card to transfer ownership.</div>
+      <div class="claim-input-wrap">
+        <input class="claim-input" id="transfer-code-input" type="text" placeholder="CLAIM-XXXXXX" autocomplete="off" style="text-transform:uppercase;">
       </div>
+      <button class="claim-btn" style="background:linear-gradient(135deg,#2a1a0a,#7a6030);margin-top:8px;" onclick="doTransferClaim()">Transfer Ownership</button>
+      <div class="claim-error" id="transfer-error"></div>
+    </div>
 
-      <div class="xp-section">
-        <div class="xp-header">
-          <span class="xp-label">Progress to next stage</span>
-          <span class="xp-value" id="xp-next-label">—</span>
-        </div>
-        <div class="xp-track">
-          <div class="xp-fill" id="xp-fill"></div>
-        </div>
+    <div id="claim-readonly-section" style="display:none;">
+      <button class="claim-btn" style="background:rgba(201,168,76,0.1);color:var(--gold);border:1px solid var(--gold);" onclick="enterReadOnly()">View Card (Read Only)</button>
+      <div class="claim-divider"></div>
+      <label class="claim-label">Own this card? Enter your claim code:</label>
+      <div class="claim-input-wrap">
+        <input class="claim-input" id="visitor-claim-input" type="text" placeholder="CLAIM-XXXXXX" autocomplete="off" style="text-transform:uppercase;">
       </div>
-
-      <div class="owner-strip">
-        <span class="owner-label">Owner</span>
-        <span class="owner-id" id="owner-id">—</span>
-      </div>
-
+      <button class="claim-btn" onclick="doVisitorClaim()">Claim This Card</button>
+      <div class="claim-error" id="visitor-error"></div>
     </div>
   </div>
+</div>
 
-  <div class="last-seen" id="last-seen"></div>
-  <div class="decay-warning" id="decay-warning">⚠ This card is decaying</div>
-  <div class="scan-toast" id="scan-toast"></div>
+<div id="readonly-banner">
+  <div class="banner-text">Viewing <strong id="banner-card-name">this card</strong> in read-only mode &nbsp;·&nbsp; Claim this card to earn XP</div>
+  <button class="banner-claim-btn" onclick="showClaimScreen('readonly')">Owner Login / Claim</button>
+</div>
 
+<div id="owner-banner">
+  <div class="owner-text">✓ Logged in as owner of <strong id="owner-banner-name">—</strong></div>
+  <button class="signout-btn" onclick="doSignOut()">Sign Out</button>
+</div>
+
+<div id="dashboard">
+  <header class="header">
+    <div class="header-logo">PfP</div>
+    <div class="header-card-name" id="header-card-name"></div>
+  </header>
+
+  <div class="content">
+
+    <div class="owner-hero animate-in">
+      <div>
+        <div class="owner-greeting">Living Card</div>
+        <div class="owner-name" id="d-card-name">—</div>
+        <div class="owner-meta" id="d-card-meta"></div>
+        <div id="d-evo-id-pill"></div>
+        <div style="margin-top:12px;" id="d-grade-badge"></div>
+        <div style="margin-top:24px;display:flex;align-items:baseline;gap:12px;">
+          <div style="font-family:'Cinzel Decorative',serif;font-size:5rem;font-weight:900;color:var(--gold);text-shadow:0 0 50px rgba(201,168,76,0.5);line-height:1;" id="d-rank-hero">#—</div>
+          <div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-dim);padding-bottom:8px;">Global Rank</div>
+        </div>
+      </div>
+      <div class="owner-art-badge stage-wrap" id="card-art-wrap">
+        <div class="no-image">No Image</div>
+        <canvas class="card-canvas" id="card-canvas"></canvas>
+      </div>
+    </div>
+
+    <div class="card-analyzer-strip animate-in delay-1" id="card-analyzer-strip"></div>
+
+    <div class="scan-btn-wrap">
+      <div id="scan-area"></div>
+      <div class="scan-feedback" id="scan-feedback"></div>
+    </div>
+
+    <div id="active-event-indicator" style="display:none;"></div>
+
+    <!-- YOUR LIFE BUTTON — always visible once dashboard loads -->
+    <a class="your-life-btn" id="your-life-btn" href="#">📖 &nbsp; Your Life</a>
+
+    <!-- GAMING HUB BUTTON — owners only -->
+    <a class="gaming-hub-btn" id="gaming-hub-btn" href="#">🎮 &nbsp; Enter XP Gaming Hub</a>
+
+    <!-- XP MARKETPLACE BUTTON — all visitors -->
+    <a class="xp-market-btn" id="xp-market-btn" href="#">🏪 &nbsp; Enter XP Gaming Marketplace</a>
+
+    <div class="section-title animate-in delay-1">At a Glance</div>
+    <div class="stat-grid animate-in delay-1">
+     <div class="glass stat-card"><div class="stat-icon">✦</div><div class="stat-label">Current XP</div><div class="stat-value" id="d-xp">—</div><div class="stat-sub" id="d-xp-sub"></div></div>
+     <div class="glass stat-card"><div class="stat-icon" style="opacity:0.7;">🎮</div><div class="stat-label">Gaming XP</div><div class="stat-value" id="d-gaming-xp">—</div><div class="stat-sub">total earned in games</div></div>
+      <div class="glass stat-card"><div class="stat-icon">🔥</div><div class="stat-label">Streak</div><div class="stat-value" id="d-streak">—</div><div class="stat-sub">consecutive days</div></div>
+      <div class="glass stat-card"><div class="stat-icon">👁</div><div class="stat-label">Page Views</div><div class="stat-value" id="d-views">—</div><div class="stat-sub">total profile visits</div></div>
+      <div class="glass stat-card"><div class="stat-icon">⚡</div><div class="stat-label">Interactions</div><div class="stat-value" id="d-interactions">—</div><div class="stat-sub">all time</div></div>
+    </div>
+
+    <div class="section-title animate-in delay-2">Living Stage</div>
+    <div class="glass evo-strip animate-in delay-2">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <span style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold)" id="d-stage">—</span>
+          <span style="font-size:0.75rem;color:var(--text-dim);margin-left:10px;" id="d-level">Level —</span>
+        </div>
+        <div style="font-size:0.72rem;color:var(--text-dim);">Next: <span id="d-next-stage" style="color:var(--gold)">—</span></div>
+      </div>
+      <div class="evo-stages" id="evo-stages"></div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-labels"><span id="xp-bar-cur">0 XP</span><span id="xp-bar-next">—</span></div>
+        <div class="xp-bar-track"><div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="section-title animate-in delay-2">Activity Analytics</div>
+    <div class="two-col animate-in delay-3">
+      <div class="glass chart-wrap" style="display:flex;flex-direction:column;justify-content:space-between;">
+        <div class="chart-title">Global Network</div>
+        <div style="display:flex;flex-direction:column;gap:20px;flex:1;justify-content:center;">
+          <div style="border-bottom:1px solid rgba(201,168,76,0.1);padding-bottom:20px;">
+            <div style="font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Live Cards in Circulation</div>
+            <div style="font-family:'Cinzel Decorative',serif;font-size:2.8rem;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(201,168,76,0.3);" id="stat-total-live">—</div>
+          </div>
+          <div style="border-bottom:1px solid rgba(201,168,76,0.1);padding-bottom:20px;">
+            <div style="font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Highest XP Earned</div>
+            <div style="font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold-light);line-height:1;" id="stat-highest-xp">—</div>
+          </div>
+          <div>
+            <div style="font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Top Card</div>
+            <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--text);" id="stat-top-card">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="glass rank-wrap">
+        <div class="rank-number" id="d-rank">#—</div>
+        <div class="rank-label">Global Rank</div>
+        <div class="rank-divider"></div>
+        <div class="rank-stat"><span class="rank-stat-label">XP Percentile</span><span class="rank-stat-val" id="d-percentile">—</span></div>
+        <div class="rank-stat"><span class="rank-stat-label">Top</span><span class="rank-stat-val" id="d-top">—%</span></div>
+        <div class="rank-stat"><span class="rank-stat-label">Interactions/Day</span><span class="rank-stat-val" id="d-ipd">—</span></div>
+        <div class="rank-stat"><span class="rank-stat-label">XP Earned Today</span><span class="rank-stat-val" id="d-today-xp">—</span></div>
+        <div class="rank-divider"></div>
+        <div style="font-size:0.72rem;color:var(--text-dim);font-style:italic;line-height:1.5;" id="d-rank-note"></div>
+      </div>
+    </div>
+
+    <div class="two-col animate-in delay-3">
+      <div class="glass chart-wrap">
+        <div class="chart-title">28-Day Streak Calendar</div>
+        <div class="streak-grid" id="streak-grid"></div>
+        <div style="display:flex;gap:16px;margin-top:14px;font-size:0.7rem;color:var(--text-dim);">
+          <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold);border-radius:2px;margin-right:4px;"></span>Active</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold-dim);border-radius:2px;margin-right:4px;"></span>Partial</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:rgba(192,57,43,0.4);border-radius:2px;margin-right:4px;"></span>Decay</span>
+        </div>
+      </div>
+      <div class="glass health-wrap">
+        <div class="chart-title">Card Health Index</div>
+        <div class="health-ring-wrap">
+          <svg class="health-ring" width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="56" fill="none" stroke="#2a2520" stroke-width="10"/>
+            <circle cx="70" cy="70" r="56" fill="none" stroke="url(#goldGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="351.86" stroke-dashoffset="351.86" id="health-arc"/>
+            <defs><linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#7a6030"/><stop offset="100%" style="stop-color:#e8c97a"/></linearGradient></defs>
+          </svg>
+          <div class="health-center"><div class="health-pct" id="health-pct">—</div><div class="health-label">Health</div></div>
+        </div>
+        <div id="decay-status"></div>
+        <div style="margin-top:16px;font-size:0.8rem;color:var(--text-dim);line-height:1.6;">
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(201,168,76,0.08)"><span>Last Interaction</span><span style="color:var(--text)" id="d-last">—</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Days Since Scan</span><span style="color:var(--text)" id="d-days-since">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title animate-in delay-4">Card Details & Milestones</div>
+    <div class="two-col animate-in delay-4">
+      <div class="glass">
+        <div class="chart-title" style="padding:24px 24px 0;">Card Profile</div>
+        <div class="card-mini-grid" id="card-profile-list"></div>
+      </div>
+      <div class="glass milestone-list" id="milestone-list"></div>
+    </div>
+
+    <div class="section-title animate-in delay-5">Interaction Log</div>
+    <div class="glass log-wrap animate-in delay-5">
+      <div class="log-list" id="log-list"></div>
+    </div>
+
+  </div>
 </div>
 
 <script>
-const STAGES = [
-  { name: 'DORMANT',     level: 1,  minXP: 0,    nextXP: 100  },
-  { name: 'AWAKENED',    level: 2,  minXP: 100,  nextXP: 250  },
-  { name: 'GROWING',     level: 3,  minXP: 250,  nextXP: 500  },
-  { name: 'ESTABLISHED', level: 5,  minXP: 500,  nextXP: 1000 },
-  { name: 'RENOWNED',    level: 10, minXP: 1000, nextXP: 2500 },
-  { name: 'LEGENDARY',   level: 20, minXP: 2500, nextXP: 5000 },
-  { name: 'MYTHIC',      level: 47, minXP: 5000, nextXP: null },
-];
+const LIVING_API   = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflBEX2r7mxTdyBxJOYXSlNcDgLGotqu28buVV4YHfBmO1MOvGDc/exec';
 
-const GRADE_COLORS = {
-  copper:  '#b87333',
-  nickel:  '#a8a9ad',
-  silver:  '#c0c0c0',
-  gold:    '#ffd700',
-  diamond: '#b9f2ff',
-};
+const STAGES      = ['Dormant','Awakened','Growing','Established','Renowned','Legendary','Mythic'];
+const STAGE_ICONS = ['💤','🌅','🌱','🏛️','🌟','⚚','🔮'];
+const STAGE_XP = [0, 500, 1500, 5000, 12000, 25000, 50000];
+const STAGE_MULT  = [1.00, 1.05, 1.10, 1.20, 1.35, 1.55, 2.00];
+const STAGE_CLASS = ['stage-dormant','stage-awakened','stage-growing','stage-established','stage-renowned','stage-legendary','stage-mythic'];
 
-const STAGE_THEMES = {
-  DORMANT:     { bg: '#0d0d0f', accent: '#3a3a4a', glow: 'transparent',  frameOp: 0.2 },
-  AWAKENED:    { bg: '#0a0f1a', accent: '#b87333', glow: '#b8733355',    frameOp: 0.5 },
-  GROWING:     { bg: '#0a1a0f', accent: '#7ab648', glow: '#7ab64855',    frameOp: 0.6 },
-  ESTABLISHED: { bg: '#0f0f1a', accent: '#8888cc', glow: '#8888cc66',    frameOp: 0.7 },
-  RENOWNED:    { bg: '#1a0f00', accent: '#ffd700', glow: '#ffd70066',    frameOp: 0.8 },
-  LEGENDARY:   { bg: '#1a0a1a', accent: '#df80ff', glow: '#df80ff88',    frameOp: 0.9 },
-  MYTHIC:      { bg: '#050510', accent: '#ffffff', glow: '#ffffff99',    frameOp: 1.0 },
-};
+let settingsMultipliers = null;
 
-const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
-
-function getStageForXP(xp) {
-  let stage = STAGES[0];
-  for (const s of STAGES) { if (xp >= s.minXP) stage = s; }
-  return stage;
-}
-
-function xpProgress(xp, stage) {
-  if (!stage.nextXP) return 1;
-  return Math.min(1, (xp - stage.minXP) / (stage.nextXP - stage.minXP));
-}
-
-function timeAgo(ts) {
-  if (!ts) return '';
-  const diff = Math.floor((Date.now() - new Date(ts)) / 1000);
-  if (diff < 60) return 'Last seen moments ago';
-  if (diff < 3600) return `Last seen ${Math.floor(diff/60)}m ago`;
-  if (diff < 86400) return `Last seen ${Math.floor(diff/3600)}h ago`;
-  return `Last seen ${Math.floor(diff/86400)}d ago`;
-}
-
-function applyTheme(stageName, grade) {
-  const t = STAGE_THEMES[stageName] || STAGE_THEMES.DORMANT;
-  const gc = GRADE_COLORS[grade?.toLowerCase()] || '#3a3a4a';
-
-  document.body.style.background = t.bg;
-  const frame = document.getElementById('card-frame');
-  frame.style.setProperty('--frame-gradient',
-    `conic-gradient(from 0deg, ${t.accent}, ${t.bg}, ${t.accent}, ${t.bg}, ${t.accent})`);
-  frame.style.setProperty('--frame-opacity', t.frameOp);
-
-  const inner = frame.querySelector('.card-inner');
-  inner.style.background = t.bg;
-  inner.style.setProperty('--accent', t.accent);
-  inner.style.setProperty('--glow', t.glow);
-  inner.style.setProperty('--accent-dim', t.bg);
-
-  const els = ['card-id-label','stage-name','stage-level','stat-xp','stat-streak',
-                'stat-interactions','xp-next-label','owner-id','xp-fill'];
-  els.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.style.color = t.accent; }
-  });
-
-  document.getElementById('xp-fill').style.background = t.accent;
-  document.getElementById('xp-fill').style.boxShadow = `0 0 8px ${t.glow}`;
-
-  document.querySelectorAll('.stat-label, .owner-label, .xp-label').forEach(el => {
-    el.style.color = t.accent;
-  });
-  document.querySelectorAll('.xp-track').forEach(el => {
-    el.style.background = 'rgba(255,255,255,0.07)';
-  });
-  document.querySelectorAll('.card-stats, .owner-strip').forEach(el => {
-    el.style.borderColor = t.accent + '22';
-  });
-
-  const badge = document.getElementById('grade-badge');
-  badge.style.borderColor = gc;
-  badge.style.color = gc;
-}
-
-function initBgCanvas(theme) {
-  const canvas = document.getElementById('bg-canvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  const accent = theme.accent;
-  const particles = Array.from({length: 60}, () => ({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    r: Math.random() * 1.5 + 0.3,
-    speed: Math.random() * 0.3 + 0.05,
-    opacity: Math.random() * 0.4 + 0.05,
-  }));
-
-  function hex2rgb(hex) {
-    const r = parseInt(hex.slice(1,3),16);
-    const g = parseInt(hex.slice(3,5),16);
-    const b = parseInt(hex.slice(5,7),16);
-    return `${r},${g},${b}`;
-  }
-
-  const rgb = hex2rgb(accent.length === 7 ? accent : '#3a3a4a');
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-      p.y -= p.speed;
-      if (p.y < -4) { p.y = canvas.height + 4; p.x = Math.random() * canvas.width; }
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${rgb}, ${p.opacity})`;
-      ctx.fill();
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-}
-
-function drawCardVisual(stageName, xp) {
-  const canvas = document.getElementById('card-canvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-  const W = canvas.offsetWidth, H = canvas.offsetHeight;
-  const t = STAGE_THEMES[stageName] || STAGE_THEMES.DORMANT;
-
-  ctx.clearRect(0, 0, W, H);
-
-  if (stageName !== 'DORMANT') {
-    const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W * 0.7);
-    grad.addColorStop(0, t.glow);
-    grad.addColorStop(1, 'transparent');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  const rings = { DORMANT:0, AWAKENED:1, GROWING:1, ESTABLISHED:2, RENOWNED:2, LEGENDARY:3, MYTHIC:4 };
-  const ringCount = rings[stageName] || 0;
-  const now = Date.now() / 1000;
-
-  for (let i = 0; i < ringCount; i++) {
-    const angle = now * (0.3 + i * 0.15) + (i * Math.PI * 0.6);
-    const rx = W * (0.28 + i * 0.06);
-    const ry = H * (0.18 + i * 0.04);
-    ctx.save();
-    ctx.translate(W/2, H/2);
-    ctx.rotate(angle);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = t.accent + (i === 0 ? '55' : '33');
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  if (stageName === 'MYTHIC') {
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2 + now * 0.1;
-      const len = W * 0.45;
-      ctx.beginPath();
-      ctx.moveTo(W/2, H/2);
-      ctx.lineTo(W/2 + Math.cos(angle) * len, H/2 + Math.sin(angle) * len);
-      ctx.strokeStyle = `rgba(255,255,255,${0.03 + 0.02 * Math.sin(now + i)})`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-  }
-
-  requestAnimationFrame(() => drawCardVisual(stageName, xp));
-}
-
-async function fireQRScan(cardId, ownerToken) {
-  const toast = document.getElementById('scan-toast');
-  try {
-    const res = await fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'qr_scan', cardId, ownerToken })
-    });
-    const data = await res.json();
-    if (data.success) {
-      toast.textContent = '✦ +10 XP awarded — scan logged';
-      toast.className = 'scan-toast success';
-      toast.style.display = 'block';
-    } else {
-      toast.textContent = 'Scan recorded';
-      toast.className = 'scan-toast already';
-      toast.style.display = 'block';
-    }
-  } catch(e) {
-    // Fail silently
-  }
-}
-
-function fetchViaScript(url) {
+function jsonpFetch(url, timeout) {
   return new Promise((resolve, reject) => {
-    const cbName = '_pfp_cb_' + Date.now();
+    const cbName = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
     const script = document.createElement('script');
-    const timeout = setTimeout(() => {
+    const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 12000);
+    function cleanup() {
+      clearTimeout(timer);
       delete window[cbName];
-      if (script.parentNode) document.body.removeChild(script);
-      reject(new Error('timeout'));
-    }, 8000);
-    window[cbName] = function(data) {
-      clearTimeout(timeout);
-      delete window[cbName];
-      if (script.parentNode) document.body.removeChild(script);
-      resolve(data);
-    };
-    script.src = url + '&callback=' + cbName;
-    script.onerror = () => {
-      clearTimeout(timeout);
-      delete window[cbName];
-      reject(new Error('script error'));
-    };
+      if (document.body.contains(script)) document.body.removeChild(script);
+    }
+    window[cbName] = function(data) { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('script error')); };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName + '&_=' + Date.now();
     document.body.appendChild(script);
   });
 }
 
-async function loadCard() {
-  const params     = new URLSearchParams(window.location.search);
-  const cardId     = params.get('id') || params.get('card_id');
-  const ownerToken = params.get('owner_token') || params.get('ownerToken');
+async function loadMultipliers() {
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_settings', 6000);
+    if (data && data.success && data.settings) {
+      const s = data.settings;
+      settingsMultipliers = [
+        parseFloat(s.multiplier_dormant)     || 1.00,
+        parseFloat(s.multiplier_awakened)    || 1.05,
+        parseFloat(s.multiplier_growing)     || 1.10,
+        parseFloat(s.multiplier_established) || 1.20,
+        parseFloat(s.multiplier_renowned)    || 1.35,
+        parseFloat(s.multiplier_legendary)   || 1.55,
+        parseFloat(s.multiplier_mythic)      || 2.00,
+      ];
+    }
+  } catch(e) {}
+}
 
-  if (!cardId) return showError('No card ID specified.');
+function getMultiplier(stageIdx) {
+  const m = settingsMultipliers || STAGE_MULT;
+  return m[Math.min(stageIdx, m.length - 1)] || 1.00;
+}
 
-  const url = `${API}?action=get_card&card_id=${encodeURIComponent(cardId)}`;
-  let data = null;
+function storageKey(evoId) { return 'pfp_owner_' + evoId; }
+function saveOwner(evoId, claimCode, cardName, ownerToken) {
+  localStorage.setItem(storageKey(evoId), JSON.stringify({ claimCode, cardName, ownerToken }));
+}
+function loadOwner(evoId) {
+  try { return JSON.parse(localStorage.getItem(storageKey(evoId))); } catch(e) { return null; }
+}
+function clearOwner(evoId) { localStorage.removeItem(storageKey(evoId)); }
+
+let analyzerCard = null;
+let livingCard   = null;
+let gamingData   = null;
+let urlCardId    = '';
+let isOwner      = false;
+let savedOwner   = null;
+
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  urlCardId = params.get('card_id') || params.get('cardId') || '';
+  if (urlCardId) {
+    livingCard   = null;
+    analyzerCard = null;
+    gamingData   = null;
+    boot(urlCardId);
+  } else {
+    showError('No card ID provided in the URL.');
+  }
+});
+
+async function boot(evoId) {
+  setLoadingSub('Fetching card from database…');
+  loadMultipliers();
 
   try {
-    const res = await fetch(url);
-    data = await res.json();
+    const data = await jsonpFetch(ANALYZER_API + '?action=getCardByEvoId&evoId=' + encodeURIComponent(evoId), 12000);
+    if (data && data.success && data.card) analyzerCard = data.card;
+  } catch(e) { console.warn('Analyzer API error:', e); }
+
+  setLoadingSub('Loading XP and interaction data…');
+
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(evoId), 8000);
+    if (data && data.success && data.card) livingCard = data.card;
+  } catch(e) { console.warn('Living Card API unavailable:', e); }
+
+  try {
+    const token = (() => { try { return JSON.parse(localStorage.getItem('pfp_owner_' + evoId)); } catch(e) { return null; } })();
+    const url = LIVING_API + '?action=getGamingData&card_id=' + encodeURIComponent(evoId)
+      + (token && token.ownerToken ? '&owner_token=' + encodeURIComponent(token.ownerToken) : '');
+    const data = await jsonpFetch(url, 8000);
+    if (data && data.success && data.gaming) gamingData = data.gaming;
+  } catch(e) { console.warn('Gaming data unavailable:', e); }
+
+  if (!analyzerCard && !livingCard) {
+    showError('No card with Evolution ID <strong>' + esc(evoId) + '</strong> was found.');
+    return;
+  }
+
+  if (!analyzerCard && livingCard) {
+    analyzerCard = { card: livingCard['Card Name'] || evoId, livingCardId: evoId };
+  }
+
+  savedOwner = loadOwner(evoId);
+  hideLoading();
+
+  const cardName = analyzerCard.card || evoId;
+  const claimed  = livingCard && String(livingCard['Claimed']).toUpperCase() === 'YES';
+
+  document.getElementById('claim-card-name').textContent = cardName;
+  document.getElementById('claim-evo-id').textContent    = evoId;
+
+  if (savedOwner) {
+    showClaimScreen('returning');
+  } else if (!claimed) {
+    showClaimScreen('unclaimed');
+  } else {
+    showDashboard(false);
+  }
+}
+
+async function fetchFreshLivingCard() {
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
+    if (data && data.success && data.card) livingCard = data.card;
+  } catch(e) { console.warn('Fresh fetch failed:', e); }
+}
+
+function showClaimScreen(mode) {
+  document.getElementById('loading-screen').style.display  = 'none';
+  document.getElementById('dashboard').style.display       = 'none';
+  document.getElementById('readonly-banner').style.display = 'none';
+  document.getElementById('owner-banner').style.display    = 'none';
+  document.getElementById('claim-screen').style.display    = 'flex';
+  document.getElementById('claim-unclaimed-section').style.display = mode === 'unclaimed' ? 'block' : 'none';
+  document.getElementById('claim-returning-section').style.display = mode === 'returning' ? 'block' : 'none';
+  document.getElementById('claim-readonly-section').style.display  = mode === 'readonly'  ? 'block' : 'none';
+}
+
+async function doClaim() {
+  const code  = document.getElementById('claim-code-input').value.trim().toUpperCase();
+  const errEl = document.getElementById('claim-error');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = 'Please enter your claim code.'; return; }
+  await performClaim(code, errEl);
+}
+
+async function doVisitorClaim() {
+  const code  = document.getElementById('visitor-claim-input').value.trim().toUpperCase();
+  const errEl = document.getElementById('visitor-error');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = 'Please enter your claim code.'; return; }
+  await performClaim(code, errEl);
+}
+
+async function doTransferClaim() {
+  const code  = document.getElementById('transfer-code-input').value.trim().toUpperCase();
+  const errEl = document.getElementById('transfer-error');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = 'Please enter your claim code.'; return; }
+  clearOwner(urlCardId);
+  await performClaim(code, errEl);
+}
+
+async function performClaim(claimCode, errEl) {
+  setLoadingSub('Verifying claim code…');
+  document.getElementById('claim-screen').style.display   = 'none';
+  document.getElementById('loading-screen').style.display = 'flex';
+
+  try {
+    const url = LIVING_API
+      + '?action=claim_card'
+      + '&card_id='    + encodeURIComponent(urlCardId)
+      + '&claim_code=' + encodeURIComponent(claimCode)
+      + '&owner_token=OWN-PLACEHOLDER';
+
+    const data = await jsonpFetch(url, 10000);
+
+    const alreadyClaimed = data.error && data.error.toLowerCase().includes('already claimed');
+    if (data.success || data.status === 200 || alreadyClaimed) {
+      const cardName  = analyzerCard ? analyzerCard.card : urlCardId;
+      const realToken = data.ownerToken || ('OWN-' + urlCardId);
+      saveOwner(urlCardId, claimCode, cardName, realToken);
+      savedOwner = { claimCode, cardName, ownerToken: realToken };
+
+      setLoadingSub('Loading your card data…');
+      await fetchFreshLivingCard();
+
+      hideLoading();
+      showDashboard(true);
+    } else {
+      hideLoading();
+      document.getElementById('claim-screen').style.display = 'flex';
+      errEl.textContent = data.error || 'Invalid claim code. Please check and try again.';
+    }
   } catch(e) {
-    try {
-      data = await fetchViaScript(url);
-    } catch(e2) {
-      return showError('Could not reach the card server.');
+    hideLoading();
+    document.getElementById('claim-screen').style.display = 'flex';
+    errEl.textContent = 'Connection error — please try again.';
+  }
+}
+
+async function enterAsSavedOwner() {
+  document.getElementById('claim-screen').style.display   = 'none';
+  document.getElementById('loading-screen').style.display = 'flex';
+  setLoadingSub('Loading your card data…');
+
+  await fetchFreshLivingCard();
+
+  hideLoading();
+  isOwner = true;
+  showDashboard(true);
+}
+
+function enterReadOnly() {
+  document.getElementById('claim-screen').style.display = 'none';
+  showDashboard(false);
+}
+
+function showDashboard(asOwner) {
+  isOwner = asOwner;
+  document.getElementById('loading-screen').style.display  = 'none';
+  document.getElementById('claim-screen').style.display    = 'none';
+  document.getElementById('dashboard').style.display       = 'block';
+
+  const cardName = analyzerCard ? analyzerCard.card : urlCardId;
+
+  if (asOwner) {
+    document.getElementById('owner-banner').style.display    = 'flex';
+    document.getElementById('readonly-banner').style.display = 'none';
+    document.getElementById('owner-banner-name').textContent = cardName;
+  } else {
+    document.getElementById('readonly-banner').style.display = 'flex';
+    document.getElementById('owner-banner').style.display    = 'none';
+    document.getElementById('banner-card-name').textContent  = cardName;
+  }
+
+  buildDashboard(asOwner);
+  showYourLifeBtn();
+  showGamingBtn(asOwner);
+}
+
+function doSignOut() {
+  clearOwner(urlCardId);
+  savedOwner = null;
+  isOwner    = false;
+  document.getElementById('owner-banner').style.display    = 'none';
+  document.getElementById('readonly-banner').style.display = 'flex';
+  document.getElementById('banner-card-name').textContent  = analyzerCard ? analyzerCard.card : urlCardId;
+  buildDashboard(false);
+}
+
+// ── YOUR LIFE BUTTON ────────────────────────────────────────────────────────
+function showYourLifeBtn() {
+  const btn = document.getElementById('your-life-btn');
+  if (!btn || !urlCardId) return;
+  btn.href = '../your_life.html?card_id=' + encodeURIComponent(urlCardId);
+}
+
+function buildDashboard(asOwner) {
+  const ac = analyzerCard || {};
+  const lc = livingCard   || {};
+
+  const cardName = ac.card || urlCardId;
+  document.getElementById('d-card-name').textContent      = cardName;
+  document.getElementById('header-card-name').textContent = cardName;
+
+  const evoId = ac.livingCardId || urlCardId || '';
+  document.getElementById('d-evo-id-pill').innerHTML = evoId
+    ? `<div class="evo-id-pill"><span>EVO ID</span>${esc(evoId)}</div>` : '';
+
+  document.getElementById('d-card-meta').textContent =
+    [ac.set, ac.rarity, ac.type].filter(Boolean).join('  ·  ') || '';
+
+  const artWrap = document.getElementById('card-art-wrap');
+  STAGE_CLASS.forEach(c => artWrap.classList.remove(c));
+
+  if (ac.imageUrl) {
+    artWrap.innerHTML = `<img src="${esc(ac.imageUrl)}" alt="${esc(cardName)}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>No Image</div>'"><canvas class="card-canvas" id="card-canvas"></canvas>`;
+  }
+
+  const rarity     = (ac.rarity || '').toLowerCase();
+  const gradeMap   = { copper:'copper', nickel:'nickel', silver:'silver', gold:'gold', diamond:'diamond' };
+  const gradeClass = gradeMap[rarity] || 'copper';
+  document.getElementById('d-grade-badge').innerHTML =
+    `<span class="grade-badge grade-${gradeClass}">◆ ${ac.rarity || 'Standard'}</span>`;
+
+  const xp           = parseInt(lc['Current XP'])        || 0;
+  const gamingXP     = (gamingData && parseInt(gamingData['Gaming XP'])) || 0;
+  const streak       = parseInt(lc['Streak (days)'])      || 0;
+  const views        = parseInt(lc['Page Views'])         || 0;
+  const interactions = parseInt(lc['Total Interactions']) || 0;
+  const stage        = lc['Evolution Stage']              || STAGES[0];
+  const level        = parseInt(lc['Current Level'])      || 1;
+  const stageIdx     = Math.max(0, STAGES.findIndex(s => s.toUpperCase() === stage.toUpperCase()));
+  const claimDate    = lc['Claim Date'] || null;
+  const lastDate     = lc['Last Interaction'] ? new Date(lc['Last Interaction']) : null;
+  const daysSince    = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / 86400000) : 99;
+
+  document.getElementById('d-xp').textContent           = xp.toLocaleString();
+  document.getElementById('d-gaming-xp').textContent    = gamingXP.toLocaleString();
+  document.getElementById('d-streak').textContent       = streak;
+  document.getElementById('d-views').textContent        = views.toLocaleString();
+  document.getElementById('d-interactions').textContent = interactions;
+  document.getElementById('d-stage').textContent        = stage;
+  document.getElementById('d-level').textContent        = `Level ${level}`;
+  document.getElementById('d-next-stage').textContent   = STAGES[stageIdx+1] || 'Mythic (Max)';
+
+  const baseValue = parseFloat(ac.value) || 0;
+  const mult      = getMultiplier(stageIdx);
+  const liveValue = baseValue * mult;
+  const multLabel = mult > 1 ? `+${Math.round((mult-1)*100)}% XP boost` : null;
+  const stripFields = [
+    { label:'Base Value', value: baseValue ? '$' + baseValue.toFixed(2) : '—', gold:false },
+    { label:'Live Value', value: baseValue ? '$' + liveValue.toFixed(2) : '—', gold:true, live:true, mult: multLabel },
+    { label:'Rank',       value: ac.rank  ? '#' + ac.rank : '—', gold:true },
+    { label:'Set',        value: ac.set        || '—' },
+    { label:'Qty Issued', value: ac.quantityIssued || '—' },
+    { label:'Condition',  value: ac.condition  || '—' },
+  ];
+  document.getElementById('card-analyzer-strip').innerHTML = stripFields.map(f =>
+    `<div class="cas-item${f.live?' cas-live':''}"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':''}">${f.value}</div>${f.mult?`<div style="font-size:0.62rem;color:var(--green);margin-top:2px;letter-spacing:0.05em;">${f.mult}</div>`:''}</div>`
+  ).join('');
+
+  artWrap.classList.add(STAGE_CLASS[stageIdx] || 'stage-dormant');
+  startParticles(stageIdx);
+
+  const curXP  = STAGE_XP[stageIdx]   || 0;
+  const nextXP = STAGE_XP[stageIdx+1] || STAGE_XP[stageIdx];
+  const pct    = nextXP > curXP ? Math.min(100, Math.round((xp - curXP) / (nextXP - curXP) * 100)) : 100;
+  document.getElementById('d-xp-sub').textContent    = nextXP > xp ? `${(nextXP - xp).toLocaleString()} XP to next stage` : 'Stage max reached';
+  document.getElementById('xp-bar-cur').textContent  = xp.toLocaleString() + ' XP';
+  document.getElementById('xp-bar-next').textContent = nextXP > xp ? `${(nextXP - xp).toLocaleString()} to ${STAGES[stageIdx+1]||'Max'}` : 'Max Reached';
+  setTimeout(() => { document.getElementById('xp-bar-fill').style.width = pct + '%'; }, 400);
+
+  document.getElementById('evo-stages').innerHTML = STAGES.map((s,i) => `
+    <div class="evo-stage">
+      <div class="evo-dot ${i<stageIdx?'past':i===stageIdx?'active':''}">${STAGE_ICONS[i]}</div>
+      <div class="evo-name ${i===stageIdx?'active':''}">${s}</div>
+    </div>`).join('');
+
+  const ipd = interactions > 0 && claimDate
+    ? (interactions / Math.max(1, Math.floor((Date.now() - new Date(claimDate).getTime()) / 86400000))).toFixed(2) : '0.00';
+  document.getElementById('d-ipd').textContent        = ipd;
+  document.getElementById('d-today-xp').textContent   = daysSince <= 0 ? '+10 XP' : '0';
+  document.getElementById('d-rank-note').textContent  =
+    xp < 500  ? 'Interact daily to climb the ranks and awaken your card.' :
+    xp < 1500 ? 'Your card is growing. Keep your streak alive for bonuses.' :
+                'Strong standing. Streak bonuses will accelerate your XP.';
+
+  document.getElementById('d-rank').textContent       = '#—';
+  document.getElementById('d-rank-hero').textContent  = '#—';
+  document.getElementById('d-percentile').textContent = '—';
+  document.getElementById('d-top').textContent        = '—';
+  fetchRank(urlCardId);
+  incrementView(urlCardId);
+  fetchStats();
+
+  const healthPct = Math.max(0, Math.min(100, 100 - (daysSince * 8)));
+  document.getElementById('health-pct').textContent   = healthPct + '%';
+  document.getElementById('d-last').textContent       = lastDate ? lastDate.toLocaleDateString() : '—';
+  document.getElementById('d-days-since').textContent = daysSince <= 0 ? 'Today' : daysSince === 1 ? '1 day ago' : `${daysSince} days ago`;
+  const arc = document.getElementById('health-arc'); const circ = 351.86;
+  setTimeout(() => {
+    arc.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1)';
+    arc.setAttribute('stroke-dashoffset', circ - (circ * healthPct / 100));
+    arc.setAttribute('stroke', healthPct > 60 ? 'url(#goldGrad)' : healthPct > 30 ? '#c9a84c' : '#c0392b');
+  }, 500);
+
+  const decayEl = document.getElementById('decay-status');
+  if (daysSince <= 0)      decayEl.innerHTML = `<div class="decay-ok">✓ Scanned today — full health</div>`;
+  else if (daysSince <= 1) decayEl.innerHTML = `<div class="decay-ok">✓ Healthy — scan today to maintain streak</div>`;
+  else if (daysSince <= 3) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −15 XP decay active</div>`;
+  else if (daysSince <= 7) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −50 XP decay zone</div>`;
+  else                     decayEl.innerHTML = `<div class="decay-warning">🔴 ${daysSince} days idle — stage drop risk! Scan now</div>`;
+
+  const scanArea = document.getElementById('scan-area');
+  if (asOwner) {
+    scanArea.innerHTML = `<button class="scan-btn" id="scan-btn" onclick="logScan()"><span>📱</span> Log Today's Scan — +10 XP</button>`;
+  } else {
+    scanArea.innerHTML = `<div class="scan-locked glass" onclick="showClaimScreen('readonly')">🔒 &nbsp; Claim this card to earn XP &nbsp;·&nbsp; <span style="color:var(--gold);text-decoration:underline;cursor:pointer;">Enter Claim Code</span></div>`;
+  }
+
+  const profileFields = [
+    ['Card Name',    cardName],
+    ['Evolution ID', evoId || '—'],
+    ['Rarity',       ac.rarity         || '—'],
+    ['Set',          ac.set            || '—'],
+    ['Type',         ac.type           || '—'],
+    ['Qty Issued',   ac.quantityIssued || '—'],
+    ['Value',        ac.value ? '$' + parseFloat(ac.value).toFixed(2) : '—'],
+    ['Claimed',      lc['Claimed']     || 'No'],
+    ['Claim Date',   claimDate ? new Date(claimDate).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'],
+  ];
+  document.getElementById('card-profile-list').innerHTML = profileFields.map(([l,v]) =>
+    `<div class="card-mini-row"><span class="card-mini-label">${l}</span><span class="card-mini-val">${esc(String(v))}</span></div>`
+  ).join('');
+
+  buildMilestones(xp, streak, interactions);
+  buildStreakCalendar(streak, daysSince);
+  buildLog(interactions, daysSince);
+
+  const eventIndicator = document.getElementById('active-event-indicator');
+  const activeEvent    = lc['Active Event'];
+  if (activeEvent && activeEvent.eventName) {
+    const isPositive  = activeEvent.xpEffect >= 0;
+    const polarityDot = isPositive ? '🟢' : '🔴';
+    const xpSign      = isPositive ? '+' : '';
+    eventIndicator.innerHTML =
+      '<div class="aei-label">ACTIVE EVENT</div>' +
+      '<div class="aei-name">' + polarityDot + ' ' + activeEvent.eventName + '</div>' +
+      '<div class="aei-flavour">' + esc(activeEvent.flavourText) + '</div>' +
+      '<div class="aei-meta">' + xpSign + activeEvent.xpEffect + ' XP &nbsp;·&nbsp; Expires ' + activeEvent.expiryDate + '</div>';
+    eventIndicator.style.display = 'block';
+  } else {
+    eventIndicator.style.display = 'none';
+  }
+}
+
+async function incrementView(cardId) {
+  const key   = 'pfp_viewed_' + cardId;
+  const today = new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem(key) === today) return;
+  localStorage.setItem(key, today);
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=increment_view&card_id=' + encodeURIComponent(cardId), 6000);
+    if (data && data.success) {
+      document.getElementById('d-views').textContent = data.views.toLocaleString();
+    }
+  } catch(e) {}
+}
+
+async function logScan() {
+  const cardId   = urlCardId;
+  const token    = (savedOwner && savedOwner.ownerToken) ? savedOwner.ownerToken : null;
+  const btn      = document.getElementById('scan-btn');
+  const feedback = document.getElementById('scan-feedback');
+  if (!cardId || !token) {
+    feedback.textContent = 'Owner token missing — try signing out and claiming again.';
+    feedback.className = 'scan-feedback error';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Logging scan...';
+  feedback.textContent = '';
+  try {
+    const url = LIVING_API
+      + '?action=qr_scan'
+      + '&card_id='     + encodeURIComponent(cardId)
+      + '&owner_token=' + encodeURIComponent(token);
+    const data = await jsonpFetch(url, 8000);
+    if (data.success || data.status === 200) {
+      const xpDisplay  = data.totalXP !== undefined ? data.totalXP.toLocaleString() : '--';
+      const xpEffect   = data.xpEffect !== undefined ? data.xpEffect : 10;
+      const xpSign     = xpEffect >= 0 ? '+' : '';
+
+      btn.innerHTML = '<span>✦</span> Scan Logged — ' + xpSign + xpEffect + ' XP Awarded';
+
+      if (data.eventFired && data.eventName) {
+        const polarityIcon = data.polarity === 'positive' ? '🟢' : '🔴';
+        feedback.innerHTML =
+          '<div class="scan-xp-line">XP: ' + xpDisplay + '&nbsp;&nbsp;Stage: ' + (data.stage || '--') + '</div>' +
+          '<div class="scan-event-line">' + polarityIcon + ' <strong>' + data.badge + ' ' + data.eventName + '</strong></div>' +
+          '<div class="scan-flavour-line">' + data.flavourText + '</div>';
+      } else {
+        feedback.textContent = 'XP: ' + xpDisplay + '  Stage: ' + (data.stage || '--');
+      }
+
+      feedback.className = 'scan-feedback success';
+
+      await fetchFreshLivingCard();
+      buildDashboard(true);
+    } else {
+      const alreadyScanned = data.error && data.error.toLowerCase().includes('already scanned');
+      if (alreadyScanned) {
+        btn.innerHTML = '<span>✦</span> Already Scanned Today';
+        btn.disabled = true;
+        feedback.textContent = 'Come back tomorrow for your next XP reward.';
+        feedback.className = 'scan-feedback success';
+      } else {
+        btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
+        feedback.textContent = data.error || 'Scan could not be logged.';
+        feedback.className = 'scan-feedback error';
+        btn.disabled = false;
+      }
+    }
+  } catch(e) {
+    btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
+    feedback.textContent = 'Connection error — try again.';
+    feedback.className = 'scan-feedback error';
+    btn.disabled = false;
+  }
+}
+
+function buildMilestones(xp, streak, interactions) {
+  const MILESTONE_DEFS = [
+    { icon:'🌅', name:'First Awakening', desc:'Reach 500 XP',         key:'First Awakening', target:500,  current:xp },
+    { icon:'🔥', name:'Week Warrior',    desc:'7-day streak',          key:'Week Warrior',    target:7,    current:streak },
+    { icon:'⚡', name:'Power User',      desc:'50 total interactions', key:'Power User',      target:50,   current:interactions },
+    { icon:'🌙', name:'Month Bound',     desc:'30-day streak',         key:'Month Bound',     target:30,   current:streak },
+    { icon:'🏛️', name:'Established',    desc:'Reach 3,500 XP',        key:'Established',     target:3500, current:xp },
+  ];
+
+  function render(earnedKeys) {
+    document.getElementById('milestone-list').innerHTML =
+      `<div class="chart-title">Milestones</div>` +
+      MILESTONE_DEFS.map(m => {
+        const done = earnedKeys.has(m.key) || m.current >= m.target;
+        const pct  = Math.min(100, Math.round(m.current / m.target * 100));
+        return `<div class="milestone-item">
+          <div class="m-icon">${m.icon}</div>
+          <div class="m-info">
+            <div class="m-name">${m.name}</div>
+            <div class="m-desc">${m.desc}</div>
+            ${done ? '' : `<div class="m-bar-track"><div class="m-bar-fill" style="width:${pct}%"></div></div>`}
+          </div>
+          ${done ? `<div class="m-done">✓</div>` : `<div class="m-xp">${m.current}/${m.target}</div>`}
+        </div>`;
+      }).join('');
+  }
+
+  render(new Set());
+
+  jsonpFetch(LIVING_API + '?action=get_milestones&card_id=' + encodeURIComponent(urlCardId), 8000)
+    .then(data => {
+      if (data && data.success && data.earned) {
+        render(new Set(data.earned.map(e => e.milestone)));
+      }
+    })
+    .catch(() => {});
+}
+
+function buildStreakCalendar(streak, daysSince) {
+  const grid = document.getElementById('streak-grid');
+  grid.innerHTML = Array.from({length:28}, (_,i) =>
+    `<div class="streak-day" title="${i===0?'Today':i+' days ago'}"></div>`
+  ).join('');
+  fetchScanHistory(urlCardId);
+}
+
+function applyStreakCalendar(days) {
+  const grid = document.getElementById('streak-grid');
+  if (!grid) return;
+  grid.innerHTML = days.map((d, i) => {
+    let cls = '';
+    const isToday = i === days.length - 1;
+    if (d.beforeClaim) {
+      cls = '';
+    } else if (d.scanned) {
+      cls = 'active';
+    } else if (isToday) {
+      cls = '';
+    } else {
+      const claimDayIdx = days.findIndex(x => !x.beforeClaim);
+      cls = i === claimDayIdx ? '' : 'decay';
+    }
+    const label = isToday ? 'Today' : (days.length - 1 - i) + ' days ago';
+    return `<div class="streak-day ${cls}" title="${label}"></div>`;
+  }).join('');
+}
+
+function buildLog(interactions, daysSince) {
+  const log = document.getElementById('log-list');
+  if (interactions === 0) {
+    log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet. Claim your card and scan to start earning XP.</div>';
+    return;
+  }
+  log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">Loading log…</div>';
+  fetchLedger(urlCardId);
+}
+
+async function fetchLedger(cardId) {
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_ledger&card_id=' + encodeURIComponent(cardId), 10000);
+    if (!data || !data.success || !data.entries) return;
+    const log = document.getElementById('log-list');
+    const typeMap = {
+      'DAILY_SCAN':              { icon:'📱', label:'QR Scan' },
+      'NEW_OWNER_CLAIM':         { icon:'🎴', label:'Card Claimed' },
+      'STREAK_7':                { icon:'🔥', label:'Streak Bonus (7 days)' },
+      'STREAK_30':               { icon:'🔥', label:'Streak Bonus (30 days)' },
+      'DECAY':                   { icon:'⚠️', label:'XP Decay' },
+      'DECAY_STAGE_DROP':        { icon:'🔴', label:'Stage Drop' },
+      'PUBLIC_SHOWCASE':         { icon:'👁', label:'Public Showcase' },
+      'ENDORSEMENT':             { icon:'🤝', label:'Endorsement Received' },
+      'EVENT_CHECKIN':           { icon:'🎪', label:'Event Check-in' },
+      'MILESTONE':               { icon:'🏆', label:'Milestone Reached' },
+      'NOTABLE_COLLECTOR_BONUS': { icon:'⭐', label:'Notable Collector Bonus' },
+      'GAMING_XP':               { icon:'🎮', label:'Gaming' },
+    };
+    if (data.entries.length === 0) {
+      log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet.</div>';
+      return;
+    }
+    log.innerHTML = data.entries.map((e, i) => {
+      const t      = typeMap[e.type] || { icon:'✦', label: e.type };
+      const gained = String(e.gained).replace('+','');
+      const lost   = Number(e.lost) || 0;
+      const isNeg  = lost > 0 && !gained;
+      const xpStr  = lost > 0 ? '−' + lost : (gained ? '+' + gained : '—');
+      const d      = new Date(e.date);
+      const now    = new Date();
+      const days   = Math.floor((now - d) / 86400000);
+      const dateStr = days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : days + ' days ago';
+      return `<div class="log-item" style="animation-delay:${i*0.05}s">
+        <div class="log-icon">${t.icon}</div>
+        <div class="log-type">${t.label}</div>
+        <div class="log-date">${dateStr}</div>
+        <div class="log-xp ${isNeg?'neg':'pos'}">${xpStr}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    console.warn('Ledger fetch failed:', e);
+  }
+}
+
+let particleAnim = null;
+
+function startParticles(stageIdx) {
+  if (particleAnim) { cancelAnimationFrame(particleAnim); particleAnim = null; }
+  const canvas = document.getElementById('card-canvas');
+  if (!canvas) return;
+  if (stageIdx < 2) { canvas.width = 0; canvas.height = 0; return; }
+
+  const wrap = canvas.parentElement;
+  canvas.width  = wrap.offsetWidth;
+  canvas.height = wrap.offsetHeight;
+  const ctx = canvas.getContext('2d');
+
+  const configs = {
+    2: { count:14, colors:['rgba(201,122,42,','rgba(184,115,51,','rgba(232,160,80,'], minSize:0.8, maxSize:2.5, minSpeed:0.3, maxSpeed:0.8,  glow:8,  shape:'circle' },
+    3: { count:20, colors:['rgba(210,210,210,','rgba(192,192,192,','rgba(201,168,76,'], minSize:0.8, maxSize:3.0, minSpeed:0.4, maxSpeed:1.0,  glow:10, shape:'circle' },
+    4: { count:32, colors:['rgba(201,168,76,','rgba(232,201,122,','rgba(255,215,80,'],  minSize:1.0, maxSize:3.5, minSpeed:0.5, maxSpeed:1.2,  glow:14, shape:'star' },
+    5: { count:55, colors:['rgba(232,201,122,','rgba(255,235,150,','rgba(201,168,76,'], minSize:1.0, maxSize:4.0, minSpeed:0.6, maxSpeed:1.5,  glow:18, shape:'star' },
+    6: { count:90, colors:['rgba(168,216,234,','rgba(212,168,240,','rgba(232,201,122,','rgba(200,180,255,'], minSize:1.2, maxSize:5.0, minSpeed:0.7, maxSpeed:2.0, glow:24, shape:'star' },
+  };
+
+  const cfg = configs[Math.min(stageIdx, 6)];
+  function randColor() { return cfg.colors[Math.floor(Math.random() * cfg.colors.length)]; }
+  function randRange(a, b) { return a + Math.random() * (b - a); }
+
+  const particles = Array.from({ length: cfg.count }, () => ({
+    x: Math.random() * canvas.width,
+    y: canvas.height + Math.random() * 30,
+    size: randRange(cfg.minSize, cfg.maxSize),
+    speed: randRange(cfg.minSpeed, cfg.maxSpeed),
+    alpha: randRange(0.3, 0.9),
+    color: randColor(),
+    drift: (Math.random() - 0.5) * 0.6,
+    wobble: Math.random() * Math.PI * 2,
+    wobbleSpeed: randRange(0.01, 0.04),
+  }));
+
+  function drawStar(ctx, x, y, size, alpha, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2;
+      const r = i % 2 === 0 ? size * 2 : size * 0.7;
+      ctx[i === 0 ? 'moveTo' : 'lineTo'](Math.cos(angle) * r, Math.sin(angle) * r);
+    }
+    ctx.closePath();
+    ctx.fillStyle = color + alpha + ')';
+    ctx.shadowColor = color + '0.8)';
+    ctx.shadowBlur = cfg.glow;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.wobble += p.wobbleSpeed;
+      const wx = p.x + Math.sin(p.wobble) * 1.5;
+      if (cfg.shape === 'star' && p.size > 2) {
+        drawStar(ctx, wx, p.y, p.size * 0.5, p.alpha, p.color);
+      } else {
+        ctx.beginPath();
+        ctx.arc(wx, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + p.alpha + ')';
+        ctx.shadowColor = p.color + '0.9)';
+        ctx.shadowBlur  = cfg.glow;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      p.y     -= p.speed;
+      p.alpha -= 0.0025;
+      if (p.y < -12 || p.alpha <= 0) {
+        p.y      = canvas.height + 5;
+        p.x      = Math.random() * canvas.width;
+        p.alpha  = randRange(0.3, 0.9);
+        p.color  = randColor();
+        p.size   = randRange(cfg.minSize, cfg.maxSize);
+        p.speed  = randRange(cfg.minSpeed, cfg.maxSpeed);
+        p.wobble = Math.random() * Math.PI * 2;
+      }
+    });
+    particleAnim = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+async function fetchRank(cardId) {
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_rank&card_id=' + encodeURIComponent(cardId), 8000);
+    if (data && data.success) {
+      const rank   = data.rank;
+      const total  = data.total;
+      const topPct = total > 1 ? Math.round((rank / total) * 100) : 1;
+      document.getElementById('d-rank').textContent       = '#' + rank;
+      document.getElementById('d-rank-hero').textContent  = '#' + rank;
+      document.getElementById('d-percentile').textContent = 'Top ' + topPct + '%';
+      document.getElementById('d-top').textContent        = topPct;
+    }
+  } catch(e) {}
+}
+
+async function fetchStats() {
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_stats', 8000);
+    if (data && data.success) {
+      document.getElementById('stat-total-live').textContent  = data.totalLive.toLocaleString();
+      document.getElementById('stat-highest-xp').textContent = data.highestXP.toLocaleString() + ' XP';
+      document.getElementById('stat-top-card').textContent   = data.topCard;
+    }
+  } catch(e) {}
+}
+
+async function fetchScanHistory(cardId) {
+  try {
+    const data = await jsonpFetch(LIVING_API + '?action=get_scan_history&card_id=' + encodeURIComponent(cardId), 10000);
+    if (data && data.success && data.days) applyStreakCalendar(data.days);
+  } catch(e) {}
+}
+
+function setLoadingSub(text) { document.getElementById('loading-sub').textContent = text; }
+function hideLoading() { document.getElementById('loading-screen').style.display = 'none'; }
+function showError(msg) {
+  document.getElementById('loading-screen').style.display = 'none';
+  const el = document.getElementById('error-screen');
+  el.style.display = 'flex';
+  document.getElementById('error-msg').innerHTML = msg;
+}
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showGamingBtn(asOwner) {
+  const btn = document.getElementById('gaming-hub-btn');
+  if (!btn) return;
+  if (asOwner && urlCardId && savedOwner && savedOwner.ownerToken) {
+    const imageUrl = (analyzerCard && analyzerCard.imageUrl) ? analyzerCard.imageUrl : '';
+    const url = '../xp-gaming/index.html?card_id=' + encodeURIComponent(urlCardId) + '&owner_token=' + encodeURIComponent(savedOwner.ownerToken) + (imageUrl ? '&image_url=' + encodeURIComponent(imageUrl) : '');
+    btn.href = url;
+    btn.classList.add('visible');
+  } else {
+    btn.classList.remove('visible');
+  }
+
+  // XP Marketplace — visible to everyone (owners and visitors)
+  const mktBtn = document.getElementById('xp-market-btn');
+  if (!mktBtn) return;
+  const marketUrl = '../Marketplace/spotlight.html' + (urlCardId ? '?ref_card=' + encodeURIComponent(urlCardId) : '');
+  mktBtn.href = marketUrl;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const cs = document.getElementById('claim-screen');
+    if (cs.style.display === 'flex') {
+      const unc = document.getElementById('claim-unclaimed-section');
+      if (unc.style.display !== 'none') doClaim();
     }
   }
-
-  if (!data || !data.success) return showError((data && data.error) || 'Card not found.');
-
-  renderCard(data.card);
-
-  if (ownerToken) fireQRScan(cardId, ownerToken);
-}
-
-function renderCard(card) {
-  // Read directly from the card object using exact sheet column names
-  const xp             = Number(card['Current XP'])        || 0;
-  const stageName      = (card['Evolution Stage']          || 'DORMANT').toUpperCase().trim();
-  const level          = Number(card['Current Level'])      || 1;
-  const streak         = Number(card['Streak (days)'])      || 0;
-  const totalInt       = Number(card['Total Interactions']) || 0;
-  const lastInteraction= card['Last Interaction']           || null;
-  const daysSince      = Number(card['Days Since Scan'])    || 0;
-  const ownerId        = card['Current Owner Token']        || '—';
-  const printRun       = card['Print Run']                  || '';
-
-  // Derive grade from Print Run field
-  const grade = String(printRun || '').toLowerCase().split(' ')[0] || 'copper';
-
-  // Use the stage from the sheet — this is the source of truth
-  const theme    = STAGE_THEMES[stageName] || STAGE_THEMES.DORMANT;
-  const stageObj = STAGES.find(s => s.name === stageName) || STAGES[0];
-
-  applyTheme(stageName, grade);
-  initBgCanvas(theme);
-  drawCardVisual(stageName, xp);
-
-  document.getElementById('card-id-label').textContent     = card['Card ID'] || '—';
-  document.getElementById('grade-badge').textContent       = grade.toUpperCase();
-  document.getElementById('stage-name').textContent        = stageName;
-  document.getElementById('stage-level').textContent       = `Level ${level}`;
-  document.getElementById('stat-xp').textContent           = xp.toLocaleString();
-  document.getElementById('stat-streak').textContent       = streak;
-  document.getElementById('stat-interactions').textContent = totalInt;
-  document.getElementById('owner-id').textContent          = ownerId;
-  document.getElementById('last-seen').textContent         = timeAgo(lastInteraction);
-
-  const progress  = xpProgress(xp, stageObj);
-  const nextLabel = stageObj.nextXP ? `${xp} / ${stageObj.nextXP} XP` : 'MAX';
-  document.getElementById('xp-next-label').textContent = nextLabel;
-  setTimeout(() => {
-    document.getElementById('xp-fill').style.width = (progress * 100) + '%';
-  }, 300);
-
-  if (daysSince >= 1) {
-    const w = document.getElementById('decay-warning');
-    w.style.display = 'block';
-    if (daysSince >= 7) w.textContent = '⚠ Severe decay — stage at risk';
-    else if (daysSince >= 3) w.textContent = '⚠ This card is decaying rapidly';
-  }
-
-  document.getElementById('loading-screen').classList.add('hidden');
-  document.getElementById('card-container').style.opacity = '1';
-}
-
-function showError(msg) {
-  document.getElementById('loading-screen').classList.add('hidden');
-  document.getElementById('error-msg').textContent = msg;
-  document.getElementById('error-screen').classList.remove('hidden');
-}
-
-loadCard();
+});
 </script>
 </body>
 </html>
