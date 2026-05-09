@@ -321,8 +321,32 @@
   .gaming-hub-btn.visible { display:flex; align-items:center; justify-content:center; gap:10px; }
 
   /* ── XP MARKETPLACE BUTTON ───────────────────────────────────────────── */
-  .xp-market-btn { width:100%; margin-top:10px; padding:14px 24px; background:linear-gradient(135deg,rgba(192,57,43,0.06),rgba(192,57,43,0.12)); border:1px solid rgba(192,57,43,0.35); color:#e74c3c; font-family:'Cinzel',serif; font-size:0.82rem; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; text-align:center; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:10px; }
-  .xp-market-btn:hover { background:linear-gradient(135deg,rgba(192,57,43,0.12),rgba(192,57,43,0.22)); box-shadow:0 0 30px rgba(192,57,43,0.1); border-color:#e74c3c; color:#ff6b6b; }
+  .xp-market-btn {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, rgba(192,57,43,0.06), rgba(192,57,43,0.13));
+    border: 1px solid rgba(192,57,43,0.45);
+    color: #e74c3c;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .xp-market-btn:hover {
+    background: linear-gradient(135deg, rgba(192,57,43,0.14), rgba(192,57,43,0.24));
+    box-shadow: 0 0 30px rgba(192,57,43,0.12);
+    border-color: #e74c3c;
+    color: #ff6b6b;
+  }
 
   @media (max-width:900px) {
     .stat-grid { grid-template-columns:repeat(2,1fr); }
