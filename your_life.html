@@ -533,7 +533,14 @@ async function loadLifeEvents(cardId) {
       jsonpFetch(LIVING_API + '?action=get_ledger&card_id=' + encodeURIComponent(cardId), 12000)
     ]);
 
-    const claimDate = cardData && (cardData['Claim Date'] || (cardData.card && cardData.card['Claim Date']));
+    console.log('cardData raw:', JSON.stringify(cardData));
+    const claimDate = cardData && (
+      cardData['Claim Date'] ||
+      (cardData.card  && cardData.card['Claim Date'])  ||
+      (cardData.data  && cardData.data['Claim Date'])  ||
+      (cardData.result && cardData.result['Claim Date'])
+    );
+    console.log('claimDate resolved:', claimDate);
     if (claimDate) {
       const daysLived = Math.floor((Date.now() - new Date(claimDate).getTime()) / 86400000);
       const daysEl = document.getElementById('days-lived-value');
