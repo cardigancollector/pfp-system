@@ -430,11 +430,6 @@ function renderPage(events, cardId) {
 
   const allStatVals = document.querySelectorAll('.life-stat-value');
   if (allStatVals[0]) allStatVals[0].textContent = count;
-  if (allStatVals[1]) {
-    allStatVals[1].textContent = (netXP >= 0 ? '+' : '') + netXP.toLocaleString();
-    const sub = allStatVals[1].nextElementSibling;
-    if (sub) sub.textContent = netXP >= 0 ? 'net positive' : 'net negative';
-  }
 
   // Life grade badge
   const grade = calcLifeGrade(events);
