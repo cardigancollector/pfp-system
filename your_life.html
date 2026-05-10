@@ -183,7 +183,7 @@
     </div>
     <div class="life-stat">
       <div class="life-stat-label">Days Lived</div>
-      <div class="life-stat-value">214</div>
+      <div class="life-stat-value" id="days-lived-value">—</div>
       <div class="life-stat-sub">since claiming</div>
     </div>
   </div>
@@ -536,8 +536,8 @@ async function loadLifeEvents(cardId) {
     const claimDate = cardData && (cardData['Claim Date'] || (cardData.card && cardData.card['Claim Date']));
     if (claimDate) {
       const daysLived = Math.floor((Date.now() - new Date(claimDate).getTime()) / 86400000);
-      const allStatVals = document.querySelectorAll('.life-stat-value');
-      if (allStatVals[2]) allStatVals[2].textContent = daysLived.toLocaleString();
+      const daysEl = document.getElementById('days-lived-value');
+      if (daysEl) daysEl.textContent = daysLived.toLocaleString();
     }
 
     if (!data || !data.success || !data.entries) { showNoEvents(cardId); return; }
