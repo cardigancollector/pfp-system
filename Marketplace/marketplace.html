@@ -580,7 +580,7 @@
       const fetches = cards.map(async c => {
         try {
           const res = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(c.cardId || c), 8000);
-          if (res && res.success && res.card) return parseInt(res.card['Current XP']) || 0;
+          if (res && res.success && res.card) return (parseInt(res.card['Current XP']) || 0) + (parseInt(res.card['Gaming XP']) || 0);
         } catch(e) {}
         return 0;
       });
