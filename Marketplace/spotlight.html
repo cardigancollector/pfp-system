@@ -658,15 +658,26 @@
   import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   // ── BACK TO DASHBOARD ──
-  window.goBack = function() {
+window.goBack = function() {
     const params = new URLSearchParams(window.location.search);
     const refCard = params.get('ref_card');
+
     if (refCard) {
-      window.location.href = '../dashboard/?card_id=' + encodeURIComponent(refCard);
-    } else {
-      window.history.back();
+        window.location.href = '../dashboard/?card_id=' + encodeURIComponent(refCard);
+        return;
     }
-  };
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('pfp_owner_')) {
+            const cardId = key.replace('pfp_owner_', '');
+            window.location.href = '../dashboard/?card_id=' + encodeURIComponent(cardId);
+            return;
+        }
+    }
+
+    window.location.href = '../dashboard/';
+};
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
