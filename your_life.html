@@ -319,7 +319,15 @@ const DOMAIN_MAP = {
 function extractDomain(notes) {
   if (!notes) return null;
   const n = notes.toLowerCase();
-  for (const key of Object.keys(DOMAIN_MAP)) { if (n.includes(key)) return key; }
+  if (/friend|social|stranger|ghost|trust|praise|relation|party|crowd|talk|chat|meet|people/.test(n)) return 'social';
+  if (/mental|therapy|breakdown|mind|thought|anxiety|depress|emotion|mood|stress|burnout|clarity|identity/.test(n)) return 'mental';
+  if (/skill|bug|code|learn|build|craft|design|fix|practice|master|study|work|job|career|startup|fail/.test(n)) return 'skill';
+  if (/money|invest|financial|salary|debt|profit|loss|bank|fund|stock|cash|income|expense/.test(n)) return 'financial';
+  if (/luck|chance|fortune|random|fate|coincidence|accident|windfall|serendip/.test(n)) return 'luck';
+  if (/health|sick|doctor|hospital|injury|pain|exercise|sleep|diet|fitness|recover/.test(n)) return 'health';
+  if (/mystery|ouija|strange|weird|unexplain|spiritual|dream|sign|omen|ghost|paranormal|ritual/.test(n)) return 'mystery';
+  if (/creat|art|music|writ|paint|draw|photo|film|story|poem|inspir|block/.test(n)) return 'creative';
+  if (/family|parent|sibling|home|house|child|mother|father|brother|sister/.test(n)) return 'family';
   return null;
 }
 
@@ -536,12 +544,12 @@ async function loadLifeEvents(cardId) {
     }
 
     if (!data || !data.success || !data.entries) { showNoEvents(cardId); return; }
-    const lifeEvents = data.lifeEvents || data.entries.filter(e => (e.type || e['Interaction Type'] || '').toUpperCase() === 'LIFE_EVENT');
-    if (lifeEvents.length === 0) { showNoEvents(cardId); return; }
-    const mapped = lifeEvents.map(e => ({
+    const allEntries = data.entries.filter(e => e.notes && e.notes.trim() !== '' && e.notes !== 'QR scan (GET)');
+    if (allEntries.length === 0) { showNoEvents(cardId); return; }
+    const mapped = allEntries.map(e => ({
       Timestamp:          e.date   || e.Timestamp        || '',
       'Card ID':          cardId,
-      'Interaction Type': 'LIFE_EVENT',
+      'Interaction Type': e.type   || 'EVENT',
       'XP Gained':        e.gained || e['XP Gained']     || 0,
       'XP Lost':          e.lost   || e['XP Lost']       || 0,
       Notes:              e.notes  || e.Notes            || '',
