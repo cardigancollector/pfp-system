@@ -528,7 +528,18 @@ function showPage() {
 async function loadLifeEvents(cardId) {
   document.getElementById('your-life-loading-sub').textContent = 'Fetching life events\u2026';
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_ledger&card_id=' + encodeURIComponent(cardId), 12000);
+    const [cardData, data] = await Promise.all([
+      jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(cardId), 8000).catch(() => null),
+      jsonpFetch(LIVING_API + '?action=get_ledger&card_id=' + encodeURIComponent(cardId), 12000)
+    ]);
+
+    const claimDate = cardData && (cardData['Claim Date'] || (cardData.card && cardData.card['Claim Date']));
+    if (claimDate) {
+      const daysLived = Math.floor((Date.now() - new Date(claimDate).getTime()) / 86400000);
+      const allStatVals = document.querySelectorAll('.life-stat-value');
+      if (allStatVals[2]) allStatVals[2].textContent = daysLived.toLocaleString();
+    }
+
     if (!data || !data.success || !data.entries) { showNoEvents(cardId); return; }
     const lifeEvents = data.lifeEvents || data.entries.filter(e => (e.type || e['Interaction Type'] || '').toUpperCase() === 'LIFE_EVENT');
     if (lifeEvents.length === 0) { showNoEvents(cardId); return; }
