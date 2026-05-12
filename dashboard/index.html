@@ -1059,6 +1059,16 @@ async function logScan() {
 
       feedback.className = 'scan-feedback success';
 
+      const grid = document.getElementById('streak-grid');
+      if (grid) {
+        const days = grid.querySelectorAll('.streak-day');
+        if (days.length > 0) {
+          const todayCell = days[days.length - 1];
+          todayCell.classList.remove('decay');
+          todayCell.classList.add('active');
+        }
+      }
+
       await fetchFreshLivingCard();
       buildDashboard(true);
     } else {
