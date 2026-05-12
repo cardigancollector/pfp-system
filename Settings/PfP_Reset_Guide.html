@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PfP System — Reset Guide & Context Prompt</title>
+<style>
+  body { font-family: Georgia, serif; background: #faf9f6; color: #2a2016; max-width: 860px; margin: 0 auto; padding: 40px 32px 80px; }
+  h1 { font-size: 24px; color: #3a2e1e; border-bottom: 2px solid #c9a84c; padding-bottom: 12px; margin-bottom: 6px; }
+  h2 { font-size: 17px; color: #3a2e1e; margin-top: 40px; margin-bottom: 10px; border-left: 4px solid #c9a84c; padding-left: 12px; }
+  h3 { font-size: 14px; color: #5a4a2e; margin-top: 24px; margin-bottom: 8px; }
+  p.sub { color: #888; font-size: 13px; margin: 0 0 32px 0; font-style: italic; }
+  p { line-height: 1.7; margin-bottom: 12px; font-size: 14px; }
+  ol, ul { padding-left: 24px; line-height: 1.9; font-size: 14px; }
+  li { margin-bottom: 4px; }
+  .step-box { background: #fff; border: 1px solid #e0d5b8; border-left: 4px solid #c9a84c; padding: 16px 20px; margin: 16px 0; }
+  .step-box h3 { margin-top: 0; color: #3a2e1e; }
+  .warn { background: #fff8ee; border: 1px solid #f0c060; border-left: 4px solid #e0a020; padding: 12px 16px; margin: 16px 0; font-size: 13px; }
+  .warn strong { color: #a06010; }
+  .prompt-box { background: #1a1a1a; color: #e8d9b8; font-family: monospace; font-size: 13px; line-height: 1.8; padding: 24px 28px; margin: 16px 0; white-space: pre-wrap; border-radius: 4px; }
+  .tag { display: inline-block; background: #c9a84c; color: #fff; font-size: 11px; font-family: Arial, sans-serif; font-weight: bold; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .section-divider { border: none; border-top: 1px solid #e0d5b8; margin: 40px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0; }
+  th { background: #3a2e1e; color: #e8d9b8; padding: 8px 12px; text-align: left; }
+  td { padding: 8px 12px; border-bottom: 1px solid #e8e0cc; }
+  tr:nth-child(even) td { background: #f5f0e8; }
+  code { background: #eee; padding: 1px 5px; font-size: 12px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<h1>PfP Cards — System Reset Guide</h1>
+<p class="sub">How to wipe test data and start clean · Includes new chat context prompt</p>
+
+<div class="warn">
+  <strong>⚠ Before you begin:</strong> Make sure you have done your housekeeping backup first — GitHub commit pushed, Apps Script code saved, and Google Sheets exported as .xlsx. The steps below permanently delete test data.
+</div>
+
+<h2>Part 1 — What Needs to Be Reset</h2>
+
+<table>
+  <tr><th>Location</th><th>What to clear</th><th>How</th></tr>
+  <tr><td>Google Sheets — LEDGER tab</td><td>All test scan and life event rows</td><td>Delete rows manually</td></tr>
+  <tr><td>Google Sheets — CARDS tab</td><td>Claim Date, Claimed status, Owner Token</td><td>Clear specific cells</td></tr>
+  <tr><td>Google Sheets — OWNERS tab</td><td>Any test owner records</td><td>Delete rows manually</td></tr>
+  <tr><td>Google Sheets — OWNERSHIP HISTORY tab</td><td>Test history entries</td><td>Delete rows manually</td></tr>
+  <tr><td>Google Sheets — MILESTONES tab</td><td>Any test milestone records</td><td>Delete rows manually</td></tr>
+  <tr><td>Google Sheets — Gaming tab</td><td>Test gaming XP entries</td><td>Delete rows manually</td></tr>
+  <tr><td>Browser localStorage</td><td>Saved owner token on your device</td><td>Clear in DevTools or use Sign Out</td></tr>
+</table>
+
+<hr class="section-divider">
+
+<h2>Part 2 — Step by Step Reset</h2>
+
+<div class="step-box">
+  <h3>Step 1 — Clear the LEDGER tab</h3>
+  <ol>
+    <li>Open your Google Sheet and click the <strong>LEDGER</strong> tab.</li>
+    <li>Click row 2 to select it, then hold <strong>Shift</strong> and click the last row with data.</li>
+    <li>Right-click → <strong>Delete rows</strong>.</li>
+    <li>Row 1 (the header) stays. The sheet should now be empty below the header.</li>
+  </ol>
+</div>
+
+<div class="step-box">
+  <h3>Step 2 — Reset the card record in CARDS tab</h3>
+  <ol>
+    <li>Click the <strong>CARDS</strong> tab and find your test card row (EVO-ART-1-108).</li>
+    <li>Clear the following columns for that row:
+      <ul>
+        <li><strong>Claimed</strong> — change back to <code>NO</code></li>
+        <li><strong>Claim Date</strong> — delete the value</li>
+        <li><strong>Owner Token</strong> — delete the value</li>
+        <li><strong>Current XP</strong> — set to <code>0</code></li>
+        <li><strong>Current Level</strong> — set to <code>1</code></li>
+        <li><strong>Evolution Stage</strong> — set to <code>Dormant</code></li>
+        <li><strong>Streak (days)</strong> — set to <code>0</code></li>
+        <li><strong>Last Interaction</strong> — delete the value</li>
+        <li><strong>Total Interactions</strong> — set to <code>0</code></li>
+        <li><strong>Page Views</strong> — set to <code>0</code></li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<div class="step-box">
+  <h3>Step 3 — Clear OWNERS, OWNERSHIP HISTORY, MILESTONES, Gaming tabs</h3>
+  <ol>
+    <li>For each of these tabs, select all data rows below the header and delete them the same way as Step 1.</li>
+    <li>Leave the header row intact in each tab.</li>
+  </ol>
+</div>
+
+<div class="step-box">
+  <h3>Step 4 — Clear browser localStorage on your device</h3>
+  <p>This removes the saved owner token so the dashboard treats the card as unclaimed on your browser.</p>
+  <ol>
+    <li>Open the dashboard in Chrome.</li>
+    <li>Press <strong>F12</strong> (Windows) or <strong>Cmd+Option+I</strong> (Mac) to open DevTools.</li>
+    <li>Click the <strong>Application</strong> tab.</li>
+    <li>In the left panel expand <strong>Local Storage</strong> and click your site's URL.</li>
+    <li>Find any key starting with <code>pfp_owner_</code> and delete it.</li>
+    <li>Also delete any key starting with <code>pfp_viewed_</code>.</li>
+  </ol>
+</div>
+
+<div class="step-box">
+  <h3>Step 5 — Verify the reset</h3>
+  <ol>
+    <li>Open the dashboard with your card's URL.</li>
+    <li>It should show the <strong>claim screen</strong> asking for a claim code — not the owner dashboard.</li>
+    <li>Open Your Life — it should show "No Life Events Recorded Yet."</li>
+    <li>The system is now clean and ready for a real owner to claim the card.</li>
+  </ol>
+</div>
+
+<hr class="section-divider">
+
+<h2>Quick Reference — Key URLs & IDs</h2>
+<p>Fill these in for your own records:</p>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Living Card API URL</td><td><code>https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec</code></td></tr>
+  <tr><td>Analyzer API URL</td><td><code>https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflBEX2r7mxTdyBxJOYXSlNcDgLGotqu28buVV4YHfBmO1MOvGDc/exec</code></td></tr>
+  <tr><td>GitHub Pages URL</td><td>cardigancollector.github.io/pfp-system (update if different)</td></tr>
+  <tr><td>Test Card ID</td><td>EVO-ART-1-108</td></tr>
+</table>
+
+<p style="margin-top:40px;font-size:12px;color:#aaa;font-style:italic;">PfP Reset Guide · Generated May 2026</p>
+
+</body>
+</html>
