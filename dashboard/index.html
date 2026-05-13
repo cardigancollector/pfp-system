@@ -898,12 +898,10 @@ function buildDashboard(asOwner) {
   document.getElementById('d-next-stage').textContent   = STAGES[stageIdx+1] || 'Mythic (Max)';
 
   const baseValue = parseFloat(ac.value) || 0;
-  const mult      = getMultiplier(stageIdx);
-  const liveValue = baseValue * mult;
-  const multLabel = mult > 1 ? `+${Math.round((mult-1)*100)}% XP boost` : null;
+  const liveValue = parseFloat(livingCard && livingCard['Live Value']) || 0;
   const stripFields = [
     { label:'Base Value', value: baseValue ? '$' + baseValue.toFixed(2) : '—', gold:false },
-    { label:'Live Value', value: baseValue ? '$' + liveValue.toFixed(2) : '—', gold:true, live:true, mult: multLabel },
+    { label:'Live Value', value: liveValue ? '$' + liveValue.toFixed(2) : '—', gold:true, live:true },
     { label:'Rank',       value: ac.rank  ? '#' + ac.rank : '—', gold:true },
     { label:'Set',        value: ac.set        || '—' },
     { label:'Qty Issued', value: ac.quantityIssued || '—' },
