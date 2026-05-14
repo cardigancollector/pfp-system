@@ -228,6 +228,7 @@
 
 <script>
 const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflBEX2r7mxTdyBxJOYXSlNcDgLGotqu28buVV4YHfBmO1MOvGDc/exec';
 
 const STAGES     = ['Dormant','Awakened','Growing','Established','Renowned','Legendary','Mythic'];
 const STAGE_XP   = [0, 500, 1500, 5000, 12000, 25000, 50000];
@@ -380,15 +381,24 @@ window.addEventListener('DOMContentLoaded', async () => {
     tiles[o.cardId] = tile;
   });
 
-  // Fetch live data for all cards in parallel
+  // Fetch live data and analyzer data for all cards in parallel
   const results = await Promise.allSettled(
-    owned.map(o =>
-      jsonpFetch(
-        LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(o.cardId)
-        + '&owner_token=' + encodeURIComponent(o.ownerToken),
-        10000
-      ).then(data => ({ cardId: o.cardId, ownerToken: o.ownerToken, data }))
-    )
+    owned.map(async o => {
+      const [livingData, analyzerData] = await Promise.allSettled([
+        jsonpFetch(
+          LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(o.cardId)
+          + '&owner_token=' + encodeURIComponent(o.ownerToken),
+          10000
+        ),
+        jsonpFetch(
+          ANALYZER_API + '?action=getCardByEvoId&evoId=' + encodeURIComponent(o.cardId),
+          10000
+        )
+      ]);
+      const imageUrl = (analyzerData.status === 'fulfilled' && analyzerData.value?.card?.imageUrl)
+        ? analyzerData.value.card.imageUrl : '';
+      return { cardId: o.cardId, ownerToken: o.ownerToken, data: livingData.value || null, imageUrl };
+    })
   );
 
   // Hydrate tiles and collect stats
@@ -401,7 +411,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     const card = data.card;
     card['_cardId']   = cardId;
-    card['_imageUrl'] = ''; // Living API doesn't return image; we rely on card art via Analyzer if available
+    card['_imageUrl'] = result.value.imageUrl || '';
 
     const tile = tiles[cardId];
     if (tile) hydrateTile(tile, card);
