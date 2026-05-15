@@ -435,8 +435,11 @@
   }
 
   async function fetchCard(cardId) {
-    const url = SHEETS_API + '?action=get_card&card_id=' + encodeURIComponent(cardId);
     try {
+      const stored = JSON.parse(localStorage.getItem('pfp_owner_' + cardId) || '{}');
+      const ownerToken = stored.ownerToken || '';
+      const url = SHEETS_API + '?action=get_card&card_id=' + encodeURIComponent(cardId)
+        + (ownerToken ? '&owner_token=' + encodeURIComponent(ownerToken) : '');
       const data = await jsonpFetch(url, 10000);
       if (data && data.success) return data.card;
       return null;
