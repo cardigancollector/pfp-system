@@ -459,6 +459,7 @@
 
     let totalLife = 0, totalGaming = 0;
 
+    console.log('renderCards got', cards.length, 'cards:', cards.map(c => c['Card ID']));
     cards.forEach((card, i) => {
       const cardName = card['Card Name'] || card['Card ID'] || '—';
       const cardId   = card['Card ID']   || '—';
