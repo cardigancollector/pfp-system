@@ -395,26 +395,37 @@
 
   async function loadUserCards(uid) {
     try {
-      const userDoc = await getDoc(doc(db, 'users', uid));
+      // Scan localStorage for all pfp_owner_* keys
+      const localCards = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('pfp_owner_')) continue;
+        const cardId = key.replace('pfp_owner_', '');
+        try {
+          const stored = JSON.parse(localStorage.getItem(key));
+          if (stored && stored.ownerToken) localCards.push(cardId);
+        } catch(e) {}
+      }
 
-      if (!userDoc.exists()) {
-        showError('No card collection found for this account.');
+      // Also check Firestore and merge any cards not already found
+      try {
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        if (userDoc.exists()) {
+          const rawCards = userDoc.data().cards || [];
+          const seen = new Set(localCards);
+          rawCards.forEach(c => {
+            const id = c.cardId || c;
+            if (!seen.has(id)) localCards.push(id);
+          });
+        }
+      } catch(e) {}
+
+      if (localCards.length === 0) {
+        showError('No cards found on this device.');
         return;
       }
 
-      const rawCards = userDoc.data().cards || [];
-
-      if (rawCards.length === 0) {
-        showError('You have no cards yet.');
-        return;
-      }
-
-      // Handle both plain string IDs and legacy object shape
-      const cardIds = rawCards.map(c => c.cardId || c);
-
-      const cardPromises = cardIds.map(id => fetchCard(id));
-      const cards = await Promise.all(cardPromises);
-
+      const cards = await Promise.all(localCards.map(id => fetchCard(id)));
       renderCards(cards.filter(c => c !== null));
 
     } catch (err) {
