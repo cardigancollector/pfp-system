@@ -426,6 +426,7 @@
       }
 
       const cards = await Promise.all(localCards.map(id => fetchCard(id)));
+      console.log('cards after fetch:', cards);
       renderCards(cards.filter(c => c !== null));
 
     } catch (err) {
