@@ -716,7 +716,18 @@ async function boot(evoId) {
 async function fetchFreshLivingCard() {
   try {
     const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
-    if (data && data.success && data.card) livingCard = data.card;
+    if (data && data.success && data.card) {
+      const incomingXP = parseInt(data.card['Current XP']) || 0;
+      const existingXP = parseInt(livingCard && livingCard['Current XP']) || 0;
+      if (incomingXP === 0 && existingXP > 0) {
+        console.warn('Stale/zero XP response ignored — retrying...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const retry = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
+        if (retry && retry.success && retry.card) livingCard = retry.card;
+      } else {
+        livingCard = data.card;
+      }
+    }
   } catch(e) { console.warn('Fresh fetch failed:', e); }
 }
 
@@ -1060,6 +1071,13 @@ async function logScan() {
 
       feedback.className = 'scan-feedback success';
 
+      if (data.totalXP !== undefined) {
+        document.getElementById('d-xp').textContent = data.totalXP.toLocaleString();
+      }
+      if (data.stage) {
+        document.getElementById('d-stage').textContent = data.stage;
+      }
+
       const grid = document.getElementById('streak-grid');
       if (grid) {
         const days = grid.querySelectorAll('.streak-day');
@@ -1070,6 +1088,7 @@ async function logScan() {
         }
       }
 
+      await new Promise(resolve => setTimeout(resolve, 2000));
       await fetchFreshLivingCard();
       buildDashboard(true);
     } else {
