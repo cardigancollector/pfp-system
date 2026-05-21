@@ -511,6 +511,7 @@
   import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+
   // ── BACK TO DASHBOARD ──
   window.goBack = function() {
     const params = new URLSearchParams(window.location.search);
@@ -537,7 +538,7 @@
     apiKey:            "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
     authDomain:        "pfp-system.firebaseapp.com",
     projectId:         "pfp-system",
-    storageBucket:     "pfp-system.appspot.com",
+    storageBucket:     "pfp-system.firebasestorage.app",
     messagingSenderId: "643360345707",
     appId:             "1:643360345707:web:9e5b9a902b41169ae5eb2e"
   };
@@ -582,43 +583,32 @@
   // ── LOAD USER XP ──
   async function loadUserXP(user) {
     try {
-      // Scan localStorage for all pfp_owner_* keys
-      const localCards = [];
+      // Collect all owned card IDs from localStorage
+      const cardIds = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (!key || !key.startsWith('pfp_owner_')) continue;
-        const cardId = key.replace('pfp_owner_', '');
-        try {
-          const stored = JSON.parse(localStorage.getItem(key));
-          if (stored && stored.ownerToken) localCards.push({ cardId, ownerToken: stored.ownerToken });
-        } catch(e) {}
+        cardIds.push(key.replace('pfp_owner_', ''));
       }
 
-      // Also check Firestore in case cards are stored there
-      let firestoreCards = [];
-      try {
-        const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (userSnap.exists()) firestoreCards = userSnap.data().cards || [];
-      } catch(e) {}
+      if (cardIds.length === 0) { updateXP(0); return; }
 
-      // Merge — prefer localStorage entries, add any Firestore-only cards
-      const seen = new Set(localCards.map(c => c.cardId));
-      firestoreCards.forEach(c => {
-        const id = c.cardId || c;
-        if (!seen.has(id)) localCards.push({ cardId: id, ownerToken: '' });
-      });
-
-      if (localCards.length === 0) { updateXP(0); return; }
-
-      const fetches = localCards.map(async c => {
+      // For each card, fetch currentXP from cards collection and gamingXP from gaming collection
+      const fetches = cardIds.map(async cardId => {
+        let currentXP = 0;
+        let gamingXP  = 0;
         try {
-          const url = LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(c.cardId)
-            + (c.ownerToken ? '&owner_token=' + encodeURIComponent(c.ownerToken) : '');
-          const res = await fetch(url);
-          const data = await res.json();
-          if (data && data.success && data.card) return (parseInt(data.card['Current XP']) || 0) + (parseInt(data.card['Gaming XP']) || 0);
+          const cardSnap = await getDoc(doc(db, 'cards', cardId));
+          if (cardSnap.exists()) currentXP = cardSnap.data().currentXP || 0;
         } catch(e) {}
-        return 0;
+        try {
+          const gamingSnap = await getDoc(doc(db, 'gaming', cardId));
+          if (gamingSnap.exists()) {
+            const g = gamingSnap.data();
+            gamingXP = g.gamingXP || g.totalGamingXP || 0;
+          }
+        } catch(e) {}
+        return currentXP + gamingXP;
       });
 
       const total = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
