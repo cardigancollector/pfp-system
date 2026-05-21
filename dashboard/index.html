@@ -581,7 +581,25 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+// ── Firebase ────────────────────────────────────────────────────────────────
+import { initializeApp }                        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc,
+         collection, getDocs,
+         query, orderBy, limit }                from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey:            'AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU',
+  authDomain:        'pfp-system.firebaseapp.com',
+  projectId:         'pfp-system',
+  storageBucket:     'pfp-system.firebasestorage.app',
+  messagingSenderId: '643360345707',
+  appId:             '1:643360345707:web:9e5b9a902b41169ae5eb2e'
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── Apps Script (writes only) ────────────────────────────────────────────────
 const LIVING_API   = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflBEX2r7mxTdyBxJOYXSlNcDgLGotqu28buVV4YHfBmO1MOvGDc/exec';
 
@@ -593,6 +611,7 @@ const STAGE_CLASS = ['stage-dormant','stage-awakened','stage-growing','stage-est
 
 let settingsMultipliers = null;
 
+// ── JSONP (kept for write-only Apps Script calls) ───────────────────────────
 function jsonpFetch(url, timeout) {
   return new Promise((resolve, reject) => {
     const cbName = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
@@ -610,11 +629,12 @@ function jsonpFetch(url, timeout) {
   });
 }
 
+// ── Firestore: load settings/multipliers ────────────────────────────────────
 async function loadMultipliers() {
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_settings', 6000);
-    if (data && data.success && data.settings) {
-      const s = data.settings;
+    const snap = await getDoc(doc(db, 'settings', 'multipliers'));
+    if (snap.exists()) {
+      const s = snap.data();
       settingsMultipliers = [
         parseFloat(s.multiplier_dormant)     || 1.00,
         parseFloat(s.multiplier_awakened)    || 1.05,
@@ -666,6 +686,7 @@ async function boot(evoId) {
   setLoadingSub('Fetching card from database…');
   loadMultipliers();
 
+  // Analyzer data (image, rarity, set, value) still from Apps Script
   try {
     const data = await jsonpFetch(ANALYZER_API + '?action=getCardByEvoId&evoId=' + encodeURIComponent(evoId), 12000);
     if (data && data.success && data.card) analyzerCard = data.card;
@@ -673,17 +694,40 @@ async function boot(evoId) {
 
   setLoadingSub('Loading XP and interaction data…');
 
+  // Living card data from Firestore
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(evoId), 8000);
-    if (data && data.success && data.card) livingCard = data.card;
-  } catch(e) { console.warn('Living Card API unavailable:', e); }
+    const snap = await getDoc(doc(db, 'cards', evoId));
+    if (snap.exists()) {
+      const d = snap.data();
+      livingCard = {
+        'Card Name':          d.cardName         || '',
+        'Claimed':            d.claimed ? 'YES' : 'NO',
+        'Claim Date':         d.claimDate        ? d.claimDate.toDate().toISOString() : null,
+        'Current XP':         d.currentXP        || 0,
+        'Current Level':      d.currentLevel     || 1,
+        'Evolution Stage':    d.evolutionStage   || 'DORMANT',
+        'Streak (days)':      d.streakDays       || 0,
+        'Page Views':         d.pageViews        || 0,
+        'Total Interactions': d.totalInteractions|| 0,
+        'Last Interaction':   d.lastInteraction  ? d.lastInteraction.toDate().toISOString() : null,
+        'Live Value':         d.liveValue        || 0,
+        'Active Event': (d.eventName && d.eventExpiryDate) ? {
+          eventName:   d.eventName,
+          flavourText: d.eventFlavourText || '',
+          xpEffect:    d.eventXPEffect    || 0,
+          expiryDate:  d.eventExpiryDate  ? d.eventExpiryDate.toDate().toLocaleDateString() : ''
+        } : null,
+      };
+    }
+  } catch(e) { console.warn('Firestore card fetch error:', e); }
 
+  // Gaming data from Firestore
   try {
-    const token = (() => { try { return JSON.parse(localStorage.getItem('pfp_owner_' + evoId)); } catch(e) { return null; } })();
-    const url = LIVING_API + '?action=getGamingData&card_id=' + encodeURIComponent(evoId)
-      + (token && token.ownerToken ? '&owner_token=' + encodeURIComponent(token.ownerToken) : '');
-    const data = await jsonpFetch(url, 8000);
-    if (data && data.success && data.gaming) gamingData = data.gaming;
+    const snap = await getDoc(doc(db, 'gaming', evoId));
+    if (snap.exists()) {
+      const d = snap.data();
+      gamingData = { 'Gaming XP': d.gamingXP || d.totalGamingXP || 0 };
+    }
   } catch(e) { console.warn('Gaming data unavailable:', e); }
 
   if (!analyzerCard && !livingCard) {
@@ -715,17 +759,29 @@ async function boot(evoId) {
 
 async function fetchFreshLivingCard() {
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
-    if (data && data.success && data.card) {
-      const incomingXP = parseInt(data.card['Current XP']) || 0;
+    const snap = await getDoc(doc(db, 'cards', urlCardId));
+    if (snap.exists()) {
+      const d = snap.data();
+      const incomingXP = d.currentXP || 0;
       const existingXP = parseInt(livingCard && livingCard['Current XP']) || 0;
       if (incomingXP === 0 && existingXP > 0) {
-        console.warn('Stale/zero XP response ignored — retrying...');
+        console.warn('Stale/zero XP — retrying...');
         await new Promise(resolve => setTimeout(resolve, 2000));
-        const retry = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
-        if (retry && retry.success && retry.card) livingCard = retry.card;
+        const snap2 = await getDoc(doc(db, 'cards', urlCardId));
+        if (snap2.exists()) {
+          const d2 = snap2.data();
+          livingCard['Current XP']         = d2.currentXP        || 0;
+          livingCard['Evolution Stage']     = d2.evolutionStage   || livingCard['Evolution Stage'];
+          livingCard['Streak (days)']       = d2.streakDays       || 0;
+          livingCard['Total Interactions']  = d2.totalInteractions|| 0;
+          livingCard['Last Interaction']    = d2.lastInteraction  ? d2.lastInteraction.toDate().toISOString() : null;
+        }
       } else {
-        livingCard = data.card;
+        livingCard['Current XP']         = d.currentXP        || 0;
+        livingCard['Evolution Stage']     = d.evolutionStage   || livingCard['Evolution Stage'];
+        livingCard['Streak (days)']       = d.streakDays       || 0;
+        livingCard['Total Interactions']  = d.totalInteractions|| 0;
+        livingCard['Last Interaction']    = d.lastInteraction  ? d.lastInteraction.toDate().toISOString() : null;
       }
     }
   } catch(e) { console.warn('Fresh fetch failed:', e); }
@@ -1142,11 +1198,14 @@ function buildMilestones(xp, streak, interactions) {
 
   render(new Set());
 
-  jsonpFetch(LIVING_API + '?action=get_milestones&card_id=' + encodeURIComponent(urlCardId), 8000)
-    .then(data => {
-      if (data && data.success && data.earned) {
-        render(new Set(data.earned.map(e => e.milestone)));
-      }
+  getDocs(query(collection(db, 'milestones'), orderBy('date', 'desc')))
+    .then(snap => {
+      const earned = new Set();
+      snap.forEach(d => {
+        const m = d.data();
+        if (m.cardId === urlCardId && m.milestone) earned.add(m.milestone);
+      });
+      render(earned);
     })
     .catch(() => {});
 }
@@ -1192,8 +1251,9 @@ function buildLog(interactions, daysSince) {
 
 async function fetchLedger(cardId) {
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_ledger&card_id=' + encodeURIComponent(cardId), 10000);
-    if (!data || !data.success || !data.entries) return;
+    const snap = await getDocs(
+      query(collection(db, 'cards', cardId, 'ledger'), orderBy('date', 'desc'), limit(50))
+    );
     const log = document.getElementById('log-list');
     const typeMap = {
       'DAILY_SCAN':              { icon:'📱', label:'QR Scan' },
@@ -1209,19 +1269,21 @@ async function fetchLedger(cardId) {
       'NOTABLE_COLLECTOR_BONUS': { icon:'⭐', label:'Notable Collector Bonus' },
       'GAMING_XP':               { icon:'🎮', label:'Gaming' },
     };
-    if (data.entries.length === 0) {
+    if (snap.empty) {
       log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet.</div>';
       return;
     }
-    log.innerHTML = data.entries.map((e, i) => {
+    const entries = [];
+    snap.forEach(d => entries.push(d.data()));
+    log.innerHTML = entries.map((e, i) => {
       const t      = typeMap[e.type] || { icon:'✦', label: e.type };
-      const gained = String(e.gained).replace('+','');
-      const lost   = Number(e.lost) || 0;
-      const isNeg  = lost > 0 && !gained;
-      const xpStr  = lost > 0 ? '−' + lost : (gained ? '+' + gained : '—');
-      const d      = new Date(e.date);
+      const gained = String(e.xpGained || e.gained || 0).replace('+','');
+      const lost   = Number(e.xpLost   || e.lost   || 0);
+      const isNeg  = lost > 0 && !Number(gained);
+      const xpStr  = lost > 0 ? '−' + lost : (Number(gained) ? '+' + gained : '—');
+      const dt     = e.date && e.date.toDate ? e.date.toDate() : new Date(e.date);
       const now    = new Date();
-      const days   = Math.floor((now - d) / 86400000);
+      const days   = Math.floor((now - dt) / 86400000);
       const dateStr = days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : days + ' days ago';
       return `<div class="log-item" style="animation-delay:${i*0.05}s">
         <div class="log-icon">${t.icon}</div>
@@ -1324,10 +1386,13 @@ function startParticles(stageIdx) {
 
 async function fetchRank(cardId) {
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_rank&card_id=' + encodeURIComponent(cardId), 8000);
-    if (data && data.success) {
-      const rank   = data.rank;
-      const total  = data.total;
+    const allSnap = await getDocs(collection(db, 'cards'));
+    const cards = [];
+    allSnap.forEach(d => cards.push(d.data()));
+    cards.sort((a, b) => (b.currentXP || 0) - (a.currentXP || 0));
+    const rank  = cards.findIndex(c => c.cardId === cardId) + 1;
+    const total = cards.length;
+    if (rank > 0) {
       const topPct = total > 1 ? Math.round((rank / total) * 100) : 1;
       document.getElementById('d-rank').textContent       = '#' + rank;
       document.getElementById('d-rank-hero').textContent  = '#' + rank;
@@ -1339,19 +1404,45 @@ async function fetchRank(cardId) {
 
 async function fetchStats() {
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_stats', 8000);
-    if (data && data.success) {
-      document.getElementById('stat-total-live').textContent  = data.totalLive.toLocaleString();
-      document.getElementById('stat-highest-xp').textContent = data.highestXP.toLocaleString() + ' XP';
-      document.getElementById('stat-top-card').textContent   = data.topCard;
-    }
+    const allSnap = await getDocs(collection(db, 'cards'));
+    const claimed = [];
+    allSnap.forEach(d => { const c = d.data(); if (c.claimed) claimed.push(c); });
+    claimed.sort((a, b) => (b.currentXP || 0) - (a.currentXP || 0));
+    const totalLive  = claimed.length;
+    const highestXP  = claimed.length ? (claimed[0].currentXP || 0) : 0;
+    const topCard    = claimed.length ? (claimed[0].cardName || claimed[0].cardId || '—') : '—';
+    document.getElementById('stat-total-live').textContent  = totalLive.toLocaleString();
+    document.getElementById('stat-highest-xp').textContent = highestXP.toLocaleString() + ' XP';
+    document.getElementById('stat-top-card').textContent   = topCard;
   } catch(e) {}
 }
 
 async function fetchScanHistory(cardId) {
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_scan_history&card_id=' + encodeURIComponent(cardId), 10000);
-    if (data && data.success && data.days) applyStreakCalendar(data.days);
+    const ledgerSnap = await getDocs(
+      query(collection(db, 'cards', cardId, 'ledger'), orderBy('date', 'desc'), limit(28))
+    );
+    const scanDates = new Set();
+    ledgerSnap.forEach(d => {
+      const entry = d.data();
+      if (entry.type === 'DAILY_SCAN' && entry.date) {
+        const dt = entry.date.toDate ? entry.date.toDate() : new Date(entry.date);
+        scanDates.add(dt.toISOString().slice(0, 10));
+      }
+    });
+    const cardSnap = await getDoc(doc(db, 'cards', cardId));
+    const claimDate = cardSnap.exists() && cardSnap.data().claimDate
+      ? cardSnap.data().claimDate.toDate()
+      : null;
+    const days = [];
+    for (let i = 27; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const beforeClaim = claimDate && d < claimDate;
+      days.push({ beforeClaim, scanned: scanDates.has(key) });
+    }
+    applyStreakCalendar(days);
   } catch(e) {}
 }
 
