@@ -1486,6 +1486,16 @@ document.addEventListener('keydown', e => {
     }
   }
 });
+
+// Expose functions to global scope (required because this is a module script)
+window.doClaim           = doClaim;
+window.doVisitorClaim    = doVisitorClaim;
+window.doTransferClaim   = doTransferClaim;
+window.enterAsSavedOwner = enterAsSavedOwner;
+window.enterReadOnly     = enterReadOnly;
+window.doSignOut         = doSignOut;
+window.logScan           = logScan;
+window.showClaimScreen   = showClaimScreen;
 </script>
 </body>
 </html>
