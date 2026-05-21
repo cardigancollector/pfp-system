@@ -956,7 +956,11 @@ function buildDashboard(asOwner) {
   const stageIdx     = Math.max(0, STAGES.findIndex(s => s.toUpperCase() === stage.toUpperCase()));
   const claimDate    = lc['Claim Date'] || null;
   const lastDate     = lc['Last Interaction'] ? new Date(lc['Last Interaction']) : null;
-  const daysSince    = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / 86400000) : 99;
+  const todayStr     = new Date().toLocaleDateString('en-CA');
+  const lastDateStr  = lastDate ? lastDate.toLocaleDateString('en-CA') : null;
+  const daysSince    = lastDateStr
+    ? Math.floor((new Date(todayStr) - new Date(lastDateStr)) / 86400000)
+    : 99;
 
   document.getElementById('d-xp').textContent           = xp.toLocaleString();
   document.getElementById('d-gaming-xp').textContent    = gamingXP.toLocaleString();
@@ -1215,7 +1219,7 @@ function buildStreakCalendar(streak, daysSince) {
   grid.innerHTML = Array.from({length:28}, (_,i) =>
     `<div class="streak-day" title="${i===0?'Today':i+' days ago'}"></div>`
   ).join('');
-  fetchScanHistory(urlCardId);
+  fetchScanHistory(urlCardId, streak);
 }
 
 function applyStreakCalendar(days) {
@@ -1241,10 +1245,6 @@ function applyStreakCalendar(days) {
 
 function buildLog(interactions, daysSince) {
   const log = document.getElementById('log-list');
-  if (interactions === 0) {
-    log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet. Claim your card and scan to start earning XP.</div>';
-    return;
-  }
   log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">Loading log…</div>';
   fetchLedger(urlCardId);
 }
@@ -1417,7 +1417,7 @@ async function fetchStats() {
   } catch(e) {}
 }
 
-async function fetchScanHistory(cardId) {
+async function fetchScanHistory(cardId, streak) {
   try {
     const ledgerSnap = await getDocs(
       query(collection(db, 'cards', cardId, 'ledger'), orderBy('date', 'desc'), limit(28))
@@ -1442,6 +1442,19 @@ async function fetchScanHistory(cardId) {
       const beforeClaim = claimDate && d < claimDate;
       days.push({ beforeClaim, scanned: scanDates.has(key) });
     }
+
+    // If ledger has no DAILY_SCAN entries, fall back to streak count from Firestore
+    if (scanDates.size === 0 && streak > 0) {
+      const streakCount = Math.min(streak, 28);
+      for (let i = 0; i < 28; i++) {
+        const dayObj = days[i];
+        if (!dayObj.beforeClaim) {
+          const distFromEnd = 27 - i;
+          dayObj.scanned = distFromEnd < streakCount;
+        }
+      }
+    }
+
     applyStreakCalendar(days);
   } catch(e) {}
 }
