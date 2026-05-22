@@ -757,15 +757,16 @@ async function boot(evoId) {
   }
 }
 
-async function fetchFreshLivingCard(expectedXP) {
+async function fetchFreshLivingCard(pinnedXP) {
   try {
     const snap = await getDoc(doc(db, 'cards', urlCardId));
     if (snap.exists()) {
       const d = snap.data();
       const incomingXP = d.currentXP || 0;
-      const floorXP    = expectedXP !== undefined ? expectedXP : (parseInt(livingCard && livingCard['Current XP']) || 0);
-      if (incomingXP < floorXP) {
-        // Firestore hasn't caught up yet — keep the pinned value, only update other fields
+      // If a scan just ran, only accept the Firestore XP if it has caught up to the scan value
+      if (pinnedXP !== undefined && incomingXP !== pinnedXP) {
+        // Firestore stale — preserve pinned XP, update everything else
+        livingCard['Evolution Stage']     = d.evolutionStage   || livingCard['Evolution Stage'];
         livingCard['Streak (days)']       = d.streakDays       || livingCard['Streak (days)'] || 0;
         livingCard['Total Interactions']  = d.totalInteractions|| livingCard['Total Interactions'] || 0;
         livingCard['Last Interaction']    = d.lastInteraction  ? d.lastInteraction.toDate().toISOString() : livingCard['Last Interaction'];
