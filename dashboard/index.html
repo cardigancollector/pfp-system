@@ -1133,9 +1133,11 @@ async function logScan() {
 
       if (data.totalXP !== undefined) {
         document.getElementById('d-xp').textContent = data.totalXP.toLocaleString();
+        if (livingCard) livingCard['Current XP'] = data.totalXP;
       }
       if (data.stage) {
         document.getElementById('d-stage').textContent = data.stage;
+        if (livingCard) livingCard['Evolution Stage'] = data.stage;
       }
 
       const grid = document.getElementById('streak-grid');
