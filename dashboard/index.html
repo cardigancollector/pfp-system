@@ -757,27 +757,20 @@ async function boot(evoId) {
   }
 }
 
-async function fetchFreshLivingCard() {
+async function fetchFreshLivingCard(expectedXP) {
   try {
     const snap = await getDoc(doc(db, 'cards', urlCardId));
     if (snap.exists()) {
       const d = snap.data();
       const incomingXP = d.currentXP || 0;
-      const existingXP = parseInt(livingCard && livingCard['Current XP']) || 0;
-      if (incomingXP === 0 && existingXP > 0) {
-        console.warn('Stale/zero XP — retrying...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const snap2 = await getDoc(doc(db, 'cards', urlCardId));
-        if (snap2.exists()) {
-          const d2 = snap2.data();
-          livingCard['Current XP']         = d2.currentXP        || 0;
-          livingCard['Evolution Stage']     = d2.evolutionStage   || livingCard['Evolution Stage'];
-          livingCard['Streak (days)']       = d2.streakDays       || 0;
-          livingCard['Total Interactions']  = d2.totalInteractions|| 0;
-          livingCard['Last Interaction']    = d2.lastInteraction  ? d2.lastInteraction.toDate().toISOString() : null;
-        }
+      const floorXP    = expectedXP !== undefined ? expectedXP : (parseInt(livingCard && livingCard['Current XP']) || 0);
+      if (incomingXP < floorXP) {
+        // Firestore hasn't caught up yet — keep the pinned value, only update other fields
+        livingCard['Streak (days)']       = d.streakDays       || livingCard['Streak (days)'] || 0;
+        livingCard['Total Interactions']  = d.totalInteractions|| livingCard['Total Interactions'] || 0;
+        livingCard['Last Interaction']    = d.lastInteraction  ? d.lastInteraction.toDate().toISOString() : livingCard['Last Interaction'];
       } else {
-        livingCard['Current XP']         = d.currentXP        || 0;
+        livingCard['Current XP']         = incomingXP;
         livingCard['Evolution Stage']     = d.evolutionStage   || livingCard['Evolution Stage'];
         livingCard['Streak (days)']       = d.streakDays       || 0;
         livingCard['Total Interactions']  = d.totalInteractions|| 0;
@@ -1151,7 +1144,7 @@ async function logScan() {
       }
 
       await new Promise(resolve => setTimeout(resolve, 2000));
-      await fetchFreshLivingCard();
+      await fetchFreshLivingCard(data.totalXP !== undefined ? data.totalXP : undefined);
       buildDashboard(true);
     } else {
       const alreadyScanned = data.error && data.error.toLowerCase().includes('already scanned');
