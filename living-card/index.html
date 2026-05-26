@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy, limit, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
@@ -32,6 +32,8 @@
   window._pfpFirestoreQuery = query;
   window._pfpFirestoreOrderBy = orderBy;
   window._pfpFirestoreLimit = limit;
+  window._pfpFirestoreUpdateDoc = updateDoc;
+  window._pfpFirestoreIncrement = increment;
   window._pfpFirebaseReady = true;
   window.dispatchEvent(new Event('pfp-firebase-ready'));
 </script>
@@ -636,9 +638,10 @@ function jsonpFetch(url, timeout) {
 
 async function loadMultipliers() {
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_settings', 6000);
-    if (data && data.success && data.settings) {
-      const s = data.settings;
+    const db   = window._pfpFirestore;
+    const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(db, 'settings', 'multipliers'));
+    if (snap.exists()) {
+      const s = snap.data();
       settingsMultipliers = [
         parseFloat(s.multiplier_dormant)     || 1.00,
         parseFloat(s.multiplier_awakened)    || 1.05,
@@ -1067,9 +1070,12 @@ async function incrementView(cardId) {
   if (localStorage.getItem(key) === today) return;
   localStorage.setItem(key, today);
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=increment_view&card_id=' + encodeURIComponent(cardId), 6000);
-    if (data && data.success) {
-      document.getElementById('d-views').textContent = data.views.toLocaleString();
+    const db     = window._pfpFirestore;
+    const docRef = window._pfpFirestoreDoc(db, 'cards', cardId);
+    await window._pfpFirestoreUpdateDoc(docRef, { pageViews: window._pfpFirestoreIncrement(1) });
+    const snap = await window._pfpFirestoreGetDoc(docRef);
+    if (snap.exists()) {
+      document.getElementById('d-views').textContent = (snap.data().pageViews || 0).toLocaleString();
     }
   } catch(e) {}
 }
