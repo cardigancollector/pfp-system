@@ -726,11 +726,12 @@ async function boot(evoId) {
   livingCard = await firestoreGetCard(evoId);
 
   try {
-    const token = (() => { try { return JSON.parse(localStorage.getItem('pfp_owner_' + evoId)); } catch(e) { return null; } })();
-    const url = LIVING_API + '?action=getGamingData&card_id=' + encodeURIComponent(evoId)
-      + (token && token.ownerToken ? '&owner_token=' + encodeURIComponent(token.ownerToken) : '');
-    const data = await jsonpFetch(url, 8000);
-    if (data && data.success && data.gaming) gamingData = data.gaming;
+    const db   = window._pfpFirestore;
+    const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(db, 'gaming', evoId));
+    if (snap.exists()) {
+      const d = snap.data();
+      gamingData = { 'Gaming XP': d.gamingXP || d.totalGamingXP || 0 };
+    }
   } catch(e) { console.warn('Gaming data unavailable:', e); }
 
   if (!analyzerCard && !livingCard) {
