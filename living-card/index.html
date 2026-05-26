@@ -8,6 +8,28 @@
 <meta http-equiv="Expires" content="0">
 <title>PfP — Living Card</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain: "pfp-system.firebaseapp.com",
+    projectId: "pfp-system",
+    storageBucket: "pfp-system.firebasestorage.app",
+    messagingSenderId: "643360345707",
+    appId: "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  window._pfpFirestore = db;
+  window._pfpFirestoreDoc = doc;
+  window._pfpFirestoreGetDoc = getDoc;
+  window._pfpFirebaseReady = true;
+  window.dispatchEvent(new Event('pfp-firebase-ready'));
+</script>
 <style>
   :root {
     --gold: #c9a84c; --gold-light: #e8c97a; --gold-dim: #7a6030;
@@ -649,15 +671,46 @@ let savedOwner   = null;
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   urlCardId = params.get('card_id') || params.get('cardId') || '';
-  if (urlCardId) {
-    livingCard   = null;
-    analyzerCard = null;
-    gamingData   = null;
+  if (!urlCardId) { showError('No card ID provided in the URL.'); return; }
+  livingCard   = null;
+  analyzerCard = null;
+  gamingData   = null;
+
+  if (window._pfpFirebaseReady) {
     boot(urlCardId);
   } else {
-    showError('No card ID provided in the URL.');
+    window.addEventListener('pfp-firebase-ready', () => boot(urlCardId), { once: true });
   }
 });
+
+async function firestoreGetCard(evoId) {
+  try {
+    const db      = window._pfpFirestore;
+    const docRef  = window._pfpFirestoreDoc(db, 'cards', evoId);
+    const snap    = await window._pfpFirestoreGetDoc(docRef);
+    if (!snap.exists()) return null;
+    const d = snap.data();
+    // Map Firestore camelCase fields to the keys buildDashboard() expects
+    return {
+      'Card Name':          d.cardName          || evoId,
+      'Current XP':         d.currentXP         ?? 0,
+      'Current Level':      d.currentLevel       ?? 1,
+      'Streak (days)':      d.streakDays         ?? 0,
+      'Page Views':         d.pageViews          ?? 0,
+      'Total Interactions': d.totalInteractions  ?? 0,
+      'Evolution Stage':    d.evolutionStage     || 'DORMANT',
+      'Claimed':            d.claimed            === true,
+      'Claim Date':         d.claimDate          ? d.claimDate.toDate().toISOString() : null,
+      'Last Interaction':   d.lastInteraction    ? d.lastInteraction.toDate().toISOString() : null,
+      'Active Event':       (d.eventName && d.eventName.trim())
+                              ? { eventName: d.eventName, flavourText: d.eventFlavourText || '', xpEffect: d.eventXPEffect || 0, expiryDate: d.eventExpiryDate ? d.eventExpiryDate.toDate().toLocaleDateString() : '' }
+                              : null,
+    };
+  } catch(e) {
+    console.warn('Firestore read failed:', e);
+    return null;
+  }
+}
 
 async function boot(evoId) {
   setLoadingSub('Fetching card from database…');
@@ -670,10 +723,7 @@ async function boot(evoId) {
 
   setLoadingSub('Loading XP and interaction data…');
 
-  try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(evoId), 8000);
-    if (data && data.success && data.card) livingCard = data.card;
-  } catch(e) { console.warn('Living Card API unavailable:', e); }
+  livingCard = await firestoreGetCard(evoId);
 
   try {
     const token = (() => { try { return JSON.parse(localStorage.getItem('pfp_owner_' + evoId)); } catch(e) { return null; } })();
@@ -696,7 +746,7 @@ async function boot(evoId) {
   hideLoading();
 
   const cardName = analyzerCard.card || evoId;
-  const claimed  = livingCard && String(livingCard['Claimed']).toUpperCase() === 'YES';
+  const claimed  = livingCard && livingCard['Claimed'] === true;
 
   document.getElementById('claim-card-name').textContent = cardName;
   document.getElementById('claim-evo-id').textContent    = evoId;
@@ -711,10 +761,7 @@ async function boot(evoId) {
 }
 
 async function fetchFreshLivingCard() {
-  try {
-    const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
-    if (data && data.success && data.card) livingCard = data.card;
-  } catch(e) { console.warn('Fresh fetch failed:', e); }
+  livingCard = await firestoreGetCard(urlCardId);
 }
 
 function showClaimScreen(mode) {
