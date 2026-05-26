@@ -320,33 +320,6 @@
   .gaming-hub-btn:hover { background:linear-gradient(135deg,rgba(46,204,113,0.12),rgba(46,204,113,0.22)); box-shadow:0 0 30px rgba(46,204,113,0.1); border-color:#2ecc71; }
   .gaming-hub-btn.visible { display:flex; align-items:center; justify-content:center; gap:10px; }
 
-  /* ── XP MARKETPLACE BUTTON ── */
-  .xp-market-btn {
-    display: flex;
-    width: 100%;
-    margin-top: 10px;
-    padding: 14px 24px;
-    background: linear-gradient(135deg, rgba(192,57,43,0.06), rgba(192,57,43,0.13));
-    border: 1px solid rgba(192,57,43,0.45);
-    color: #e74c3c;
-    font-family: 'Cinzel', serif;
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    text-decoration: none;
-  }
-  .xp-market-btn:hover {
-    background: linear-gradient(135deg, rgba(192,57,43,0.14), rgba(192,57,43,0.24));
-    box-shadow: 0 0 30px rgba(192,57,43,0.12);
-    border-color: #e74c3c;
-    color: #ff6b6b;
-  }
 
   @media (max-width:900px) {
     .stat-grid { grid-template-columns:repeat(2,1fr); }
@@ -429,10 +402,7 @@
 
 <div id="owner-banner">
   <div class="owner-text">✓ Logged in as owner of <strong id="owner-banner-name">—</strong></div>
-  <div style="display:flex;gap:10px;align-items:center;">
-    <a href="my-collection.html" class="signout-btn" style="text-decoration:none;">My Collection</a>
-    <button class="signout-btn" onclick="doSignOut()">Sign Out</button>
-  </div>
+  <button class="signout-btn" onclick="doSignOut()">Sign Out</button>
 </div>
 
 <div id="dashboard">
@@ -476,8 +446,6 @@
     <!-- GAMING HUB BUTTON — owners only -->
     <a class="gaming-hub-btn" id="gaming-hub-btn" href="#">🎮 &nbsp; Enter XP Gaming Hub</a>
 
-    <!-- XP MARKETPLACE BUTTON — all visitors -->
-    <a class="xp-market-btn" id="xp-market-btn" href="#">🏪 &nbsp; Enter XP Gaming Marketplace</a>
 
     <div class="section-title animate-in delay-1">At a Glance</div>
     <div class="stat-grid animate-in delay-1">
@@ -581,25 +549,7 @@
   </div>
 </div>
 
-<script type="module">
-// ── Firebase ────────────────────────────────────────────────────────────────
-import { initializeApp }                        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc,
-         collection, getDocs,
-         query, orderBy, limit }                from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-const firebaseConfig = {
-  apiKey:            'AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU',
-  authDomain:        'pfp-system.firebaseapp.com',
-  projectId:         'pfp-system',
-  storageBucket:     'pfp-system.firebasestorage.app',
-  messagingSenderId: '643360345707',
-  appId:             '1:643360345707:web:9e5b9a902b41169ae5eb2e'
-};
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-
-// ── Apps Script (writes only) ────────────────────────────────────────────────
+<script>
 const LIVING_API   = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflBEX2r7mxTdyBxJOYXSlNcDgLGotqu28buVV4YHfBmO1MOvGDc/exec';
 
@@ -611,7 +561,6 @@ const STAGE_CLASS = ['stage-dormant','stage-awakened','stage-growing','stage-est
 
 let settingsMultipliers = null;
 
-// ── JSONP (kept for write-only Apps Script calls) ───────────────────────────
 function jsonpFetch(url, timeout) {
   return new Promise((resolve, reject) => {
     const cbName = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
@@ -629,12 +578,11 @@ function jsonpFetch(url, timeout) {
   });
 }
 
-// ── Firestore: load settings/multipliers ────────────────────────────────────
 async function loadMultipliers() {
   try {
-    const snap = await getDoc(doc(db, 'settings', 'multipliers'));
-    if (snap.exists()) {
-      const s = snap.data();
+    const data = await jsonpFetch(LIVING_API + '?action=get_settings', 6000);
+    if (data && data.success && data.settings) {
+      const s = data.settings;
       settingsMultipliers = [
         parseFloat(s.multiplier_dormant)     || 1.00,
         parseFloat(s.multiplier_awakened)    || 1.05,
@@ -686,7 +634,6 @@ async function boot(evoId) {
   setLoadingSub('Fetching card from database…');
   loadMultipliers();
 
-  // Analyzer data (image, rarity, set, value) still from Apps Script
   try {
     const data = await jsonpFetch(ANALYZER_API + '?action=getCardByEvoId&evoId=' + encodeURIComponent(evoId), 12000);
     if (data && data.success && data.card) analyzerCard = data.card;
@@ -694,40 +641,17 @@ async function boot(evoId) {
 
   setLoadingSub('Loading XP and interaction data…');
 
-  // Living card data from Firestore
   try {
-    const snap = await getDoc(doc(db, 'cards', evoId));
-    if (snap.exists()) {
-      const d = snap.data();
-      livingCard = {
-        'Card Name':          d.cardName         || '',
-        'Claimed':            d.claimed ? 'YES' : 'NO',
-        'Claim Date':         d.claimDate        ? d.claimDate.toDate().toISOString() : null,
-        'Current XP':         d.currentXP        || 0,
-        'Current Level':      d.currentLevel     || 1,
-        'Evolution Stage':    d.evolutionStage   || 'DORMANT',
-        'Streak (days)':      d.streakDays       || 0,
-        'Page Views':         d.pageViews        || 0,
-        'Total Interactions': d.totalInteractions|| 0,
-        'Last Interaction':   d.lastInteraction  ? d.lastInteraction.toDate().toISOString() : null,
-        'Live Value':         d.liveValue        || 0,
-        'Active Event': (d.eventName && d.eventExpiryDate) ? {
-          eventName:   d.eventName,
-          flavourText: d.eventFlavourText || '',
-          xpEffect:    d.eventXPEffect    || 0,
-          expiryDate:  d.eventExpiryDate  ? d.eventExpiryDate.toDate().toLocaleDateString() : ''
-        } : null,
-      };
-    }
-  } catch(e) { console.warn('Firestore card fetch error:', e); }
+    const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(evoId), 8000);
+    if (data && data.success && data.card) livingCard = data.card;
+  } catch(e) { console.warn('Living Card API unavailable:', e); }
 
-  // Gaming data from Firestore
   try {
-    const snap = await getDoc(doc(db, 'gaming', evoId));
-    if (snap.exists()) {
-      const d = snap.data();
-      gamingData = { 'Gaming XP': d.gamingXP || d.totalGamingXP || 0 };
-    }
+    const token = (() => { try { return JSON.parse(localStorage.getItem('pfp_owner_' + evoId)); } catch(e) { return null; } })();
+    const url = LIVING_API + '?action=getGamingData&card_id=' + encodeURIComponent(evoId)
+      + (token && token.ownerToken ? '&owner_token=' + encodeURIComponent(token.ownerToken) : '');
+    const data = await jsonpFetch(url, 8000);
+    if (data && data.success && data.gaming) gamingData = data.gaming;
   } catch(e) { console.warn('Gaming data unavailable:', e); }
 
   if (!analyzerCard && !livingCard) {
@@ -757,27 +681,10 @@ async function boot(evoId) {
   }
 }
 
-async function fetchFreshLivingCard(pinnedXP) {
+async function fetchFreshLivingCard() {
   try {
-    const snap = await getDoc(doc(db, 'cards', urlCardId));
-    if (snap.exists()) {
-      const d = snap.data();
-      const incomingXP = d.currentXP || 0;
-      // If a scan just ran, only accept the Firestore XP if it has caught up to the scan value
-      if (pinnedXP !== undefined && incomingXP !== pinnedXP) {
-        // Firestore stale — preserve pinned XP, update everything else
-        livingCard['Evolution Stage']     = d.evolutionStage   || livingCard['Evolution Stage'];
-        livingCard['Streak (days)']       = d.streakDays       || livingCard['Streak (days)'] || 0;
-        livingCard['Total Interactions']  = d.totalInteractions|| livingCard['Total Interactions'] || 0;
-        livingCard['Last Interaction']    = d.lastInteraction  ? d.lastInteraction.toDate().toISOString() : livingCard['Last Interaction'];
-      } else {
-        livingCard['Current XP']         = incomingXP;
-        livingCard['Evolution Stage']     = d.evolutionStage   || livingCard['Evolution Stage'];
-        livingCard['Streak (days)']       = d.streakDays       || 0;
-        livingCard['Total Interactions']  = d.totalInteractions|| 0;
-        livingCard['Last Interaction']    = d.lastInteraction  ? d.lastInteraction.toDate().toISOString() : null;
-      }
-    }
+    const data = await jsonpFetch(LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(urlCardId), 8000);
+    if (data && data.success && data.card) livingCard = data.card;
   } catch(e) { console.warn('Fresh fetch failed:', e); }
 }
 
@@ -950,11 +857,7 @@ function buildDashboard(asOwner) {
   const stageIdx     = Math.max(0, STAGES.findIndex(s => s.toUpperCase() === stage.toUpperCase()));
   const claimDate    = lc['Claim Date'] || null;
   const lastDate     = lc['Last Interaction'] ? new Date(lc['Last Interaction']) : null;
-  const todayStr     = new Date().toLocaleDateString('en-CA');
-  const lastDateStr  = lastDate ? lastDate.toLocaleDateString('en-CA') : null;
-  const daysSince    = lastDateStr
-    ? Math.floor((new Date(todayStr) - new Date(lastDateStr)) / 86400000)
-    : 99;
+  const daysSince    = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / 86400000) : 99;
 
   document.getElementById('d-xp').textContent           = xp.toLocaleString();
   document.getElementById('d-gaming-xp').textContent    = gamingXP.toLocaleString();
@@ -966,10 +869,12 @@ function buildDashboard(asOwner) {
   document.getElementById('d-next-stage').textContent   = STAGES[stageIdx+1] || 'Mythic (Max)';
 
   const baseValue = parseFloat(ac.value) || 0;
-  const liveValue = parseFloat(livingCard && livingCard['Live Value']) || 0;
+  const mult      = getMultiplier(stageIdx);
+  const liveValue = baseValue * mult;
+  const multLabel = mult > 1 ? `+${Math.round((mult-1)*100)}% XP boost` : null;
   const stripFields = [
     { label:'Base Value', value: baseValue ? '$' + baseValue.toFixed(2) : '—', gold:false },
-    { label:'Live Value', value: liveValue ? '$' + liveValue.toFixed(2) : '—', gold:true, live:true },
+    { label:'Live Value', value: baseValue ? '$' + liveValue.toFixed(2) : '—', gold:true, live:true, mult: multLabel },
     { label:'Rank',       value: ac.rank  ? '#' + ac.rank : '—', gold:true },
     { label:'Set',        value: ac.set        || '—' },
     { label:'Qty Issued', value: ac.quantityIssued || '—' },
@@ -1033,7 +938,7 @@ function buildDashboard(asOwner) {
 
   const scanArea = document.getElementById('scan-area');
   if (asOwner) {
-    scanArea.innerHTML = `<button class="scan-btn" id="scan-btn" onclick="logScan()"><span>📱</span> Log Today's Life — +10 XP</button>`;
+    scanArea.innerHTML = `<button class="scan-btn" id="scan-btn" onclick="logScan()"><span>📱</span> Log Today's Scan — +10 XP</button>`;
   } else {
     scanArea.innerHTML = `<div class="scan-locked glass" onclick="showClaimScreen('readonly')">🔒 &nbsp; Claim this card to earn XP &nbsp;·&nbsp; <span style="color:var(--gold);text-decoration:underline;cursor:pointer;">Enter Claim Code</span></div>`;
   }
@@ -1101,10 +1006,11 @@ async function logScan() {
   btn.innerHTML = '<span>⏳</span> Logging scan...';
   feedback.textContent = '';
   try {
-    const url = 'https://us-central1-pfp-system.cloudfunctions.net/qrScan'
-      + '?card_id='     + encodeURIComponent(cardId)
+    const url = LIVING_API
+      + '?action=qr_scan'
+      + '&card_id='     + encodeURIComponent(cardId)
       + '&owner_token=' + encodeURIComponent(token);
-    const data = await fetch(url).then(r => r.json());
+    const data = await jsonpFetch(url, 8000);
     if (data.success || data.status === 200) {
       const xpDisplay  = data.totalXP !== undefined ? data.totalXP.toLocaleString() : '--';
       const xpEffect   = data.xpEffect !== undefined ? data.xpEffect : 10;
@@ -1124,27 +1030,7 @@ async function logScan() {
 
       feedback.className = 'scan-feedback success';
 
-      if (data.totalXP !== undefined) {
-        document.getElementById('d-xp').textContent = data.totalXP.toLocaleString();
-        if (livingCard) livingCard['Current XP'] = data.totalXP;
-      }
-      if (data.stage) {
-        document.getElementById('d-stage').textContent = data.stage;
-        if (livingCard) livingCard['Evolution Stage'] = data.stage;
-      }
-
-      const grid = document.getElementById('streak-grid');
-      if (grid) {
-        const days = grid.querySelectorAll('.streak-day');
-        if (days.length > 0) {
-          const todayCell = days[days.length - 1];
-          todayCell.classList.remove('decay');
-          todayCell.classList.add('active');
-        }
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      await fetchFreshLivingCard(data.totalXP !== undefined ? data.totalXP : undefined);
+      await fetchFreshLivingCard();
       buildDashboard(true);
     } else {
       const alreadyScanned = data.error && data.error.toLowerCase().includes('already scanned');
@@ -1154,14 +1040,14 @@ async function logScan() {
         feedback.textContent = 'Come back tomorrow for your next XP reward.';
         feedback.className = 'scan-feedback success';
       } else {
-        btn.innerHTML = '<span>📱</span> Log Today\'s Life — +10 XP';
+        btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
         feedback.textContent = data.error || 'Scan could not be logged.';
         feedback.className = 'scan-feedback error';
         btn.disabled = false;
       }
     }
   } catch(e) {
-    btn.innerHTML = '<span>📱</span> Log Today\'s Life — +10 XP';
+    btn.innerHTML = '<span>📱</span> Log Today\'s Scan — +10 XP';
     feedback.textContent = 'Connection error — try again.';
     feedback.className = 'scan-feedback error';
     btn.disabled = false;
@@ -1197,14 +1083,11 @@ function buildMilestones(xp, streak, interactions) {
 
   render(new Set());
 
-  getDocs(query(collection(db, 'milestones'), orderBy('date', 'desc')))
-    .then(snap => {
-      const earned = new Set();
-      snap.forEach(d => {
-        const m = d.data();
-        if (m.cardId === urlCardId && m.milestone) earned.add(m.milestone);
-      });
-      render(earned);
+  jsonpFetch(LIVING_API + '?action=get_milestones&card_id=' + encodeURIComponent(urlCardId), 8000)
+    .then(data => {
+      if (data && data.success && data.earned) {
+        render(new Set(data.earned.map(e => e.milestone)));
+      }
     })
     .catch(() => {});
 }
@@ -1214,7 +1097,7 @@ function buildStreakCalendar(streak, daysSince) {
   grid.innerHTML = Array.from({length:28}, (_,i) =>
     `<div class="streak-day" title="${i===0?'Today':i+' days ago'}"></div>`
   ).join('');
-  fetchScanHistory(urlCardId, streak);
+  fetchScanHistory(urlCardId);
 }
 
 function applyStreakCalendar(days) {
@@ -1240,15 +1123,18 @@ function applyStreakCalendar(days) {
 
 function buildLog(interactions, daysSince) {
   const log = document.getElementById('log-list');
+  if (interactions === 0) {
+    log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet. Claim your card and scan to start earning XP.</div>';
+    return;
+  }
   log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">Loading log…</div>';
   fetchLedger(urlCardId);
 }
 
 async function fetchLedger(cardId) {
   try {
-    const snap = await getDocs(
-      query(collection(db, 'cards', cardId, 'ledger'), orderBy('date', 'desc'), limit(50))
-    );
+    const data = await jsonpFetch(LIVING_API + '?action=get_ledger&card_id=' + encodeURIComponent(cardId), 10000);
+    if (!data || !data.success || !data.entries) return;
     const log = document.getElementById('log-list');
     const typeMap = {
       'DAILY_SCAN':              { icon:'📱', label:'QR Scan' },
@@ -1264,21 +1150,19 @@ async function fetchLedger(cardId) {
       'NOTABLE_COLLECTOR_BONUS': { icon:'⭐', label:'Notable Collector Bonus' },
       'GAMING_XP':               { icon:'🎮', label:'Gaming' },
     };
-    if (snap.empty) {
+    if (data.entries.length === 0) {
       log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No interactions recorded yet.</div>';
       return;
     }
-    const entries = [];
-    snap.forEach(d => entries.push(d.data()));
-    log.innerHTML = entries.map((e, i) => {
+    log.innerHTML = data.entries.map((e, i) => {
       const t      = typeMap[e.type] || { icon:'✦', label: e.type };
-      const gained = String(e.xpGained || e.gained || 0).replace('+','');
-      const lost   = Number(e.xpLost   || e.lost   || 0);
-      const isNeg  = lost > 0 && !Number(gained);
-      const xpStr  = lost > 0 ? '−' + lost : (Number(gained) ? '+' + gained : '—');
-      const dt     = e.date && e.date.toDate ? e.date.toDate() : new Date(e.date);
+      const gained = String(e.gained).replace('+','');
+      const lost   = Number(e.lost) || 0;
+      const isNeg  = lost > 0 && !gained;
+      const xpStr  = lost > 0 ? '−' + lost : (gained ? '+' + gained : '—');
+      const d      = new Date(e.date);
       const now    = new Date();
-      const days   = Math.floor((now - dt) / 86400000);
+      const days   = Math.floor((now - d) / 86400000);
       const dateStr = days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : days + ' days ago';
       return `<div class="log-item" style="animation-delay:${i*0.05}s">
         <div class="log-icon">${t.icon}</div>
@@ -1381,13 +1265,10 @@ function startParticles(stageIdx) {
 
 async function fetchRank(cardId) {
   try {
-    const allSnap = await getDocs(collection(db, 'cards'));
-    const cards = [];
-    allSnap.forEach(d => cards.push(d.data()));
-    cards.sort((a, b) => (b.currentXP || 0) - (a.currentXP || 0));
-    const rank  = cards.findIndex(c => c.cardId === cardId) + 1;
-    const total = cards.length;
-    if (rank > 0) {
+    const data = await jsonpFetch(LIVING_API + '?action=get_rank&card_id=' + encodeURIComponent(cardId), 8000);
+    if (data && data.success) {
+      const rank   = data.rank;
+      const total  = data.total;
       const topPct = total > 1 ? Math.round((rank / total) * 100) : 1;
       document.getElementById('d-rank').textContent       = '#' + rank;
       document.getElementById('d-rank-hero').textContent  = '#' + rank;
@@ -1399,58 +1280,19 @@ async function fetchRank(cardId) {
 
 async function fetchStats() {
   try {
-    const allSnap = await getDocs(collection(db, 'cards'));
-    const claimed = [];
-    allSnap.forEach(d => { const c = d.data(); if (c.claimed) claimed.push(c); });
-    claimed.sort((a, b) => (b.currentXP || 0) - (a.currentXP || 0));
-    const totalLive  = claimed.length;
-    const highestXP  = claimed.length ? (claimed[0].currentXP || 0) : 0;
-    const topCard    = claimed.length ? (claimed[0].cardName || claimed[0].cardId || '—') : '—';
-    document.getElementById('stat-total-live').textContent  = totalLive.toLocaleString();
-    document.getElementById('stat-highest-xp').textContent = highestXP.toLocaleString() + ' XP';
-    document.getElementById('stat-top-card').textContent   = topCard;
+    const data = await jsonpFetch(LIVING_API + '?action=get_stats', 8000);
+    if (data && data.success) {
+      document.getElementById('stat-total-live').textContent  = data.totalLive.toLocaleString();
+      document.getElementById('stat-highest-xp').textContent = data.highestXP.toLocaleString() + ' XP';
+      document.getElementById('stat-top-card').textContent   = data.topCard;
+    }
   } catch(e) {}
 }
 
-async function fetchScanHistory(cardId, streak) {
+async function fetchScanHistory(cardId) {
   try {
-    const ledgerSnap = await getDocs(
-      query(collection(db, 'cards', cardId, 'ledger'), orderBy('date', 'desc'), limit(28))
-    );
-    const scanDates = new Set();
-    ledgerSnap.forEach(d => {
-      const entry = d.data();
-      if (entry.type === 'DAILY_SCAN' && entry.date) {
-        const dt = entry.date.toDate ? entry.date.toDate() : new Date(entry.date);
-        scanDates.add(dt.toISOString().slice(0, 10));
-      }
-    });
-    const cardSnap = await getDoc(doc(db, 'cards', cardId));
-    const claimDate = cardSnap.exists() && cardSnap.data().claimDate
-      ? cardSnap.data().claimDate.toDate()
-      : null;
-    const days = [];
-    for (let i = 27; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      const beforeClaim = claimDate && d < claimDate;
-      days.push({ beforeClaim, scanned: scanDates.has(key) });
-    }
-
-    // If ledger has no DAILY_SCAN entries, fall back to streak count from Firestore
-    if (scanDates.size === 0 && streak > 0) {
-      const streakCount = Math.min(streak, 28);
-      for (let i = 0; i < 28; i++) {
-        const dayObj = days[i];
-        if (!dayObj.beforeClaim) {
-          const distFromEnd = 27 - i;
-          dayObj.scanned = distFromEnd < streakCount;
-        }
-      }
-    }
-
-    applyStreakCalendar(days);
+    const data = await jsonpFetch(LIVING_API + '?action=get_scan_history&card_id=' + encodeURIComponent(cardId), 10000);
+    if (data && data.success && data.days) applyStreakCalendar(data.days);
   } catch(e) {}
 }
 
@@ -1477,12 +1319,6 @@ function showGamingBtn(asOwner) {
   } else {
     btn.classList.remove('visible');
   }
-
-  // XP Marketplace — visible to everyone (owners and visitors)
-  const mktBtn = document.getElementById('xp-market-btn');
-  if (!mktBtn) return;
-  const marketUrl = '../Marketplace/spotlight.html' + (urlCardId ? '?ref_card=' + encodeURIComponent(urlCardId) : '');
-  mktBtn.href = marketUrl;
 }
 
 document.addEventListener('keydown', e => {
@@ -1494,16 +1330,6 @@ document.addEventListener('keydown', e => {
     }
   }
 });
-
-// Expose functions to global scope (required because this is a module script)
-window.doClaim           = doClaim;
-window.doVisitorClaim    = doVisitorClaim;
-window.doTransferClaim   = doTransferClaim;
-window.enterAsSavedOwner = enterAsSavedOwner;
-window.enterReadOnly     = enterReadOnly;
-window.doSignOut         = doSignOut;
-window.logScan           = logScan;
-window.showClaimScreen   = showClaimScreen;
 </script>
 </body>
 </html>
