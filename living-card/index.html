@@ -1035,11 +1035,11 @@ async function logScan() {
   btn.innerHTML = '<span>⏳</span> Logging scan...';
   feedback.textContent = '';
   try {
-    const url = LIVING_API
-      + '?action=qr_scan'
-      + '&card_id='     + encodeURIComponent(cardId)
+    const url = 'https://us-central1-pfp-system.cloudfunctions.net/qrScan'
+      + '?card_id='     + encodeURIComponent(cardId)
       + '&owner_token=' + encodeURIComponent(token);
-    const data = await jsonpFetch(url, 8000);
+    const data = await fetch(url).then(r => r.json());
+    
     if (data.success || data.status === 200) {
       const xpDisplay  = data.totalXP !== undefined ? data.totalXP.toLocaleString() : '--';
       const xpEffect   = data.xpEffect !== undefined ? data.xpEffect : 10;
