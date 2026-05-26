@@ -320,6 +320,33 @@
   .gaming-hub-btn:hover { background:linear-gradient(135deg,rgba(46,204,113,0.12),rgba(46,204,113,0.22)); box-shadow:0 0 30px rgba(46,204,113,0.1); border-color:#2ecc71; }
   .gaming-hub-btn.visible { display:flex; align-items:center; justify-content:center; gap:10px; }
 
+  /* ── XP MARKETPLACE BUTTON ───────────────────────────────────────────── */
+  .xp-market-btn {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, rgba(192,57,43,0.06), rgba(192,57,43,0.13));
+    border: 1px solid rgba(192,57,43,0.45);
+    color: #e74c3c;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .xp-market-btn:hover {
+    background: linear-gradient(135deg, rgba(192,57,43,0.14), rgba(192,57,43,0.24));
+    box-shadow: 0 0 30px rgba(192,57,43,0.12);
+    border-color: #e74c3c;
+    color: #ff6b6b;
+  }
 
   @media (max-width:900px) {
     .stat-grid { grid-template-columns:repeat(2,1fr); }
@@ -446,6 +473,8 @@
     <!-- GAMING HUB BUTTON — owners only -->
     <a class="gaming-hub-btn" id="gaming-hub-btn" href="#">🎮 &nbsp; Enter XP Gaming Hub</a>
 
+    <!-- XP MARKETPLACE BUTTON — all visitors -->
+    <a class="xp-market-btn" id="xp-market-btn" href="#">🏪 &nbsp; Enter XP Gaming Marketplace</a>
 
     <div class="section-title animate-in delay-1">At a Glance</div>
     <div class="stat-grid animate-in delay-1">
@@ -1319,6 +1348,12 @@ function showGamingBtn(asOwner) {
   } else {
     btn.classList.remove('visible');
   }
+
+  // XP Marketplace — visible to everyone (owners and visitors)
+  const mktBtn = document.getElementById('xp-market-btn');
+  if (!mktBtn) return;
+  const marketUrl = '../Marketplace/spotlight.html' + (urlCardId ? '?ref_card=' + encodeURIComponent(urlCardId) : '');
+  mktBtn.href = marketUrl;
 }
 
 document.addEventListener('keydown', e => {
