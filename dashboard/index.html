@@ -582,11 +582,11 @@
 </div>
 
 <script type="module">
-// ── Firebase ────────────────────────────────────────────────────────────────
 import { initializeApp }                        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, doc, getDoc,
          collection, getDocs,
-         query, orderBy, limit }                from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+         query, orderBy, limit,
+         updateDoc, increment }                 from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey:            'AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU',
@@ -599,6 +599,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
+window._pfpFirestore          = db;
+window._pfpFirestoreDoc       = doc;
+window._pfpFirestoreGetDoc    = getDoc;
+window._pfpFirestoreCollection= collection;
+window._pfpFirestoreGetDocs   = getDocs;
+window._pfpFirestoreQuery     = query;
+window._pfpFirestoreOrderBy   = orderBy;
+window._pfpFirestoreLimit     = limit;
+window._pfpFirestoreUpdateDoc = updateDoc;
+window._pfpFirestoreIncrement = increment;
+window._pfpFirebaseReady      = true;
+window.dispatchEvent(new Event('pfp-firebase-ready'));
+</script>
+
+<script>
 // ── Apps Script (writes only) ────────────────────────────────────────────────
 const LIVING_API   = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflBEX2r7mxTdyBxJOYXSlNcDgLGotqu28buVV4YHfBmO1MOvGDc/exec';
@@ -632,7 +647,7 @@ function jsonpFetch(url, timeout) {
 // ── Firestore: load settings/multipliers ────────────────────────────────────
 async function loadMultipliers() {
   try {
-    const snap = await getDoc(doc(db, 'settings', 'multipliers'));
+    const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(window._pfpFirestore, 'settings', 'multipliers'));
     if (snap.exists()) {
       const s = snap.data();
       settingsMultipliers = [
@@ -676,7 +691,11 @@ window.addEventListener('DOMContentLoaded', () => {
     livingCard   = null;
     analyzerCard = null;
     gamingData   = null;
-    boot(urlCardId);
+    if (window._pfpFirebaseReady) {
+      boot(urlCardId);
+    } else {
+      window.addEventListener('pfp-firebase-ready', () => boot(urlCardId), { once: true });
+    }
   } else {
     showError('No card ID provided in the URL.');
   }
@@ -696,7 +715,7 @@ async function boot(evoId) {
 
   // Living card data from Firestore
   try {
-    const snap = await getDoc(doc(db, 'cards', evoId));
+    const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(window._pfpFirestore, 'cards', evoId));
     if (snap.exists()) {
       const d = snap.data();
       livingCard = {
@@ -723,7 +742,7 @@ async function boot(evoId) {
 
   // Gaming data from Firestore
   try {
-    const snap = await getDoc(doc(db, 'gaming', evoId));
+    const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(window._pfpFirestore, 'gaming', evoId));
     if (snap.exists()) {
       const d = snap.data();
       gamingData = { 'Gaming XP': d.gamingXP || d.totalGamingXP || 0 };
@@ -759,7 +778,7 @@ async function boot(evoId) {
 
 async function fetchFreshLivingCard(pinnedXP) {
   try {
-    const snap = await getDoc(doc(db, 'cards', urlCardId));
+    const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(window._pfpFirestore, 'cards', urlCardId));
     if (snap.exists()) {
       const d = snap.data();
       const incomingXP = d.currentXP || 0;
@@ -1080,9 +1099,12 @@ async function incrementView(cardId) {
   if (localStorage.getItem(key) === today) return;
   localStorage.setItem(key, today);
   try {
-    const data = await jsonpFetch(LIVING_API + '?action=increment_view&card_id=' + encodeURIComponent(cardId), 6000);
-    if (data && data.success) {
-      document.getElementById('d-views').textContent = data.views.toLocaleString();
+    const db     = window._pfpFirestore;
+    const docRef = window._pfpFirestoreDoc(db, 'cards', cardId);
+    await window._pfpFirestoreUpdateDoc(docRef, { pageViews: window._pfpFirestoreIncrement(1) });
+    const snap = await window._pfpFirestoreGetDoc(docRef);
+    if (snap.exists()) {
+      document.getElementById('d-views').textContent = (snap.data().pageViews || 0).toLocaleString();
     }
   } catch(e) {}
 }
@@ -1101,11 +1123,10 @@ async function logScan() {
   btn.innerHTML = '<span>⏳</span> Logging scan...';
   feedback.textContent = '';
   try {
-    const url = LIVING_API
-      + '?action=qr_scan'
-      + '&card_id='     + encodeURIComponent(cardId)
+    const url = 'https://us-central1-pfp-system.cloudfunctions.net/qrScan'
+      + '?card_id='     + encodeURIComponent(cardId)
       + '&owner_token=' + encodeURIComponent(token);
-    const data = await jsonpFetch(url, 8000);
+    const data = await fetch(url).then(r => r.json());
     if (data.success || data.status === 200) {
       const xpDisplay  = data.totalXP !== undefined ? data.totalXP.toLocaleString() : '--';
       const xpEffect   = data.xpEffect !== undefined ? data.xpEffect : 10;
@@ -1198,7 +1219,7 @@ function buildMilestones(xp, streak, interactions) {
 
   render(new Set());
 
-  getDocs(query(collection(db, 'milestones'), orderBy('date', 'desc')))
+  window._pfpFirestoreGetDocs(window._pfpFirestoreQuery(window._pfpFirestoreCollection(window._pfpFirestore, 'milestones'), window._pfpFirestoreOrderBy('date', 'desc')))
     .then(snap => {
       const earned = new Set();
       snap.forEach(d => {
@@ -1247,8 +1268,8 @@ function buildLog(interactions, daysSince) {
 
 async function fetchLedger(cardId) {
   try {
-    const snap = await getDocs(
-      query(collection(db, 'cards', cardId, 'ledger'), orderBy('date', 'desc'), limit(50))
+    const snap = await window._pfpFirestoreGetDocs(
+      window._pfpFirestoreQuery(window._pfpFirestoreCollection(window._pfpFirestore, 'cards', cardId, 'ledger'), window._pfpFirestoreOrderBy('date', 'desc'), window._pfpFirestoreLimit(50))
     );
     const log = document.getElementById('log-list');
     const typeMap = {
@@ -1382,7 +1403,7 @@ function startParticles(stageIdx) {
 
 async function fetchRank(cardId) {
   try {
-    const allSnap = await getDocs(collection(db, 'cards'));
+    const allSnap = await window._pfpFirestoreGetDocs(window._pfpFirestoreCollection(window._pfpFirestore, 'cards'));
     const cards = [];
     allSnap.forEach(d => cards.push(d.data()));
     cards.sort((a, b) => (b.currentXP || 0) - (a.currentXP || 0));
@@ -1400,7 +1421,7 @@ async function fetchRank(cardId) {
 
 async function fetchStats() {
   try {
-    const allSnap = await getDocs(collection(db, 'cards'));
+    const allSnap = await window._pfpFirestoreGetDocs(window._pfpFirestoreCollection(window._pfpFirestore, 'cards'));
     const claimed = [];
     allSnap.forEach(d => { const c = d.data(); if (c.claimed) claimed.push(c); });
     claimed.sort((a, b) => (b.currentXP || 0) - (a.currentXP || 0));
@@ -1415,8 +1436,8 @@ async function fetchStats() {
 
 async function fetchScanHistory(cardId, streak) {
   try {
-    const ledgerSnap = await getDocs(
-      query(collection(db, 'cards', cardId, 'ledger'), orderBy('date', 'desc'), limit(28))
+    const ledgerSnap = await window._pfpFirestoreGetDocs(
+      window._pfpFirestoreQuery(window._pfpFirestoreCollection(window._pfpFirestore, 'cards', cardId, 'ledger'), window._pfpFirestoreOrderBy('date', 'desc'), window._pfpFirestoreLimit(28))
     );
     const scanDates = new Set();
     ledgerSnap.forEach(d => {
@@ -1426,7 +1447,7 @@ async function fetchScanHistory(cardId, streak) {
         scanDates.add(dt.toISOString().slice(0, 10));
       }
     });
-    const cardSnap = await getDoc(doc(db, 'cards', cardId));
+    const cardSnap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(window._pfpFirestore, 'cards', cardId));
     const claimDate = cardSnap.exists() && cardSnap.data().claimDate
       ? cardSnap.data().claimDate.toDate()
       : null;
@@ -1495,16 +1516,6 @@ document.addEventListener('keydown', e => {
     }
   }
 });
-
-// Expose functions to global scope (required because this is a module script)
-window.doClaim           = doClaim;
-window.doVisitorClaim    = doVisitorClaim;
-window.doTransferClaim   = doTransferClaim;
-window.enterAsSavedOwner = enterAsSavedOwner;
-window.enterReadOnly     = enterReadOnly;
-window.doSignOut         = doSignOut;
-window.logScan           = logScan;
-window.showClaimScreen   = showClaimScreen;
 </script>
 </body>
 </html>
