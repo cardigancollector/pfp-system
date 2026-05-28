@@ -818,13 +818,12 @@ async function performClaim(claimCode, errEl) {
   document.getElementById('loading-screen').style.display = 'flex';
 
   try {
-    const url = LIVING_API
-      + '?action=claim_card'
-      + '&card_id='    + encodeURIComponent(urlCardId)
-      + '&claim_code=' + encodeURIComponent(claimCode)
-      + '&owner_token=OWN-PLACEHOLDER';
-
-    const data = await jsonpFetch(url, 10000);
+    const response = await fetch('https://us-central1-pfp-system.cloudfunctions.net/claimCard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cardId: urlCardId, claimCode: claimCode })
+    });
+    const data = await response.json();
 
     const alreadyClaimed = data.error && data.error.toLowerCase().includes('already claimed');
     if (data.success || data.status === 200 || alreadyClaimed) {
