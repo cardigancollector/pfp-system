@@ -970,7 +970,7 @@ function buildDashboard(asOwner) {
   const claimDate    = lc['Claim Date'] || null;
   const lastDate     = lc['Last Interaction'] ? new Date(lc['Last Interaction']) : null;
   const todayStr     = new Date().toLocaleDateString('en-CA');
-  const lastDateStr  = lastDate ? lastDate.toLocaleDateString('en-CA') : null;
+  const lastDateStr  = lastDate ? lastDate.toISOString().slice(0, 10) : null;
   const daysSince    = lastDateStr
     ? Math.floor((new Date(todayStr) - new Date(lastDateStr)) / 86400000)
     : 99;
