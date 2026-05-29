@@ -226,8 +226,30 @@
 
 </div>
 
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp }       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey:            'AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU',
+  authDomain:        'pfp-system.firebaseapp.com',
+  projectId:         'pfp-system',
+  storageBucket:     'pfp-system.firebasestorage.app',
+  messagingSenderId: '643360345707',
+  appId:             '1:643360345707:web:9e5b9a902b41169ae5eb2e'
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+window._pfpFirestore       = db;
+window._pfpFirestoreDoc    = doc;
+window._pfpFirestoreGetDoc = getDoc;
+window._pfpFirebaseReady   = true;
+window.dispatchEvent(new Event('pfp-firebase-ready'));
+</script>
+
 <script>
-const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflBEX2r7mxTdyBxJOYXSlNcDgLGotqu28buVV4YHfBmO1MOvGDc/exec';
 
 const STAGES     = ['Dormant','Awakened','Growing','Established','Renowned','Legendary','Mythic'];
@@ -280,6 +302,36 @@ function scanOwnedCards() {
     } catch(e) {}
   }
   return owned;
+}
+
+// ── Fetch living card data from Firestore ──
+async function fetchLivingCardFromFirestore(cardId) {
+  try {
+    const db     = window._pfpFirestore;
+    const docRef = window._pfpFirestoreDoc(db, 'cards', cardId);
+    const snap   = await window._pfpFirestoreGetDoc(docRef);
+    if (!snap.exists()) return null;
+    const d = snap.data();
+
+    const lastInteraction = d.lastInteraction ? d.lastInteraction.toDate() : null;
+    const todayStr        = new Date().toISOString().slice(0, 10);
+    const lastStr         = lastInteraction ? lastInteraction.toISOString().slice(0, 10) : null;
+    const daysSince       = lastStr
+      ? Math.floor((new Date(todayStr) - new Date(lastStr)) / 86400000)
+      : 99;
+
+    return {
+      'Card Name':          d.cardName        || cardId,
+      'Current XP':         d.currentXP       || 0,
+      'Gaming XP':          0, // fetched separately if needed
+      'Evolution Stage':    d.evolutionStage  || 'DORMANT',
+      'Streak (days)':      d.streakDays      || 0,
+      'Days Since Scan':    daysSince,
+    };
+  } catch(e) {
+    console.warn('Firestore fetch failed for', cardId, e);
+    return null;
+  }
 }
 
 // ── Build a skeleton tile while data loads ──
@@ -355,7 +407,7 @@ function esc(str) {
 }
 
 // ── Main ──
-window.addEventListener('DOMContentLoaded', async () => {
+async function main() {
   const owned = scanOwnedCards();
 
   if (owned.length === 0) {
@@ -381,15 +433,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     tiles[o.cardId] = tile;
   });
 
-  // Fetch live data and analyzer data for all cards in parallel
+  // Fetch Firestore living data + Analyzer image data for all cards in parallel
   const results = await Promise.allSettled(
     owned.map(async o => {
       const [livingData, analyzerData] = await Promise.allSettled([
-        jsonpFetch(
-          LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(o.cardId)
-          + '&owner_token=' + encodeURIComponent(o.ownerToken),
-          10000
-        ),
+        fetchLivingCardFromFirestore(o.cardId),
         jsonpFetch(
           ANALYZER_API + '?action=getCardByEvoId&evoId=' + encodeURIComponent(o.cardId),
           10000
@@ -397,7 +445,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       ]);
       const imageUrl = (analyzerData.status === 'fulfilled' && analyzerData.value?.card?.imageUrl)
         ? analyzerData.value.card.imageUrl : '';
-      return { cardId: o.cardId, ownerToken: o.ownerToken, data: livingData.value || null, imageUrl };
+      return { cardId: o.cardId, data: livingData.value || null, imageUrl };
     })
   );
 
@@ -406,18 +454,17 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   results.forEach(result => {
     if (result.status !== 'fulfilled') return;
-    const { cardId, data } = result.value;
-    if (!data || !data.success || !data.card) return;
+    const { cardId, data, imageUrl } = result.value;
+    if (!data) return;
 
-    const card = data.card;
-    card['_cardId']   = cardId;
-    card['_imageUrl'] = result.value.imageUrl || '';
+    data['_cardId']   = cardId;
+    data['_imageUrl'] = imageUrl || '';
 
     const tile = tiles[cardId];
-    if (tile) hydrateTile(tile, card);
+    if (tile) hydrateTile(tile, data);
 
-    const xp       = Number(card['Current XP'] || 0) + Number(card['Gaming XP'] || 0);
-    const stageIdx = getStageIndex(card['Evolution Stage']);
+    const xp       = Number(data['Current XP'] || 0) + Number(data['Gaming XP'] || 0);
+    const stageIdx = getStageIndex(data['Evolution Stage']);
     totalXPAll += xp;
     if (stageIdx > highestStageIdx) highestStageIdx = stageIdx;
     cardsWithData++;
@@ -441,7 +488,20 @@ window.addEventListener('DOMContentLoaded', async () => {
       </div>
     `;
   }
-});
+}
+
+// Wait for Firebase to be ready before running
+if (window._pfpFirebaseReady) {
+  window.addEventListener('DOMContentLoaded', main);
+} else {
+  window.addEventListener('pfp-firebase-ready', () => {
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', main);
+    } else {
+      main();
+    }
+  });
+}
 </script>
 </body>
 </html>
