@@ -6,6 +6,28 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>XP Gaming — PfP</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain: "pfp-system.firebaseapp.com",
+    projectId: "pfp-system",
+    storageBucket: "pfp-system.firebasestorage.app",
+    messagingSenderId: "643360345707",
+    appId: "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  window._pfpFirestore = db;
+  window._pfpFirestoreDoc = doc;
+  window._pfpFirestoreGetDoc = getDoc;
+  window._pfpFirebaseReady = true;
+  window.dispatchEvent(new Event('pfp-firebase-ready'));
+</script>
 <style>
   :root {
     --green-deep:  #041a0a;
@@ -295,36 +317,45 @@ async function loadAllData() {
   if (!CARD_ID) return;
 
   try {
-    const [cardResp, gamingResp] = await Promise.all([
-      jsonpFetch(API + '?action=get_card&card_id=' + encodeURIComponent(CARD_ID), 10000),
-      jsonpFetch(API + '?action=getGamingData&card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN), 10000)
-    ]);
+    const db   = window._pfpFirestore;
+    const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(db, 'gaming', CARD_ID));
+    if (snap.exists()) {
+      const d = snap.data();
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      const xpToday  = d.gamingXPDate === todayStr ? (d.gamingXPToday || 0) : 0;
+      const remaining = Math.max(0, 100 - xpToday);
 
-    if (cardResp && cardResp.success && cardResp.card) {
-      CARD_DATA = cardResp.card;
-    }
+      GAMING_DATA = {
+        'Gaming XP':              d.gamingXP        || 0,
+        'Daily Remaining':        remaining,
+        'Last Game':              d.lastGame         || '—',
+        'Vault Rounds':           d.vaultRounds      || 0,
+        'Vault Wins':             d.vaultWins        || 0,
+        'Vault Net XP':           d.vaultNetXP       || 0,
+        'Vault Biggest Win':      d.vaultBiggestWin  || 0,
+        'Vault Biggest Loss':     d.vaultBiggestLoss || 0,
+        'Card Attack Rounds':     d.caRounds         || 0,
+        'Card Attack Best Score': d.caBestScore      || 0,
+        'Card Attack Best Wave':  d.caBestWave       || 0,
+        'Card Attack XP Earned':  d.caXPEarned       || 0,
+        'Maze Rounds':            d.mazeRounds       || 0,
+        'Maze Escaped':           d.mazeEscaped      || 0,
+        'Maze XP Earned':         d.mazeXPEarned     || 0,
+      };
 
-    if (gamingResp && gamingResp.success && gamingResp.gaming) {
-      GAMING_DATA = gamingResp.gaming;
-      const remaining = parseInt(GAMING_DATA['Daily Remaining']) || 0;
       sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
     }
   } catch(e) {
-    // silently continue with whatever data we have
+    console.warn('Firestore gaming read failed:', e);
   }
 }
 
 async function refreshGamingData() {
   if (!CARD_ID) return;
   try {
-    const resp = await jsonpFetch(API + '?action=getGamingData&card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN), 10000);
-    if (resp && resp.success && resp.gaming) {
-      GAMING_DATA = resp.gaming;
-      const remaining = parseInt(GAMING_DATA['Daily Remaining']) || 0;
-      sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
-      renderPlayer();
-      renderStats();
-    }
+    await loadAllData();
+    renderPlayer();
+    renderStats();
   } catch(e) {}
 }
 
