@@ -6,6 +6,28 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>The Vault — XP Gaming</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain: "pfp-system.firebaseapp.com",
+    projectId: "pfp-system",
+    storageBucket: "pfp-system.firebasestorage.app",
+    messagingSenderId: "643360345707",
+    appId: "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  window._pfpFirestore = db;
+  window._pfpFirestoreDoc = doc;
+  window._pfpFirestoreGetDoc = getDoc;
+  window._pfpFirebaseReady = true;
+  window.dispatchEvent(new Event('pfp-firebase-ready'));
+</script>
 <style>
   :root {
     --green-deep:   #041a0a;
@@ -411,16 +433,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (CARD_ID) {
     try {
-      const url  = API + '?action=getGamingData&card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
-      const data = await jsonpFetch(url, 10000);
-      if (data && data.success && data.gaming) {
-        const g = data.gaming;
-        balance = parseInt(g['Gaming XP']) || 0;
-        const remaining = parseInt(g['Daily Remaining']);
-        sessionStorage.setItem('pfp_daily_xp_remaining', isNaN(remaining) ? 100 : remaining);
-        document.getElementById('card-name-display').textContent = CARD_ID;
+      const db   = window._pfpFirestore;
+      const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(db, 'gaming', CARD_ID));
+      if (snap.exists()) {
+        const d = snap.data();
+        balance = parseInt(d.gamingXP) || 0;
+
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+        const xpToday  = d.gamingXPDate === todayStr ? (d.gamingXPToday || 0) : 0;
+        const remaining = Math.max(0, 100 - xpToday);
+        sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
       }
-    } catch(e) { console.warn('getGamingData failed:', e); }
+      document.getElementById('card-name-display').textContent = CARD_ID;
+    } catch(e) { console.warn('Firestore gaming read failed:', e); }
   } else {
     document.getElementById('card-name-display').textContent = 'No card loaded';
     sessionStorage.setItem('pfp_daily_xp_remaining', 100);
