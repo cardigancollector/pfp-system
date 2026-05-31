@@ -737,11 +737,7 @@ async function boot(evoId) {
   livingCard = await firestoreGetCard(evoId);
   // Increment page view counter for every visit
   try {
-    const db = window._pfpFirestore;
-    await window._pfpFirestoreUpdateDoc(
-      window._pfpFirestoreDoc(db, 'cards', evoId),
-      { pageViews: window._pfpFirestoreIncrement(1) }
-    );
+    await fetch('https://us-central1-pfp-system.cloudfunctions.net/recordPageView?card_id=' + encodeURIComponent(evoId));
   } catch(e) { console.warn('Page view increment failed:', e); }
 
   try {
