@@ -1099,14 +1099,12 @@ async function incrementView(cardId) {
   if (localStorage.getItem(key) === today) return;
   localStorage.setItem(key, today);
   try {
-    const db     = window._pfpFirestore;
-    const docRef = window._pfpFirestoreDoc(db, 'cards', cardId);
-    await window._pfpFirestoreUpdateDoc(docRef, { pageViews: window._pfpFirestoreIncrement(1) });
-    const snap = await window._pfpFirestoreGetDoc(docRef);
-    if (snap.exists()) {
-      document.getElementById('d-views').textContent = (snap.data().pageViews || 0).toLocaleString();
+    const res  = await fetch('https://us-central1-pfp-system.cloudfunctions.net/recordPageView?card_id=' + encodeURIComponent(cardId));
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('d-views').textContent = data.pageViews.toLocaleString();
     }
-  } catch(e) {}
+  } catch(e) { console.warn('Page view increment failed:', e); }
 }
 
 async function logScan() {
