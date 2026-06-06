@@ -1438,7 +1438,7 @@ async function fetchScanHistory(cardId, streak) {
       const entry = d.data();
       if (entry.type === 'DAILY_SCAN' && entry.date) {
         const dt = entry.date.toDate ? entry.date.toDate() : new Date(entry.date);
-        scanDates.add(dt.toISOString().slice(0, 10));
+        scanDates.add(dt.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }));
       }
     });
     const cardSnap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(window._pfpFirestore, 'cards', cardId));
@@ -1448,8 +1448,8 @@ async function fetchScanHistory(cardId, streak) {
     const days = [];
     for (let i = 27; i >= 0; i--) {
       const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
+      d.setUTCDate(d.getUTCDate() - i);
+      const key = d.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
       const beforeClaim = claimDate && d < claimDate;
       days.push({ beforeClaim, scanned: scanDates.has(key) });
     }
