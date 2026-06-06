@@ -725,7 +725,7 @@ async function boot(evoId) {
         'Total Interactions': d.totalInteractions|| 0,
         'Last Interaction':   d.lastInteraction  ? d.lastInteraction.toDate().toISOString() : null,
         'Live Value':         d.liveValue        || 0,
-        'Active Event': (d.eventName && d.eventExpiryDate) ? {
+        'Active Event': (d.eventName && d.eventExpiryDate && d.eventExpiryDate.toDate() > new Date()) ? {
           eventName:   d.eventName,
           flavourText: d.eventFlavourText || '',
           xpEffect:    d.eventXPEffect    || 0,
