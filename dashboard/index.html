@@ -1260,6 +1260,7 @@ function applyStreakCalendar(days) {
 
 function buildLog(interactions, daysSince) {
   const log = document.getElementById('log-list');
+  if (!log) return;
   log.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">Loading log…</div>';
   fetchLedger(urlCardId);
 }
