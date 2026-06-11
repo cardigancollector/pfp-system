@@ -737,11 +737,17 @@ window.goBack = function() {
       if (cardIds.length === 0) { updateXPDisplay(0); return; }
 
       const fetches = cardIds.map(async cardId => {
+        let currentXP = 0;
+        let gamingXP  = 0;
         try {
           const cardSnap = await getDoc(doc(db, 'cards', cardId));
-          if (cardSnap.exists()) return cardSnap.data().currentXP || 0;
+          if (cardSnap.exists()) currentXP = cardSnap.data().currentXP || 0;
         } catch(e) {}
-        return 0;
+        try {
+          const gamingSnap = await getDoc(doc(db, 'gaming', cardId));
+          if (gamingSnap.exists()) gamingXP = gamingSnap.data().gamingXP || 0;
+        } catch(e) {}
+        return currentXP + gamingXP;
       });
 
       const total = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
