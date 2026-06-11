@@ -438,7 +438,7 @@
     let totalLife = 0, totalGaming = 0;
 
     cards.forEach((card, i) => {
-      const lifeXP   = card.currentXP - card.gamingXP;
+      const lifeXP   = card.currentXP;
       totalLife   += lifeXP;
       totalGaming += card.gamingXP;
 
