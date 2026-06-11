@@ -652,7 +652,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, doc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   // ── BACK TO DASHBOARD ──
 window.goBack = function() {
@@ -727,50 +727,26 @@ window.goBack = function() {
   // ── LOAD USER XP ──
   async function loadUserXP(user) {
     try {
-      // Scan localStorage for all pfp_owner_* keys
-      const localCards = [];
+      const cardIds = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (!key || !key.startsWith('pfp_owner_')) continue;
-        const cardId = key.replace('pfp_owner_', '');
-        try {
-          const stored = JSON.parse(localStorage.getItem(key));
-          if (stored && stored.ownerToken) localCards.push({ cardId, ownerToken: stored.ownerToken });
-        } catch(e) {}
+        cardIds.push(key.replace('pfp_owner_', ''));
       }
 
-      // Also check Firestore in case cards are stored there
-      let firestoreCards = [];
-      try {
-        const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (userSnap.exists()) firestoreCards = userSnap.data().cards || [];
-      } catch(e) {}
+      if (cardIds.length === 0) { updateXPDisplay(0); return; }
 
-      // Merge — prefer localStorage entries, add any Firestore-only cards
-      const seen = new Set(localCards.map(c => c.cardId));
-      firestoreCards.forEach(c => {
-        const id = c.cardId || c;
-        if (!seen.has(id)) localCards.push({ cardId: id, ownerToken: '' });
-      });
-
-      if (localCards.length === 0) { updateXPDisplay(0); return; }
-
-      const fetches = localCards.map(async c => {
+      const fetches = cardIds.map(async cardId => {
         try {
-          const url = LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(c.cardId)
-            + (c.ownerToken ? '&owner_token=' + encodeURIComponent(c.ownerToken) : '');
-          const res = await jsonpFetch(url, 8000);
-          if (res && res.success && res.card) return (parseInt(res.card['Current XP']) || 0) + (parseInt(res.card['Gaming XP']) || 0);
+          const cardSnap = await getDoc(doc(db, 'cards', cardId));
+          if (cardSnap.exists()) return cardSnap.data().currentXP || 0;
         } catch(e) {}
         return 0;
       });
 
       const total = (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
-      userXP = total;
       updateXPDisplay(total);
-
     } catch(err) {
-      console.warn('XP load error:', err);
       updateXPDisplay(0);
     }
   }
@@ -783,13 +759,12 @@ window.goBack = function() {
   // ── LOAD SPOTLIGHT ──
   async function loadSpotlight() {
     try {
-      const data = await jsonpFetch(LIVING_API + '?action=get_spotlight', 10000);
-      if (!data || !data.success || !data.card) {
-        showError();
-        return;
-      }
-      spotlightCard = data.card;
-      renderSpotlight(data.card);
+      const q = query(collection(db, 'marketplace'), where('status', '==', 'spotlight'));
+      const snap = await getDocs(q);
+      if (snap.empty) { showError(); return; }
+      const data = snap.docs[0].data();
+      spotlightCard = data;
+      renderSpotlight(data);
     } catch(err) {
       showError();
     }
