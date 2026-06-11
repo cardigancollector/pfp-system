@@ -366,25 +366,6 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
-  const SHEETS_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
-
-  function jsonpFetch(url, timeout) {
-    return new Promise((resolve, reject) => {
-      const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
-      const script = document.createElement('script');
-      const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 10000);
-      function cleanup() {
-        clearTimeout(timer);
-        delete window[cb];
-        if (document.body.contains(script)) document.body.removeChild(script);
-      }
-      window[cb]     = data => { cleanup(); resolve(data); };
-      script.onerror = ()   => { cleanup(); reject(new Error('script error')); };
-      script.src     = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
-      document.body.appendChild(script);
-    });
-  }
-
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = 'login.html';
@@ -409,7 +390,6 @@
         return;
       }
 
-      // Handle both plain string IDs and legacy object shape
       const cardIds = rawCards.map(c => c.cardId || c);
 
       const cardPromises = cardIds.map(id => fetchCard(id));
@@ -424,11 +404,23 @@
   }
 
   async function fetchCard(cardId) {
-    const url = SHEETS_API + '?action=get_card&card_id=' + encodeURIComponent(cardId);
     try {
-      const data = await jsonpFetch(url, 10000);
-      if (data && data.success) return data.card;
-      return null;
+      const [cardSnap, gamingSnap] = await Promise.all([
+        getDoc(doc(db, 'cards', cardId)),
+        getDoc(doc(db, 'gaming', cardId))
+      ]);
+
+      if (!cardSnap.exists()) return null;
+
+      const cardData   = cardSnap.data();
+      const gamingData = gamingSnap.exists() ? gamingSnap.data() : {};
+
+      return {
+        cardId:    cardId,
+        cardName:  cardData.cardName  || cardId,
+        currentXP: Number(cardData.currentXP) || 0,
+        gamingXP:  Number(gamingData.gamingXP) || 0
+      };
     } catch (e) {
       console.warn('Could not fetch card:', cardId, e);
       return null;
@@ -446,18 +438,9 @@
     let totalLife = 0, totalGaming = 0;
 
     cards.forEach((card, i) => {
-      const cardName = card['Card Name'] || card['Card ID'] || '—';
-      const cardId   = card['Card ID']   || '—';
-      const printRun = card['Print Run'] || '—';
-
-      // Current XP is the combined total; Gaming XP is separate.
-      // Life XP = Current XP - Gaming XP.
-      const currentXP = Number(card['Current XP']) || 0;
-      const gamingXP  = Number(card['Gaming XP'])  || 0;
-      const lifeXP    = currentXP - gamingXP;
-
+      const lifeXP   = card.currentXP - card.gamingXP;
       totalLife   += lifeXP;
-      totalGaming += gamingXP;
+      totalGaming += card.gamingXP;
 
       const row = document.createElement('div');
       row.className = 'card-row';
@@ -472,13 +455,13 @@
             </svg>
           </div>
           <div>
-            <div class="card-name">${cardName}</div>
-            <div class="card-edition">${cardId} &nbsp;·&nbsp; ${printRun}</div>
+            <div class="card-name">${card.cardName}</div>
+            <div class="card-edition">${card.cardId}</div>
           </div>
         </div>
         <div class="xp-cell life">${fmt(lifeXP)}</div>
-        <div class="xp-cell gaming">${fmt(gamingXP)}</div>
-        <div class="xp-cell total">${fmt(currentXP)}</div>
+        <div class="xp-cell gaming">${fmt(card.gamingXP)}</div>
+        <div class="xp-cell total">${fmt(card.currentXP)}</div>
       `;
       list.appendChild(row);
     });
