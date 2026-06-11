@@ -724,22 +724,18 @@
       country:  document.getElementById('country').value.trim(),
     };
 
-    // Build redeem URL
-    const params = new URLSearchParams({
-      action:        'redeem',
-      user_uid:      currentUser.uid,
-      user_email:    currentUser.email || '',
-      card_ids:      userCardIds.join(','),
-      item_id:       marketItem.cardId,
-      ship_name:     shipping.name     || '',
-      ship_address:  shipping.address  || '',
-      ship_city:     shipping.city     || '',
-      ship_postcode: shipping.postcode || '',
-      ship_country:  shipping.country  || '',
-    });
-
     try {
-      const result = await jsonpFetch(LIVING_API + '?' + params.toString(), 20000);
+      const response = await fetch('https://us-central1-pfp-system.cloudfunctions.net/redeemItem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userUid:  currentUser.uid,
+          cardIds:  userCardIds,
+          itemId:   marketItem.cardId,
+          shipping: shipping,
+        }),
+      });
+      const result = await response.json();
 
       if (!result || !result.success) {
         const errText = result && result.error ? result.error : 'Redemption failed. Please try again.';
