@@ -569,47 +569,29 @@
   }
 
   // ── LOAD USER XP ──
-  // Current XP from get_card is already the combined total (Life + Gaming).
-  // We just sum Current XP across all cards — no Gaming XP addition needed.
   async function loadUserXP(user) {
     try {
-      // Collect cards from localStorage
-      const localCards = [];
+      const cardIds = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (!key || !key.startsWith('pfp_owner_')) continue;
-        const cardId = key.replace('pfp_owner_', '');
-        try {
-          const stored = JSON.parse(localStorage.getItem(key));
-          if (stored && stored.ownerToken) localCards.push({ cardId, ownerToken: stored.ownerToken });
-        } catch(e) {}
+        cardIds.push(key.replace('pfp_owner_', ''));
       }
 
-      // Also check Firestore in case cards are stored there but not in localStorage
-      let firestoreCards = [];
-      try {
-        const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (userSnap.exists()) firestoreCards = userSnap.data().cards || [];
-      } catch(e) {}
+      if (cardIds.length === 0) return 0;
 
-      // Merge — prefer localStorage entries, add any Firestore-only cards
-      const seen = new Set(localCards.map(c => c.cardId));
-      firestoreCards.forEach(c => {
-        const id = c.cardId || c;
-        if (!seen.has(id)) localCards.push({ cardId: id, ownerToken: '' });
-      });
-
-      if (localCards.length === 0) return 0;
-
-      const fetches = localCards.map(async c => {
+      const fetches = cardIds.map(async cardId => {
+        let currentXP = 0;
+        let gamingXP  = 0;
         try {
-          const url = LIVING_API + '?action=get_card&card_id=' + encodeURIComponent(c.cardId)
-            + (c.ownerToken ? '&owner_token=' + encodeURIComponent(c.ownerToken) : '');
-          const res = await fetch(url);
-          const data = await res.json();
-          if (data && data.success && data.card) return (parseInt(data.card['Current XP']) || 0) + (parseInt(data.card['Gaming XP']) || 0);
+          const cardSnap = await getDoc(doc(db, 'cards', cardId));
+          if (cardSnap.exists()) currentXP = cardSnap.data().currentXP || 0;
         } catch(e) {}
-        return 0;
+        try {
+          const gamingSnap = await getDoc(doc(db, 'gaming', cardId));
+          if (gamingSnap.exists()) gamingXP = gamingSnap.data().gamingXP || 0;
+        } catch(e) {}
+        return currentXP + gamingXP;
       });
 
       return (await Promise.all(fetches)).reduce((s, x) => s + x, 0);
@@ -632,23 +614,17 @@
     }
 
     try {
-      const [userXP, marketData] = await Promise.all([
+      const [userXP, itemSnap] = await Promise.all([
         loadUserXP(user),
-        jsonpFetch(LIVING_API + '?action=get_marketplace', 12000)
+        getDoc(doc(db, 'marketplace', cardId))
       ]);
 
-      if (!marketData || !marketData.success || !marketData.cards) {
-        showError('Could not load marketplace data. Please try again.');
-        return;
-      }
-
-      const card = marketData.cards.find(c => String(c.cardId) === String(cardId));
-      if (!card) {
+      if (!itemSnap.exists()) {
         showError('Item not found in the marketplace.');
         return;
       }
 
-      render(card, userXP);
+      render(itemSnap.data(), userXP);
 
     } catch(err) {
       showError('Connection error — please refresh and try again.');
