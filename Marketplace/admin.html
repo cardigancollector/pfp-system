@@ -646,7 +646,7 @@
 </main>
 
 <script>
-  const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+  const FUNCTIONS_BASE = 'https://us-central1-pfp-system.cloudfunctions.net';
   const ADMIN_PASSWORD = 'ZacwT2!'; // Change this to your preferred password
 
   let editingCardId = null; // null = adding new, string = editing existing
@@ -670,21 +670,13 @@
   });
 
   // ── JSONP ──
-  function jsonpFetch(url, timeout) {
-    return new Promise((resolve, reject) => {
-      const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
-      const script = document.createElement('script');
-      const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 12000);
-      function cleanup() {
-        clearTimeout(timer);
-        delete window[cb];
-        if (document.body.contains(script)) document.body.removeChild(script);
-      }
-      window[cb]     = data => { cleanup(); resolve(data); };
-      script.onerror = ()   => { cleanup(); reject(new Error('script error')); };
-      script.src     = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
-      document.body.appendChild(script);
+  async function apiFetch(endpoint, params) {
+    const res  = await fetch(FUNCTIONS_BASE + endpoint, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(params),
     });
+    return res.json();
   }
 
   function esc(str) {
@@ -698,12 +690,24 @@
   // ── LOAD LISTINGS ──
   async function loadListings() {
     try {
-      const data = await jsonpFetch(LIVING_API + '?action=get_marketplace_admin', 12000);
-      if (!data || !data.success || !data.cards) {
-        renderTableError('Could not load listings.');
-        return;
-      }
-      renderTable(data.cards);
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+      const firebaseConfig = {
+        apiKey:            "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+        authDomain:        "pfp-system.firebaseapp.com",
+        projectId:         "pfp-system",
+        storageBucket:     "pfp-system.firebasestorage.app",
+        messagingSenderId: "643360345707",
+        appId:             "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+      };
+
+      const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+      const db  = getFirestore(app);
+
+      const snapshot = await getDocs(collection(db, 'marketplace'));
+      const cards    = snapshot.docs.map(d => d.data());
+      renderTable(cards);
     } catch(err) {
       renderTableError('Connection error loading listings.');
     }
@@ -877,24 +881,19 @@
     document.getElementById('submit-label').textContent = editingCardId ? 'Saving…' : 'Adding…';
     showMsg('', '');
 
-    const action = editingCardId ? 'update_marketplace_item' : 'add_marketplace_item';
-
-    const params = new URLSearchParams({
-      action:       action,
-      card_id:      cardId,
-      card_name:    cardName,
-      format:       format,
-      status:       status,
-      xp_price:     xpPrice,
-      edition_size: editionSize,
-      remaining:    remaining,
-      image_url:    imageUrl,
-      description:  description,
-      date_added:   dateAdded
-    });
-
     try {
-      const result = await jsonpFetch(LIVING_API + '?' + params.toString(), 15000);
+      const result = await apiFetch('/upsertMarketplaceItem', {
+        cardId:      cardId,
+        cardName:    cardName,
+        format:      format,
+        status:      status,
+        xpPrice:     xpPrice,
+        editionSize: editionSize,
+        remaining:   remaining,
+        imageUrl:    imageUrl,
+        description: description,
+        dateAdded:   dateAdded,
+      });
 
       if (!result || !result.success) {
         showMsg(result ? result.error : 'Something went wrong.', 'error');
