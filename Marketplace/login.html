@@ -550,9 +550,13 @@
     getFirestore,
     doc,
     getDoc,
+    getDocs,
     setDoc,
     updateDoc,
-    arrayUnion
+    arrayUnion,
+    collection,
+    query,
+    where
   } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   // ── FIREBASE CONFIG ── Replace with your actual config
@@ -569,30 +573,10 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
-  const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
-
   // ── STATE ──
   let currentUser      = null;
   let registeredCards  = [];
   let isNewUser        = false;
-
-  // ── JSONP HELPER ──
-  function jsonpFetch(url, timeout) {
-    return new Promise((resolve, reject) => {
-      const cb     = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
-      const script = document.createElement('script');
-      const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 10000);
-      function cleanup() {
-        clearTimeout(timer);
-        delete window[cb];
-        if (document.body.contains(script)) document.body.removeChild(script);
-      }
-      window[cb]     = data => { cleanup(); resolve(data); };
-      script.onerror = ()   => { cleanup(); reject(new Error('script error')); };
-      script.src     = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
-      document.body.appendChild(script);
-    });
-  }
 
   // ── LOADING ──
   function showLoading(label) {
@@ -725,7 +709,7 @@
     if (!code || code.length < 6) { showMsg(msgEl, 'Please enter a valid claim code.', 'error'); return; }
     if (!code.startsWith('CLAIM-')) { showMsg(msgEl, 'Claim codes start with CLAIM-', 'error'); return; }
 
-    // Check not already registered
+    // Check not already registered to this account
     if (registeredCards.some(c => c.claimCode === code)) {
       showMsg(msgEl, 'This card is already registered to your account.', 'error');
       return;
@@ -735,37 +719,48 @@
     showMsg(msgEl, 'Verifying claim code…', 'info');
 
     try {
-      // Verify claim code against Living Card sheet
-      const url  = LIVING_API + '?action=verify_claim_code&claim_code=' + encodeURIComponent(code);
-      const data = await jsonpFetch(url, 10000);
+      // Query the cards collection for a matching claimCode
+      const q        = query(collection(db, 'cards'), where('claimCode', '==', code));
+      const snapshot = await getDocs(q);
 
-      if (data && data.success && data.cardId) {
-        const newCard = {
-          cardId:      data.cardId,
-          cardName:    data.cardName   || data.cardId,
-          ownerToken:  data.ownerToken || '',
-          claimCode:   code,
-          registeredAt: new Date().toISOString()
-        };
-
-        // Save to Firestore
-        const userRef = doc(db, 'users', currentUser.uid);
-        await updateDoc(userRef, {
-          cards: arrayUnion(newCard)
-        });
-
-        registeredCards.push(newCard);
-        input.value = '';
-        renderRegisteredCards();
-        showMsg(msgEl, `✓ ${newCard.cardName} registered successfully.`, 'success');
-
-        // Show enter button now that at least one card is registered
-        document.getElementById('enter-btn').style.display = 'flex';
-
-      } else {
-        showMsg(msgEl, data.error || 'Invalid claim code. Please check and try again.', 'error');
+      if (snapshot.empty) {
+        showMsg(msgEl, 'Invalid claim code. Please check and try again.', 'error');
+        btn.disabled = false;
+        return;
       }
+
+      const cardDoc  = snapshot.docs[0];
+      const cardData = cardDoc.data();
+
+      if (cardData.claimed === true) {
+        showMsg(msgEl, 'This claim code has already been used.', 'error');
+        btn.disabled = false;
+        return;
+      }
+
+      const newCard = {
+        cardId:       cardData.cardId,
+        cardName:     cardData.cardName || cardData.cardId,
+        claimCode:    code,
+        registeredAt: new Date().toISOString()
+      };
+
+      // Save to Firestore users document
+      const userRef = doc(db, 'users', currentUser.uid);
+      await updateDoc(userRef, {
+        cards: arrayUnion(newCard)
+      });
+
+      registeredCards.push(newCard);
+      input.value = '';
+      renderRegisteredCards();
+      showMsg(msgEl, `✓ ${newCard.cardName} registered successfully.`, 'success');
+
+      // Show enter button now that at least one card is registered
+      document.getElementById('enter-btn').style.display = 'flex';
+
     } catch(err) {
+      console.error(err);
       showMsg(msgEl, 'Connection error — please try again.', 'error');
     }
 
