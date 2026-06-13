@@ -647,21 +647,32 @@
 
 <script>
   const FUNCTIONS_BASE = 'https://us-central1-pfp-system.cloudfunctions.net';
-  const ADMIN_PASSWORD = 'ZacwT2!'; // Change this to your preferred password
 
-  let editingCardId = null; // null = adding new, string = editing existing
+  let editingCardId  = null;
+  let adminToken     = null;
 
   // ── PASSWORD GATE ──
-  function checkPassword() {
+  async function checkPassword() {
     const val = document.getElementById('gate-input').value;
-    if (val === ADMIN_PASSWORD) {
-      document.getElementById('gate').style.display = 'none';
-      document.getElementById('main').classList.add('visible');
-      loadListings();
-    } else {
-      document.getElementById('gate-err').textContent = 'Incorrect password.';
-      document.getElementById('gate-input').value = '';
-      document.getElementById('gate-input').focus();
+    if (!val) return;
+
+    document.getElementById('gate-err').textContent = 'Checking…';
+
+    try {
+      const result = await apiFetch('/adminLogin', { password: val });
+
+      if (result.success) {
+        adminToken = result.token;
+        document.getElementById('gate').style.display = 'none';
+        document.getElementById('main').classList.add('visible');
+        loadListings();
+      } else {
+        document.getElementById('gate-err').textContent = 'Incorrect password.';
+        document.getElementById('gate-input').value = '';
+        document.getElementById('gate-input').focus();
+      }
+    } catch(err) {
+      document.getElementById('gate-err').textContent = 'Connection error — please try again.';
     }
   }
 
@@ -883,6 +894,7 @@
 
     try {
       const result = await apiFetch('/upsertMarketplaceItem', {
+        token:       adminToken,
         cardId:      cardId,
         cardName:    cardName,
         format:      format,
