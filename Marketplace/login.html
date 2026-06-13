@@ -621,9 +621,9 @@
           hideLoading();
           showRegisterPanel([]);
         } else {
-          // Returning user with cards — go straight to spotlight
+          // Returning user with cards — go straight to marketplace
           hideLoading();
-          goToSpotlight();
+          goToMarketplace();
         }
       }
     } catch(err) {
@@ -802,17 +802,16 @@
     }
   }
 
-  // ── ENTER MARKETPLACE ──
   window.enterMarketplace = function() {
-    goToSpotlight();
+    goToMarketplace();
   };
 
   window.skipRegistration = function() {
-    goToSpotlight();
+    goToMarketplace();
   };
 
-  function goToSpotlight() {
-    window.location.href = 'spotlight.html';
+  function goToMarketplace() {
+    window.location.href = 'marketplace.html';
   }
 
   // ── HELPERS ──
