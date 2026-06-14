@@ -292,21 +292,6 @@ body {
 }
 .confirm-btn.active:hover { background: var(--purple-mid); }
 
-.dismiss-link {
-  display: block;
-  text-align: center;
-  font-family: 'EB Garamond', serif;
-  font-size: 0.85rem;
-  font-style: italic;
-  color: var(--text-muted);
-  margin-top: 0.6rem;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  transition: color 0.15s;
-}
-.dismiss-link:hover { color: var(--text-body); }
-
 /* ─── Loading state ────────────────────────────────────────────────────── */
 #narrative-loading {
   display: none;
@@ -507,9 +492,7 @@ body {
           Confirm My Response
         </button>
       </div>
-      <span class="dismiss-link" onclick="closePopup()">
-        Dismiss this event
-      </span>
+
 
       <!-- Generating state -->
       <div id="narrative-loading">
@@ -841,7 +824,6 @@ function _resetState() {
   document.getElementById('choice-grid').style.display      = 'grid';
   document.getElementById('confirm-btn').style.display      = 'block';
   document.querySelector('.popup-prompt').style.display     = 'block';
-  document.querySelector('.dismiss-link').style.display     = 'block';
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -870,7 +852,6 @@ function _renderPopup() {
   document.getElementById('choice-grid').style.display       = 'grid';
   document.getElementById('confirm-btn').style.display       = 'block';
   document.querySelector('.popup-prompt').style.display      = 'block';
-  document.querySelector('.dismiss-link').style.display      = 'block';
 
   const confirmBtn = document.getElementById('confirm-btn');
   confirmBtn.classList.remove('active');
@@ -918,7 +899,6 @@ async function submitChoice() {
   document.getElementById('choice-grid').style.display       = 'none';
   document.getElementById('confirm-btn').style.display       = 'none';
   document.querySelector('.popup-prompt').style.display      = 'none';
-  document.querySelector('.dismiss-link').style.display      = 'none';
   document.getElementById('narrative-loading').style.display = 'flex';
 
   const prompt = buildPrompt(event, card, choice);
@@ -1015,22 +995,6 @@ function acceptOutcome() {
   }
   closePopup();
 }
-
-/* ─────────────────────────────────────────────────────────────────────────
-   CLOSE ON OVERLAY CLICK
-   ───────────────────────────────────────────────────────────────────────── */
-document.getElementById('reaction-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closePopup();
-});
-
-/* ─────────────────────────────────────────────────────────────────────────
-   KEYBOARD: Escape to close
-   ───────────────────────────────────────────────────────────────────────── */
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && document.getElementById('reaction-overlay').classList.contains('active')) {
-    closePopup();
-  }
-});
 
 /* ─────────────────────────────────────────────────────────────────────────
    MOCK DATA + DEMO LAUNCHER (remove in production)
