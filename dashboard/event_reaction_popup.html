@@ -511,7 +511,6 @@ body {
           <span class="archetype-revealed" id="archetype-badge">—</span>
         </div>
         <div class="narrative-actions">
-          <button class="btn-decline" onclick="closePopup()">Dismiss</button>
           <button class="btn-accept" onclick="acceptOutcome()">Accept &amp; Continue</button>
         </div>
       </div>
@@ -819,11 +818,10 @@ function closePopup() {
 }
 
 function _resetState() {
-  document.getElementById('narrative-panel').style.display  = 'none';
-  document.getElementById('narrative-loading').style.display = 'none';
-  document.getElementById('choice-grid').style.display      = 'grid';
-  document.getElementById('confirm-btn').style.display      = 'block';
-  document.querySelector('.popup-prompt').style.display     = 'block';
+  document.getElementById('narrative-panel').style.display = 'none';
+  document.getElementById('choice-grid').style.display     = 'grid';
+  document.getElementById('confirm-btn').style.display     = 'block';
+  document.querySelector('.popup-prompt').style.display    = 'block';
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -847,11 +845,10 @@ function _renderPopup() {
   polBadge.className    = 'meta-badge ' + (isPos ? 'polarity-positive' : 'polarity-negative');
 
   // Reset visibility
-  document.getElementById('narrative-panel').style.display   = 'none';
-  document.getElementById('narrative-loading').style.display = 'none';
-  document.getElementById('choice-grid').style.display       = 'grid';
-  document.getElementById('confirm-btn').style.display       = 'block';
-  document.querySelector('.popup-prompt').style.display      = 'block';
+  document.getElementById('narrative-panel').style.display = 'none';
+  document.getElementById('choice-grid').style.display     = 'grid';
+  document.getElementById('confirm-btn').style.display     = 'block';
+  document.querySelector('.popup-prompt').style.display    = 'block';
 
   const confirmBtn = document.getElementById('confirm-btn');
   confirmBtn.classList.remove('active');
@@ -887,86 +884,28 @@ function selectChoice(index) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   SUBMIT → CLAUDE
+   SUBMIT — placeholder narrative (Claude integration coming via Cloud Function)
    ───────────────────────────────────────────────────────────────────────── */
-async function submitChoice() {
+function submitChoice() {
   if (_state.selectedIndex === null) return;
 
   const choice = _state.choices[_state.selectedIndex];
-  const { event, card } = _state;
 
-  // Hide choice phase, show loading
-  document.getElementById('choice-grid').style.display       = 'none';
-  document.getElementById('confirm-btn').style.display       = 'none';
-  document.querySelector('.popup-prompt').style.display      = 'none';
-  document.getElementById('narrative-loading').style.display = 'flex';
+  // Hide choice phase
+  document.getElementById('choice-grid').style.display  = 'none';
+  document.getElementById('confirm-btn').style.display  = 'none';
+  document.querySelector('.popup-prompt').style.display = 'none';
 
-  const prompt = buildPrompt(event, card, choice);
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model:      'claude-sonnet-4-6',
-        max_tokens: 1000,
-        messages:   [{ role: 'user', content: prompt }],
-      }),
-    });
-
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-
-    const data = await response.json();
-    const text = (data.content || [])
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('');
-
-    _state.narrative = text.trim();
-    _showNarrative(choice);
-
-  } catch (err) {
-    console.error('Reaction popup — Claude API error:', err);
-    _showNarrativeError(choice);
-  }
+  // Set placeholder narrative and show it
+  _state.narrative = 'The matter has been noted in the ledger of one\'s life, and the response recorded for posterity.';
+  _showNarrative(choice);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   PROMPT CONSTRUCTION
-   ───────────────────────────────────────────────────────────────────────── */
-function buildPrompt(event, card, choice) {
-  return `You are writing a first-person Victorian narrative for a living collectible card named "${card.cardName}".
-
-CONTEXT:
-- Event: "${event.name}"
-- Event category: ${event.category}
-- Polarity: ${event.polarity} (note: this does NOT determine the outcome — outcome is 50/50 regardless)
-- Flavour text: "${event.flavourText || 'None provided.'}"
-- The card's chosen response: "${choice.label}"
-- Response archetype: ${choice.archetype}
-- Card's dominant domain: ${card.dominantDomain || 'Unknown'}
-- Rarity tier: ${card.rarityTier || 'Common'}
-- Financial standing: ${card.financialStanding || 'Unknown'}
-- Recent history: ${card.recentHistory || 'No notable recent events.'}
-
-TASK:
-Write 2–3 sentences in the first person, from the card's perspective, reflecting on what happened and how they responded. 
-
-RULES:
-- Victorian register — formal, measured, slightly florid but never overwrought
-- The archetype "${choice.archetype}" should colour the voice (Resist = stubborn dignity; Yield = graceful acceptance; Reflect = inward contemplation; Act = decisive energy; Deflect = externalising blame; Transform = growth through adversity)
-- Do NOT state the outcome as good or bad — the outcome is ambiguous
-- Do NOT begin with "I" — start mid-thought, as if the reader arrives partway through
-- 2–3 sentences only
-- Return only the narrative text, no preamble, no quotation marks`;
-}
 
 /* ─────────────────────────────────────────────────────────────────────────
    SHOW NARRATIVE
    ───────────────────────────────────────────────────────────────────────── */
 function _showNarrative(choice) {
-  document.getElementById('narrative-loading').style.display = 'none';
-
   const panel = document.getElementById('narrative-panel');
   document.getElementById('narrative-text').textContent   = _state.narrative;
   document.getElementById('archetype-badge').textContent  = choice.archetype + ' Response';
@@ -974,8 +913,6 @@ function _showNarrative(choice) {
 }
 
 function _showNarrativeError(choice) {
-  document.getElementById('narrative-loading').style.display = 'none';
-
   _state.narrative = null;
 
   const panel = document.getElementById('narrative-panel');
