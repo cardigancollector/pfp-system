@@ -358,7 +358,7 @@ function setLoading(text, flavour) {
 function showNoEvents(cardId) {
   document.getElementById('loading-screen').style.display    = 'none';
   document.getElementById('no-events-screen').style.display  = 'flex';
-  const backUrl = cardId ? 'index.html?card_id=' + encodeURIComponent(cardId) : 'index.html';
+  const backUrl = cardId ? 'dashboard/index.html?card_id=' + encodeURIComponent(cardId) : 'dashboard/index.html';
   document.getElementById('no-events-back').href = backUrl;
 }
 
@@ -460,7 +460,7 @@ function renderPage(events, cardData, cardId) {
   const stage     = cardData.evolutionStage || 'DORMANT';
 
   // Back link
-  document.getElementById('back-link').href     = 'index.html?card_id=' + encodeURIComponent(cardId);
+  document.getElementById('back-link').href = 'dashboard/index.html?card_id=' + encodeURIComponent(cardId);
   document.getElementById('header-card-name').textContent = cardName;
 
   // Days lived
