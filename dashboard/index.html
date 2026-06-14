@@ -1133,6 +1133,31 @@ async function logScan() {
           '<div class="scan-xp-line">XP: ' + xpDisplay + '&nbsp;&nbsp;Stage: ' + (data.stage || '--') + '</div>' +
           '<div class="scan-event-line">' + polarityIcon + ' <strong>' + data.badge + ' ' + data.eventName + '</strong></div>' +
           '<div class="scan-flavour-line">' + data.flavourText + '</div>';
+
+        // Fire the reaction popup
+        const ac = analyzerCard || {};
+        setTimeout(() => {
+          openReactionPopup({
+            event: {
+              name:        data.eventName,
+              category:    data.eventCategory || 'mystery',
+              polarity:    data.polarity      || 'positive',
+              flavourText: data.flavourText   || '',
+            },
+            card: {
+              cardName:          ac.card              || urlCardId,
+              dominantDomain:    ac.dominantDomain    || ac.type || 'unknown',
+              rarityTier:        ac.rarity            || 'Common',
+              financialStanding: ac.financialStanding || 'Unknown',
+              recentHistory:     '',
+            },
+            onAccept: (ev, choice, narrative) => {
+              // TODO: call submitReaction Cloud Function here (future session)
+              console.log('Reaction accepted:', { event: ev.name, choice: choice.label, archetype: choice.archetype });
+            },
+            onDismiss: () => {},
+          });
+        }, 600);
       } else {
         feedback.textContent = 'XP: ' + xpDisplay + '  Stage: ' + (data.stage || '--');
       }
@@ -1511,5 +1536,10 @@ document.addEventListener('keydown', e => {
   }
 });
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     EVENT REACTION POPUP — overlay injected from event_reaction_popup.html
+════════════════════════════════════════════════════════════════════════ -->
+<script src="event_reaction_popup.js"></script>
 </body>
 </html>
