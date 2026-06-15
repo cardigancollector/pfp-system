@@ -1151,10 +1151,29 @@ async function logScan() {
               financialStanding: ac.financialStanding || 'Unknown',
               recentHistory:     '',
             },
-            onAccept: (ev, choice, narrative) => {
-              // TODO: call submitReaction Cloud Function here (future session)
-              console.log('Reaction accepted:', { event: ev.name, choice: choice.label, archetype: choice.archetype });
-            },
+            onAccept: async (ev, choice, narrative) => {
+  const cardId = ac.card || urlCardId;
+  try {
+    const res = await fetch('https://us-central1-pfp-system.cloudfunctions.net/submitReaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cardId:          cardId,
+        eventCategory:   ev.category,
+        chosenArchetype: choice.archetype,
+        chosenLabel:     choice.label,
+      }),
+    });
+    const result = await res.json();
+    const xpSign = result.reactionXP >= 0 ? '+' : '';
+    let msg = `${choice.archetype} — ${result.coherenceRating} coherence\n${xpSign}${result.reactionXP} XP`;
+    if (result.streakMessage) msg += `\n${result.streakMessage}`;
+    showToast(msg);
+  } catch (err) {
+    console.error('submitReaction failed:', err);
+    showToast('Could not save reaction. Try again.');
+  }
+},
             onDismiss: () => {},
           });
         }, 600);
@@ -1525,6 +1544,16 @@ function showGamingBtn(asOwner) {
   const marketUrl = '../Marketplace/spotlight.html' + (urlCardId ? '?ref_card=' + encodeURIComponent(urlCardId) : '');
   mktBtn.href = marketUrl;
 }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const cs = document.getElementById('claim-screen');
+    if (cs.style.display === 'flex') {
+      const unc = document.getElementById('claim-unclaimed-section');
+      if (unc.style.display !== 'none') doClaim();
+    }
+  }
+});
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
