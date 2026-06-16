@@ -390,71 +390,101 @@ function ratioSummary(posPct) {
   return 'Much has been carried. This card has known genuine difficulty.';
 }
 
-// ── Claude narrative ──────────────────────────────────────────────────────────
-async function generateNarrative(cardName, stage, grade, events) {
+// ── Local narrative generator ─────────────────────────────────────────────────
+// Builds a descriptive chronicle from real event + reaction data. No API needed.
+function generateNarrative(cardName, stage, grade, events, reactions) {
   const narrativeEl = document.getElementById('narrative-text');
 
-  // Build a compact event summary for the prompt
-  const eventLines = events.map(e => {
-    const sign = e.xpGained > 0 ? `+${e.xpGained} XP` : `-${e.xpLost} XP`;
-    return `- ${e.notes} (${e.category}, ${e.polarity}, ${sign})${e.flavourText ? ': "' + e.flavourText + '"' : ''}`;
-  }).join('\n');
+  const posEvents = events.filter(e => e.xpGained > 0);
+  const negEvents = events.filter(e => e.xpLost   > 0);
+  const total     = events.length;
 
-  const posCount = events.filter(e => e.xpGained > 0).length;
-  const negCount = events.filter(e => e.xpLost  > 0).length;
+  // ── Dominant category ──────────────────────────────────────────────────────
+  const catCount = {};
+  events.forEach(e => { if (e.category) catCount[e.category] = (catCount[e.category] || 0) + 1; });
+  const dominantCat = Object.entries(catCount).sort((a,b) => b[1]-a[1])[0]?.[0] || 'mystery';
+  const catLabels = {
+    social:'social life', mental:'inner world', skill:'pursuit of mastery',
+    financial:'financial fortunes', luck:'encounters with fate', health:'wellbeing',
+    mystery:'brushes with the unknown', creative:'creative endeavours',
+    physical:'physical endeavours', world:'place in the wider world'
+  };
 
-  const prompt = `You are writing the life chronicle for a living trading card named "${cardName}".
+  // ── Dominant archetype from reactions ─────────────────────────────────────
+  const archCount = {};
+  (reactions || []).forEach(r => {
+    if (r.reactionArchetype) archCount[r.reactionArchetype] = (archCount[r.reactionArchetype] || 0) + 1;
+  });
+  const dominantArch   = Object.entries(archCount).sort((a,b) => b[1]-a[1])[0]?.[0] || null;
+  const totalReactions = (reactions || []).length;
+  const archDesc = {
+    Resist:    'one who holds firm against the current',
+    Yield:     'one who bends rather than breaks',
+    Reflect:   'one who looks inward before acting',
+    Act:       'one who meets each moment with decisive motion',
+    Deflect:   'one who keeps the world at a careful distance',
+    Transform: 'one who lets experience reshape them entirely'
+  };
 
-This card is at the ${stage} stage of its evolution and has been given a life grade of "${grade}".
-It has experienced ${events.length} life events: ${posCount} fortunate and ${negCount} difficult.
+  // ── Notable events ─────────────────────────────────────────────────────────
+  const bestEvent   = [...posEvents].sort((a,b) => b.xpGained - a.xpGained)[0];
+  const worstEvent  = [...negEvents].sort((a,b) => b.xpLost   - a.xpLost)[0];
+  const recentEvent = [...events].sort((a,b) => b.date - a.date)[0];
 
-Here are the events that shaped this card's life:
-${eventLines}
+  // ── Paragraph 1 — grade + dominant domain ─────────────────────────────────
+  const gradeOpeners = {
+    Blessed:   `${cardName} has known a life of remarkable fortune.`,
+    Fortunate: `${cardName} has moved through life with the wind largely at their back.`,
+    Seasoned:  `${cardName} has lived — truly lived — the kind of life that leaves marks.`,
+    Tested:    `${cardName}'s chronicle is one of balance hard-won.`,
+    Weathered: `${cardName} has carried more than most. The weight shows, but so does the endurance.`,
+    Burdened:  `${cardName}'s story has been shaped more by loss than by gain — at least so far.`,
+    Nascent:   `${cardName}'s chronicle is only beginning to be written.`
+  };
+  const p1 = `${gradeOpeners[grade] || gradeOpeners['Nascent']} Across ${total} recorded moment${total !== 1 ? 's' : ''}, their ${catLabels[dominantCat] || dominantCat} has defined them most — a thread that runs through nearly everything the ledger has captured.`;
 
-Write a unique, atmospheric narrative of 3–4 paragraphs that tells the story of this card's life so far. 
-The tone should feel like a literary biography — poetic but grounded, using the specific events and their flavour text as raw material. 
-Do not list the events mechanically. Weave them into a flowing story that feels personal to this specific card.
-Do not use generic phrases like "this card has experienced" or "in conclusion". 
-Write in third person. Begin mid-thought, as if the reader has arrived partway through the story.
-Return only the narrative text with paragraphs separated by blank lines. No titles, no preamble.`;
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    const data = await response.json();
-    const text = data.content && data.content[0] && data.content[0].text
-      ? data.content[0].text.trim()
-      : null;
-
-    if (!text) throw new Error('Empty response');
-
-    const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
-    const html = paragraphs.map((p, i) =>
-      i === 0
-        ? `<p><span class="narrative-opening">"</span>${esc(p)}</p>`
-        : `<p>${esc(p)}</p>`
-    ).join('');
-
-    narrativeEl.innerHTML = html;
-
-  } catch (err) {
-    console.warn('Narrative generation failed:', err);
-    // Graceful fallback — show event names as a plain summary
-    const names = events.map(e => e.notes).filter(Boolean).slice(0, 6).join(', ');
-    narrativeEl.innerHTML = `<p style="color:var(--text-dim);font-style:italic;">The chronicle of ${esc(cardName)} includes: ${esc(names)}${events.length > 6 ? ', and more' : ''}. The full narrative could not be generated at this time.</p>`;
+  // ── Paragraph 2 — best and worst events with flavour text ─────────────────
+  let p2 = '';
+  if (bestEvent && worstEvent && bestEvent !== worstEvent) {
+    p2 = `Among the fortunate moments, ${bestEvent.notes} stands out${bestEvent.flavourText ? ' — ' + bestEvent.flavourText : ''}. Yet the record does not spare them from difficulty: ${worstEvent.notes} left its mark${worstEvent.flavourText ? ', a moment captured simply as: ' + worstEvent.flavourText : ''}.`;
+  } else if (bestEvent) {
+    p2 = `The high point of the chronicle belongs to ${bestEvent.notes}${bestEvent.flavourText ? ' — ' + bestEvent.flavourText : ''}. ${posEvents.length > 1 ? `Alongside it, ${posEvents.length - 1} further fortunate moment${posEvents.length - 1 !== 1 ? 's have' : ' has'} shaped the record.` : ''}`;
+  } else if (worstEvent) {
+    p2 = `The chronicle leans into difficulty. ${worstEvent.notes} weighs heaviest${worstEvent.flavourText ? ' — ' + worstEvent.flavourText : ''}. ${negEvents.length > 1 ? `It was not the only trial: ${negEvents.length} difficult moments in total have tested this card.` : ''}`;
   }
+
+  // ── Paragraph 3 — reaction archetype portrait ─────────────────────────────
+  let p3 = '';
+  if (dominantArch && totalReactions > 0) {
+    const sampleReaction = [...(reactions || [])].filter(r => r.reactionArchetype === dominantArch && r.reactionChoice).pop();
+    p3 = `When faced with what life brings, ${cardName} has shown themselves to be ${archDesc[dominantArch] || 'someone shaped by their choices'}. ${totalReactions > 1 ? `Across ${totalReactions} reactions, the ${dominantArch} response has appeared most often` : `Their first recorded response was to ${dominantArch.toLowerCase()}`}${sampleReaction?.reactionChoice ? `, choosing at one point to "${sampleReaction.reactionChoice}"` : ''}.`;
+  } else {
+    p3 = `How ${cardName} has met each moment is not yet fully recorded — but the events themselves speak. ${posEvents.length > negEvents.length ? 'The fortunate outweigh the difficult.' : negEvents.length > posEvents.length ? 'The difficult have outnumbered the fortunate.' : 'Fortune and hardship have arrived in near equal measure.'}`;
+  }
+
+  // ── Paragraph 4 — closing with recent event and stage ─────────────────────
+  const stageDesc = {
+    DORMANT:'only just beginning to stir', AWAKENED:'newly awakened to the possibilities ahead',
+    GROWING:'in the midst of growth', ESTABLISHED:'an established presence',
+    RENOWNED:'widely recognised', LEGENDARY:'of legendary standing', MYTHIC:'of mythic renown'
+  };
+  let p4 = `At the ${stageDesc[stage] || stage} stage, the story is far from finished.`;
+  if (recentEvent) {
+    p4 += ` Most recently, ${recentEvent.notes} has entered the record${recentEvent.flavourText ? ' — ' + recentEvent.flavourText : ''}.`;
+  }
+  p4 += ` The chronicle continues.`;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  const paragraphs = [p1, p2, p3, p4].filter(p => p.trim());
+  narrativeEl.innerHTML = paragraphs.map((p, i) =>
+    i === 0
+      ? `<p><span class="narrative-opening">"</span>${esc(p)}</p>`
+      : `<p>${esc(p)}</p>`
+  ).join('');
 }
 
 // ── Render page ───────────────────────────────────────────────────────────────
-function renderPage(events, cardData, cardId) {
+function renderPage(events, cardData, cardId, reactions) {
   const cardName  = cardData.cardName  || cardId;
   const claimDate = cardData.claimDate ? cardData.claimDate.toDate() : null;
   const stage     = cardData.evolutionStage || 'DORMANT';
@@ -560,8 +590,8 @@ function renderPage(events, cardData, cardId) {
     </div>`;
   }).join('');
 
-  // Generate narrative via Claude (runs async, updates when ready)
-  generateNarrative(cardName, stage, grade.grade, events);
+  // Generate narrative from local data (no API needed)
+  generateNarrative(cardName, stage, grade.grade, events, reactions || []);
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
@@ -608,7 +638,25 @@ window.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    renderPage(events, cardData, cardId);
+    // Load REACTION entries for the narrative archetype portrait
+    const reactionSnap = await getDocs(
+      query(
+        collection(db, 'cards', cardId, 'ledger'),
+        where('type', '==', 'REACTION')
+      )
+    );
+    const reactions = [];
+    reactionSnap.forEach(d => {
+      const r = d.data();
+      reactions.push({
+        reactionArchetype: r.reactionArchetype || '',
+        reactionChoice:    r.reactionChoice    || '',
+        coherenceRating:   r.coherenceRating   || '',
+        eventCategory:     r.eventCategory     || '',
+      });
+    });
+
+    renderPage(events, cardData, cardId, reactions);
     showPage();
 
   } catch (err) {
