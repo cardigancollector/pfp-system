@@ -1,33 +1,5 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// EVENT REACTION POPUP — self-injecting script
-// Include: <script src="event_reaction_popup.js"></script>
-// Call:    openReactionPopup({ event, card, onAccept, onDismiss })
-// ─────────────────────────────────────────────────────────────────────────────
-
-(function () {
-  'use strict';
-
-  // ── Inject CSS ──────────────────────────────────────────────────────────────
-  if (document.getElementById('reaction-popup-styles')) return; // prevent double-inject
-  const style = document.createElement('style');
-  style.id = 'reaction-popup-styles';
-  style.textContent = ":root {\n  --purple:      #3B1F5E;\n  --purple-deep: #2A1545;\n  --purple-mid:  #4E2A7A;\n  --purple-pale: #6B3FA0;\n  --gold:        #C9A84C;\n  --gold-light:  #E8C97A;\n  --gold-dim:    #8A6E2A;\n  --cream:       #F5EFD8;\n  --cream-dark:  #E8DFC0;\n  --ink:         #1A1025;\n  --ink-mid:     #2D1E45;\n  --text-body:   #3A2A5A;\n  --text-muted:  #7A6A8A;\n  --shadow:      rgba(20, 8, 40, 0.85);\n}\n\n/* ─── Demo launcher (remove in production) ────────────────────────────── */\n#demo-launcher {\n  text-align: center;\n}\n#demo-launcher h1 {\n  font-family: 'Cinzel Decorative', serif;\n  color: var(--gold);\n  font-size: 1.4rem;\n  margin-bottom: 0.5rem;\n  letter-spacing: 0.06em;\n}\n#demo-launcher p {\n  font-family: 'EB Garamond', serif;\n  color: var(--cream);\n  opacity: 0.75;\n  margin-bottom: 1.5rem;\n  font-size: 1.05rem;\n  font-style: italic;\n}\n.demo-btn {\n  font-family: 'Cinzel', serif;\n  background: var(--gold);\n  color: var(--ink);\n  border: none;\n  padding: 0.75rem 2rem;\n  font-size: 0.85rem;\n  letter-spacing: 0.1em;\n  text-transform: uppercase;\n  cursor: pointer;\n  border-radius: 2px;\n  transition: background 0.2s;\n}\n.demo-btn:hover { background: var(--gold-light); }\n\n/* ─── Overlay ──────────────────────────────────────────────────────────── */\n#reaction-overlay {\n  display: none;\n  position: fixed;\n  inset: 0;\n  background: rgba(10, 4, 20, 0.82);\n  backdrop-filter: blur(6px);\n  -webkit-backdrop-filter: blur(6px);\n  z-index: 9000;\n  align-items: center;\n  justify-content: center;\n  padding: 16px;\n  animation: overlayIn 0.35s ease;\n}\n#reaction-overlay.active { display: flex; }\n\n@keyframes overlayIn {\n  from { opacity: 0; }\n  to   { opacity: 1; }\n}\n\n/* ─── Popup Shell ──────────────────────────────────────────────────────── */\n#reaction-popup {\n  width: 100%;\n  max-width: 640px;\n  max-height: 92vh;\n  overflow-y: auto;\n  border-radius: 3px;\n  box-shadow: 0 24px 80px var(--shadow), 0 0 0 1px rgba(201,168,76,0.3);\n  animation: popupIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);\n  scrollbar-width: thin;\n  scrollbar-color: var(--gold-dim) transparent;\n}\n#reaction-popup::-webkit-scrollbar { width: 5px; }\n#reaction-popup::-webkit-scrollbar-track { background: transparent; }\n#reaction-popup::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }\n\n@keyframes popupIn {\n  from { opacity: 0; transform: translateY(28px) scale(0.97); }\n  to   { opacity: 1; transform: translateY(0)    scale(1);    }\n}\n\n/* ─── Header ───────────────────────────────────────────────────────────── */\n.popup-header {\n  background: var(--ink);\n  padding: 1.5rem 1.75rem 1.25rem;\n  border-bottom: 1px solid rgba(201,168,76,0.2);\n  position: relative;\n  overflow: hidden;\n}\n.popup-header::before {\n  content: '';\n  position: absolute;\n  inset: 0;\n  background: radial-gradient(ellipse at 60% -10%, rgba(201,168,76,0.08) 0%, transparent 65%);\n  pointer-events: none;\n}\n\n.popup-eyebrow {\n  font-family: 'Cinzel', serif;\n  font-size: 0.65rem;\n  letter-spacing: 0.18em;\n  text-transform: uppercase;\n  color: var(--gold);\n  opacity: 0.8;\n  margin-bottom: 0.4rem;\n}\n\n.popup-event-name {\n  font-family: 'Cinzel Decorative', serif;\n  font-size: 1.35rem;\n  font-weight: 700;\n  color: var(--cream);\n  line-height: 1.2;\n  letter-spacing: 0.02em;\n  margin-bottom: 0.6rem;\n}\n\n.popup-flavour {\n  font-family: 'EB Garamond', serif;\n  font-size: 1rem;\n  font-style: italic;\n  color: rgba(245,239,216,0.65);\n  line-height: 1.55;\n}\n\n.popup-meta {\n  display: flex;\n  align-items: center;\n  gap: 0.6rem;\n  margin-top: 0.85rem;\n  flex-wrap: wrap;\n}\n\n.meta-badge {\n  font-family: 'Cinzel', serif;\n  font-size: 0.6rem;\n  letter-spacing: 0.12em;\n  text-transform: uppercase;\n  padding: 0.2rem 0.6rem;\n  border-radius: 2px;\n  border: 1px solid;\n}\n.meta-badge.category {\n  border-color: rgba(201,168,76,0.4);\n  color: var(--gold-light);\n  background: rgba(201,168,76,0.08);\n}\n.meta-badge.polarity-positive {\n  border-color: rgba(80,180,100,0.5);\n  color: #7DCF95;\n  background: rgba(80,180,100,0.08);\n}\n.meta-badge.polarity-negative {\n  border-color: rgba(180,70,70,0.5);\n  color: #D98080;\n  background: rgba(180,70,70,0.08);\n}\n\n.popup-ornament {\n  text-align: center;\n  font-size: 0.8rem;\n  color: var(--gold);\n  opacity: 0.4;\n  letter-spacing: 0.5em;\n  margin-top: 0.9rem;\n}\n\n/* ─── Body ─────────────────────────────────────────────────────────────── */\n.popup-body {\n  background: var(--cream);\n  padding: 1.5rem 1.75rem;\n}\n\n.popup-prompt {\n  font-family: 'Cinzel', serif;\n  font-size: 0.85rem;\n  font-weight: 600;\n  color: var(--ink);\n  text-align: center;\n  letter-spacing: 0.06em;\n  margin-bottom: 1.1rem;\n  opacity: 0.85;\n}\n\n/* ─── Choice Grid ──────────────────────────────────────────────────────── */\n.choice-grid {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 0.55rem;\n  margin-bottom: 1.25rem;\n}\n\n.choice-btn {\n  background: #fff;\n  border: 1.5px solid rgba(59,31,94,0.18);\n  border-radius: 2px;\n  padding: 0.6rem 0.5rem;\n  cursor: pointer;\n  transition: all 0.18s ease;\n  text-align: center;\n  position: relative;\n  overflow: hidden;\n}\n.choice-btn:hover {\n  border-color: var(--purple-pale);\n  background: rgba(59,31,94,0.04);\n  transform: translateY(-1px);\n  box-shadow: 0 3px 10px rgba(59,31,94,0.12);\n}\n.choice-btn.selected {\n  border-color: var(--purple);\n  background: rgba(59,31,94,0.07);\n  box-shadow: 0 0 0 2px rgba(59,31,94,0.2);\n}\n.choice-btn.selected .choice-archetype {\n  color: var(--purple);\n}\n\n.choice-archetype {\n  font-family: 'Cinzel', serif;\n  font-size: 0.52rem;\n  letter-spacing: 0.15em;\n  text-transform: uppercase;\n  color: var(--text-muted);\n  margin-bottom: 0.3rem;\n  transition: color 0.18s;\n}\n.choice-label {\n  font-family: 'EB Garamond', serif;\n  font-size: 0.9rem;\n  color: var(--text-body);\n  line-height: 1.3;\n}\n\n/* ─── Confirm button ───────────────────────────────────────────────────── */\n.confirm-row {\n  text-align: center;\n  margin-bottom: 0.5rem;\n}\n.confirm-btn {\n  font-family: 'Cinzel', serif;\n  font-size: 0.75rem;\n  letter-spacing: 0.12em;\n  text-transform: uppercase;\n  background: var(--purple);\n  color: var(--cream);\n  border: none;\n  padding: 0.7rem 2rem;\n  cursor: pointer;\n  border-radius: 2px;\n  transition: background 0.2s, opacity 0.2s;\n  opacity: 0.45;\n  pointer-events: none;\n}\n.confirm-btn.active {\n  opacity: 1;\n  pointer-events: auto;\n}\n.confirm-btn.active:hover { background: var(--purple-mid); }\n\n/* ─── Loading state ────────────────────────────────────────────────────── */\n#narrative-loading {\n  display: none;\n  flex-direction: column;\n  align-items: center;\n  padding: 1.5rem 0;\n  gap: 0.75rem;\n}\n.spinner {\n  width: 28px;\n  height: 28px;\n  border: 2px solid rgba(59,31,94,0.15);\n  border-top-color: var(--purple);\n  border-radius: 50%;\n  animation: spin 0.9s linear infinite;\n}\n@keyframes spin { to { transform: rotate(360deg); } }\n.loading-text {\n  font-family: 'EB Garamond', serif;\n  font-style: italic;\n  font-size: 0.95rem;\n  color: var(--text-muted);\n}\n\n/* ─── Narrative panel ──────────────────────────────────────────────────── */\n#narrative-panel {\n  display: none;\n  animation: fadeUp 0.5s ease;\n}\n@keyframes fadeUp {\n  from { opacity: 0; transform: translateY(8px); }\n  to   { opacity: 1; transform: translateY(0); }\n}\n\n.narrative-divider {\n  display: flex;\n  align-items: center;\n  gap: 0.75rem;\n  margin: 0.25rem 0 1.1rem;\n  color: var(--gold-dim);\n}\n.narrative-divider::before,\n.narrative-divider::after {\n  content: '';\n  flex: 1;\n  height: 1px;\n  background: linear-gradient(90deg, transparent, rgba(138,110,42,0.4), transparent);\n}\n.narrative-divider-icon {\n  font-size: 0.8rem;\n  opacity: 0.6;\n}\n\n.narrative-label {\n  font-family: 'Cinzel', serif;\n  font-size: 0.62rem;\n  letter-spacing: 0.18em;\n  text-transform: uppercase;\n  color: var(--text-muted);\n  margin-bottom: 0.55rem;\n}\n\n.narrative-text {\n  font-family: 'EB Garamond', serif;\n  font-size: 1.05rem;\n  line-height: 1.7;\n  color: var(--text-body);\n  font-style: italic;\n}\n\n.archetype-revealed {\n  display: inline-block;\n  font-family: 'Cinzel', serif;\n  font-size: 0.6rem;\n  letter-spacing: 0.15em;\n  text-transform: uppercase;\n  color: var(--purple-pale);\n  border: 1px solid rgba(107,63,160,0.3);\n  background: rgba(59,31,94,0.05);\n  padding: 0.18rem 0.5rem;\n  border-radius: 2px;\n  margin-top: 0.65rem;\n}\n\n.narrative-actions {\n  display: flex;\n  gap: 0.6rem;\n  margin-top: 1.1rem;\n  justify-content: flex-end;\n}\n.btn-accept {\n  font-family: 'Cinzel', serif;\n  font-size: 0.72rem;\n  letter-spacing: 0.1em;\n  text-transform: uppercase;\n  background: var(--purple);\n  color: var(--cream);\n  border: none;\n  padding: 0.6rem 1.4rem;\n  border-radius: 2px;\n  cursor: pointer;\n  transition: background 0.2s;\n}\n.btn-accept:hover { background: var(--purple-mid); }\n.btn-decline {\n  font-family: 'Cinzel', serif;\n  font-size: 0.72rem;\n  letter-spacing: 0.1em;\n  text-transform: uppercase;\n  background: transparent;\n  color: var(--text-muted);\n  border: 1px solid rgba(59,31,94,0.2);\n  padding: 0.6rem 1.2rem;\n  border-radius: 2px;\n  cursor: pointer;\n  transition: all 0.15s;\n}\n.btn-decline:hover { border-color: rgba(59,31,94,0.5); color: var(--text-body); }\n\n/* ─── Footer ───────────────────────────────────────────────────────────── */\n.popup-footer {\n  background: var(--ink);\n  padding: 0.65rem 1.75rem;\n  border-top: 1px solid rgba(201,168,76,0.12);\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n}\n.footer-card-name {\n  font-family: 'Cinzel', serif;\n  font-size: 0.65rem;\n  letter-spacing: 0.1em;\n  color: var(--gold);\n  opacity: 0.7;\n}\n.footer-logo {\n  font-family: 'Cinzel Decorative', serif;\n  font-size: 0.6rem;\n  letter-spacing: 0.15em;\n  color: var(--gold);\n  opacity: 0.4;\n}\n\n/* ─── Error state ──────────────────────────────────────────────────────── */\n.narrative-error {\n  font-family: 'EB Garamond', serif;\n  font-size: 0.9rem;\n  font-style: italic;\n  color: #B05050;\n  padding: 0.75rem;\n  background: rgba(180,80,80,0.08);\n  border: 1px solid rgba(180,80,80,0.2);\n  border-radius: 2px;\n  text-align: center;\n}\n";
-  document.head.appendChild(style);
-
-  // ── Inject overlay HTML ─────────────────────────────────────────────────────
-  if (document.getElementById('reaction-overlay')) return; // prevent double-inject
-  const _div = document.createElement('div');
-  _div.innerHTML = '<div id="reaction-overlay">\n  <div id="reaction-popup" role="dialog" aria-modal="true" aria-labelledby="popup-event-title">\n\n    <!-- Header -->\n    <div class="popup-header">\n      <div class="popup-eyebrow">A Life Event Has Occurred</div>\n      <div class="popup-event-name" id="popup-event-title">—</div>\n      <div class="popup-flavour" id="popup-flavour">—</div>\n      <div class="popup-meta">\n        <span class="meta-badge category" id="meta-category">—</span>\n        <span class="meta-badge" id="meta-polarity">—</span>\n      </div>\n      <div class="popup-ornament">◆ ◆ ◆</div>\n    </div>\n\n    <!-- Body: choice phase -->\n    <div class="popup-body" id="popup-body">\n\n      <div class="popup-prompt">How do you respond?</div>\n\n      <div class="choice-grid" id="choice-grid">\n        <!-- Populated by JS -->\n      </div>\n\n      <div class="confirm-row">\n        <button class="confirm-btn" id="confirm-btn" onclick="submitChoice()">\n          Confirm My Response\n        </button>\n      </div>\n\n\n      <!-- Generating state -->\n      <div id="narrative-loading">\n        <div class="spinner"></div>\n        <div class="loading-text">The chronicle is being written…</div>\n      </div>\n\n      <!-- Narrative result -->\n      <div id="narrative-panel">\n        <div class="narrative-divider">\n          <span class="narrative-divider-icon">✦</span>\n        </div>\n        <div class="narrative-label">Your Card Reflects</div>\n        <div class="narrative-text" id="narrative-text">—</div>\n        <div>\n          <span class="archetype-revealed" id="archetype-badge">—</span>\n        </div>\n        <div class="narrative-actions">\n          <button class="btn-accept" onclick="acceptOutcome()">Accept &amp; Continue</button>\n        </div>\n      </div>\n\n    </div>\n\n    <!-- Footer -->\n    <div class="popup-footer">\n      <div class="footer-card-name" id="footer-card-name">—</div>\n      <div class="footer-logo">PfP · The Cardigan Collector</div>\n    </div>\n\n  </div>\n</div>\n';
-  document.body.appendChild(_div.firstElementChild);
-
-  // ── Popup logic ─────────────────────────────────────────────────────────────
 'use strict';
 
-/* ─────────────────────────────────────────────────────────────────────────
-   REACTION POOLS
-   16 choices per category, each tagged with one of six archetypes:
-   Resist | Yield | Reflect | Act | Deflect | Transform
-   ───────────────────────────────────────────────────────────────────────── */
 const REACTION_POOLS = {
 
   financial: [
@@ -222,30 +194,22 @@ const REACTION_POOLS = {
 
 };
 
-/* ─────────────────────────────────────────────────────────────────────────
-   CATEGORY ICONS (optional visual aid)
-   ───────────────────────────────────────────────────────────────────────── */
 const CATEGORY_ICONS = {
   financial: '💰', social: '🤝', health: '🩺', mental: '🧠',
   skill: '💡', creative: '🎨', luck: '🎲', physical: '💪',
   world: '🌍', mystery: '🌀',
 };
 
-/* ─────────────────────────────────────────────────────────────────────────
-   STATE
-   ───────────────────────────────────────────────────────────────────────── */
 let _state = {
-  event:          null,    // current event object
-  choices:        [],      // 9 randomly drawn choices
-  selectedIndex:  null,    // index into _state.choices
-  narrative:      null,    // text from Claude
-  onAccept:       null,    // callback(event, choice, narrative)
-  onDismiss:      null,    // callback()
+  event:         null,
+  card:          null,
+  choices:       [],
+  selectedIndex: null,
+  narrative:     null,
+  onAccept:      null,
+  onDismiss:     null,
 };
 
-/* ─────────────────────────────────────────────────────────────────────────
-   HELPERS
-   ───────────────────────────────────────────────────────────────────────── */
 function pickRandom(arr, n) {
   const shuffled = [...arr].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, n);
@@ -259,29 +223,7 @@ function esc(str) {
     .replace(/"/g, '&quot;');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   PUBLIC API
-   Call this from your dashboard code to open the popup.
-
-   openReactionPopup({
-     event: {
-       name:       "Clear Bill of Health",
-       category:   "health",          // one of the 10 pool keys
-       polarity:   "positive",        // "positive" | "negative"
-       flavourText:"The physician found nothing amiss.",
-     },
-     card: {
-       cardName:        "Lady Elspeth Vane",
-       dominantDomain:  "health",
-       rarityTier:      "Rare",
-       financialStanding: "Comfortable",
-       recentHistory:   "Two misfortunes in the past fortnight.",
-     },
-     onAccept:  (event, choice, narrative) => { ... },
-     onDismiss: () => { ... },
-   });
-   ───────────────────────────────────────────────────────────────────────── */
-function openReactionPopup({ event, card, onAccept, onDismiss }) {
+window.openReactionPopup = function({ event, card, onAccept, onDismiss }) {
   _state.event         = event;
   _state.card          = card;
   _state.selectedIndex = null;
@@ -289,62 +231,222 @@ function openReactionPopup({ event, card, onAccept, onDismiss }) {
   _state.onAccept      = onAccept  || null;
   _state.onDismiss     = onDismiss || null;
 
-  // Draw 9 random choices from the category pool (fallback to mystery)
   const pool = REACTION_POOLS[event.category] || REACTION_POOLS.mystery;
   _state.choices = pickRandom(pool, 9);
 
+  _ensureOverlay();
   _renderPopup();
 
   const overlay = document.getElementById('reaction-overlay');
   overlay.classList.add('active');
   document.body.style.overflow = 'hidden';
+};
+
+function _ensureOverlay() {
+  if (document.getElementById('reaction-overlay')) return;
+
+  const html = `
+<style>
+#reaction-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,4,20,0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: overlayIn 0.35s ease;
+}
+#reaction-overlay.active { display: flex; }
+@keyframes overlayIn { from { opacity:0; } to { opacity:1; } }
+
+#reaction-popup {
+  width: 100%;
+  max-width: 640px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 3px;
+  box-shadow: 0 24px 80px rgba(20,8,40,0.85), 0 0 0 1px rgba(201,168,76,0.3);
+  animation: popupIn 0.4s cubic-bezier(0.22,1,0.36,1);
+  scrollbar-width: thin;
+  scrollbar-color: #8A6E2A transparent;
+  font-family: 'EB Garamond', serif;
+}
+@keyframes popupIn {
+  from { opacity:0; transform:translateY(28px) scale(0.97); }
+  to   { opacity:1; transform:translateY(0)    scale(1);    }
 }
 
-function closePopup() {
-  const overlay = document.getElementById('reaction-overlay');
-  overlay.classList.remove('active');
-  document.body.style.overflow = '';
-  if (_state.onDismiss) _state.onDismiss();
-  _resetState();
+.popup-header {
+  background: #1A1025;
+  padding: 1.5rem 1.75rem 1.25rem;
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.popup-header::before {
+  content:'';
+  position:absolute; inset:0;
+  background: radial-gradient(ellipse at 60% -10%, rgba(201,168,76,0.08) 0%, transparent 65%);
+  pointer-events:none;
+}
+.popup-eyebrow {
+  font-family:'Cinzel',serif;
+  font-size:0.65rem; letter-spacing:0.18em; text-transform:uppercase;
+  color:#C9A84C; opacity:0.8; margin-bottom:0.4rem;
+}
+.popup-event-name {
+  font-family:'Cinzel Decorative',serif;
+  font-size:1.35rem; font-weight:700; color:#F5EFD8;
+  line-height:1.2; letter-spacing:0.02em; margin-bottom:0.6rem;
+}
+.popup-flavour {
+  font-size:1rem; font-style:italic;
+  color:rgba(245,239,216,0.65); line-height:1.55;
+}
+.popup-meta {
+  display:flex; align-items:center; gap:0.6rem;
+  margin-top:0.85rem; flex-wrap:wrap;
+}
+.meta-badge {
+  font-family:'Cinzel',serif;
+  font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase;
+  padding:0.2rem 0.6rem; border-radius:2px; border:1px solid;
+}
+.meta-badge.category { border-color:rgba(201,168,76,0.4); color:#E8C97A; background:rgba(201,168,76,0.08); }
+.meta-badge.polarity-positive { border-color:rgba(80,180,100,0.5); color:#7DCF95; background:rgba(80,180,100,0.08); }
+.meta-badge.polarity-negative { border-color:rgba(180,70,70,0.5);  color:#D98080; background:rgba(180,70,70,0.08); }
+.popup-ornament { text-align:center; font-size:0.8rem; color:#C9A84C; opacity:0.4; letter-spacing:0.5em; margin-top:0.9rem; }
+
+.popup-body { background:#F5EFD8; padding:1.5rem 1.75rem; }
+.popup-prompt {
+  font-family:'Cinzel',serif; font-size:0.85rem; font-weight:600;
+  color:#1A1025; text-align:center; letter-spacing:0.06em;
+  margin-bottom:1.1rem; opacity:0.85;
+}
+.choice-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.55rem; margin-bottom:1.25rem; }
+.choice-btn {
+  background:#fff; border:1.5px solid rgba(59,31,94,0.18); border-radius:2px;
+  padding:0.6rem 0.5rem; cursor:pointer; transition:all 0.18s ease;
+  text-align:center; position:relative; overflow:hidden;
+}
+.choice-btn:hover { border-color:#6B3FA0; background:rgba(59,31,94,0.04); transform:translateY(-1px); box-shadow:0 3px 10px rgba(59,31,94,0.12); }
+.choice-btn.selected { border-color:#3B1F5E; background:rgba(59,31,94,0.07); box-shadow:0 0 0 2px rgba(59,31,94,0.2); }
+.choice-btn.selected .choice-archetype { color:#3B1F5E; }
+.choice-archetype { font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A6A8A; margin-bottom:0.3rem; transition:color 0.18s; }
+.choice-label { font-family:'EB Garamond',serif; font-size:0.9rem; color:#3A2A5A; line-height:1.3; }
+
+.confirm-row { text-align:center; margin-bottom:0.5rem; }
+.confirm-btn {
+  font-family:'Cinzel',serif; font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase;
+  background:#3B1F5E; color:#F5EFD8; border:none; padding:0.7rem 2rem;
+  cursor:pointer; border-radius:2px; transition:background 0.2s,opacity 0.2s;
+  opacity:0.45; pointer-events:none;
+}
+.confirm-btn.active { opacity:1; pointer-events:auto; }
+.confirm-btn.active:hover { background:#4E2A7A; }
+
+.narrative-divider {
+  display:flex; align-items:center; gap:0.75rem;
+  margin:0.25rem 0 1.1rem; color:#8A6E2A;
+}
+.narrative-divider::before,.narrative-divider::after {
+  content:''; flex:1; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(138,110,42,0.4),transparent);
+}
+.narrative-divider-icon { font-size:0.8rem; opacity:0.6; }
+.narrative-label { font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.18em; text-transform:uppercase; color:#7A6A8A; margin-bottom:0.55rem; }
+.narrative-text { font-family:'EB Garamond',serif; font-size:1.05rem; line-height:1.7; color:#3A2A5A; font-style:italic; }
+.archetype-revealed {
+  display:inline-block; font-family:'Cinzel',serif; font-size:0.6rem;
+  letter-spacing:0.15em; text-transform:uppercase; color:#6B3FA0;
+  border:1px solid rgba(107,63,160,0.3); background:rgba(59,31,94,0.05);
+  padding:0.18rem 0.5rem; border-radius:2px; margin-top:0.65rem;
+}
+.narrative-actions { display:flex; gap:0.6rem; margin-top:1.1rem; justify-content:flex-end; }
+.btn-accept {
+  font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase;
+  background:#3B1F5E; color:#F5EFD8; border:none; padding:0.6rem 1.4rem;
+  border-radius:2px; cursor:pointer; transition:background 0.2s;
+}
+.btn-accept:hover { background:#4E2A7A; }
+
+.popup-footer {
+  background:#1A1025; padding:0.65rem 1.75rem;
+  border-top:1px solid rgba(201,168,76,0.12);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.footer-card-name { font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.1em; color:#C9A84C; opacity:0.7; }
+.footer-logo { font-family:'Cinzel Decorative',serif; font-size:0.6rem; letter-spacing:0.15em; color:#C9A84C; opacity:0.4; }
+
+#narrative-panel { display:none; animation:fadeUp 0.5s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+</style>
+
+<div id="reaction-overlay">
+  <div id="reaction-popup" role="dialog" aria-modal="true" aria-labelledby="popup-event-title">
+    <div class="popup-header">
+      <div class="popup-eyebrow">A Life Event Has Occurred</div>
+      <div class="popup-event-name" id="popup-event-title">—</div>
+      <div class="popup-flavour" id="popup-flavour">—</div>
+      <div class="popup-meta">
+        <span class="meta-badge category" id="meta-category">—</span>
+        <span class="meta-badge" id="meta-polarity">—</span>
+      </div>
+      <div class="popup-ornament">◆ ◆ ◆</div>
+    </div>
+    <div class="popup-body" id="popup-body">
+      <div class="popup-prompt">How do you respond?</div>
+      <div class="choice-grid" id="choice-grid"></div>
+      <div class="confirm-row">
+        <button class="confirm-btn" id="confirm-btn" onclick="window._pfpConfirmChoice()">Confirm My Response</button>
+      </div>
+      <div id="narrative-panel">
+        <div class="narrative-divider"><span class="narrative-divider-icon">✦</span></div>
+        <div class="narrative-label">Your Card Reflects</div>
+        <div class="narrative-text" id="narrative-text">—</div>
+        <div><span class="archetype-revealed" id="archetype-badge">—</span></div>
+        <div class="narrative-actions">
+          <button class="btn-accept" onclick="window._pfpAcceptOutcome()">Accept &amp; Continue</button>
+        </div>
+      </div>
+    </div>
+    <div class="popup-footer">
+      <div class="footer-card-name" id="footer-card-name">—</div>
+      <div class="footer-logo">PfP · The Cardigan Collector</div>
+    </div>
+  </div>
+</div>`;
+
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  document.body.appendChild(div);
 }
 
-function _resetState() {
-  document.getElementById('narrative-panel').style.display = 'none';
-  document.getElementById('choice-grid').style.display     = 'grid';
-  document.getElementById('confirm-btn').style.display     = 'block';
-  document.querySelector('.popup-prompt').style.display    = 'block';
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
-   RENDER
-   ───────────────────────────────────────────────────────────────────────── */
 function _renderPopup() {
   const { event, card, choices } = _state;
 
-  // Header
   document.getElementById('popup-event-title').textContent = event.name;
   document.getElementById('popup-flavour').textContent     = event.flavourText || '';
-  document.getElementById('footer-card-name').textContent  = card.cardName || '';
+  document.getElementById('footer-card-name').textContent  = card ? card.cardName || '' : '';
 
   const catBadge = document.getElementById('meta-category');
-  catBadge.textContent = (CATEGORY_ICONS[event.category] || '') + ' ' + 
-                          (event.category || 'Unknown');
+  catBadge.textContent = (CATEGORY_ICONS[event.category] || '') + ' ' + (event.category || 'Unknown');
 
   const polBadge = document.getElementById('meta-polarity');
   const isPos    = event.polarity === 'positive';
-  polBadge.textContent  = isPos ? '✦ Fortunate' : '✦ Adverse';
-  polBadge.className    = 'meta-badge ' + (isPos ? 'polarity-positive' : 'polarity-negative');
+  polBadge.textContent = isPos ? '✦ Fortunate' : '✦ Adverse';
+  polBadge.className   = 'meta-badge ' + (isPos ? 'polarity-positive' : 'polarity-negative');
 
-  // Reset visibility
   document.getElementById('narrative-panel').style.display = 'none';
   document.getElementById('choice-grid').style.display     = 'grid';
   document.getElementById('confirm-btn').style.display     = 'block';
   document.querySelector('.popup-prompt').style.display    = 'block';
+  document.getElementById('confirm-btn').classList.remove('active');
 
-  const confirmBtn = document.getElementById('confirm-btn');
-  confirmBtn.classList.remove('active');
-
-  // Build choice grid
   const grid = document.getElementById('choice-grid');
   grid.innerHTML = '';
   choices.forEach((choice, i) => {
@@ -355,132 +457,65 @@ function _renderPopup() {
       <div class="choice-archetype">${esc(choice.archetype)}</div>
       <div class="choice-label">${esc(choice.label)}</div>
     `;
-    btn.addEventListener('click', () => selectChoice(i));
+    btn.addEventListener('click', () => _selectChoice(i));
     grid.appendChild(btn);
   });
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   SELECTION
-   ───────────────────────────────────────────────────────────────────────── */
-function selectChoice(index) {
+function _selectChoice(index) {
   _state.selectedIndex = index;
-
   document.querySelectorAll('.choice-btn').forEach((btn, i) => {
     btn.classList.toggle('selected', i === index);
   });
-
-  const confirmBtn = document.getElementById('confirm-btn');
-  confirmBtn.classList.add('active');
+  document.getElementById('confirm-btn').classList.add('active');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   SUBMIT — placeholder narrative (Claude integration coming via Cloud Function)
-   ───────────────────────────────────────────────────────────────────────── */
-function submitChoice() {
+window._pfpConfirmChoice = function() {
   if (_state.selectedIndex === null) return;
-
   const choice = _state.choices[_state.selectedIndex];
 
-  // Hide choice phase
   document.getElementById('choice-grid').style.display  = 'none';
   document.getElementById('confirm-btn').style.display  = 'none';
   document.querySelector('.popup-prompt').style.display = 'none';
 
-  // Set placeholder narrative and show it
   _state.narrative = 'The matter has been noted in the ledger of one\'s life, and the response recorded for posterity.';
-  _showNarrative(choice);
-}
 
-
-/* ─────────────────────────────────────────────────────────────────────────
-   SHOW NARRATIVE
-   ───────────────────────────────────────────────────────────────────────── */
-function _showNarrative(choice) {
-  const panel = document.getElementById('narrative-panel');
-  document.getElementById('narrative-text').textContent   = _state.narrative;
-  document.getElementById('archetype-badge').textContent  = choice.archetype + ' Response';
-  panel.style.display = 'block';
-}
-
-function _showNarrativeError(choice) {
-  _state.narrative = null;
-
-  const panel = document.getElementById('narrative-panel');
-  document.getElementById('narrative-text').innerHTML =
-    `<span class="narrative-error">The chronicle could not be written at this time. Please try again presently.</span>`;
+  document.getElementById('narrative-text').textContent  = _state.narrative;
   document.getElementById('archetype-badge').textContent = choice.archetype + ' Response';
-  panel.style.display = 'block';
-}
+  document.getElementById('narrative-panel').style.display = 'block';
+};
 
-/* ─────────────────────────────────────────────────────────────────────────
-   ACCEPT OUTCOME
-   ───────────────────────────────────────────────────────────────────────── */
-function acceptOutcome() {
+window._pfpAcceptOutcome = function() {
   const choice = _state.choices[_state.selectedIndex];
   if (_state.onAccept) {
     _state.onAccept(_state.event, choice, _state.narrative);
   }
-  closePopup();
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
-   MOCK DATA + DEMO LAUNCHER (remove in production)
-   ───────────────────────────────────────────────────────────────────────── */
-const DEMO_EVENTS = [
-  {
-    name:       'Clear Bill of Health',
-    category:   'health',
-    polarity:   'positive',
-    flavourText:'The physician found nothing amiss — a small mercy in uncertain times.',
-  },
-  {
-    name:       'The Creditor Calls',
-    category:   'financial',
-    polarity:   'negative',
-    flavourText:'A knock at the door, and the cheerful ruin of the morning.',
-  },
-  {
-    name:       'A Curious Visitation',
-    category:   'mystery',
-    polarity:   'negative',
-    flavourText:'Something moved in the house that had no right to move at all.',
-  },
-  {
-    name:       'Unexpected Recognition',
-    category:   'social',
-    polarity:   'positive',
-    flavourText:'Spoken of at the club in terms one is not accustomed to hearing.',
-  },
-  {
-    name:       'The Muse Departs',
-    category:   'creative',
-    polarity:   'negative',
-    flavourText:'Three blank pages where yesterday there had been fire.',
-  },
-];
-
-const DEMO_CARD = {
-  cardName:          'Lady Elspeth Vane',
-  dominantDomain:    'social',
-  rarityTier:        'Rare',
-  financialStanding: 'Comfortable',
-  recentHistory:     'Two misfortunes in the past fortnight; one narrow triumph.',
+  const overlay = document.getElementById('reaction-overlay');
+  overlay.classList.remove('active');
+  document.body.style.overflow = '';
+  _state = { event:null, card:null, choices:[], selectedIndex:null, narrative:null, onAccept:null, onDismiss:null };
 };
 
-function launchDemo() {
-  const event = DEMO_EVENTS[Math.floor(Math.random() * DEMO_EVENTS.length)];
-  openReactionPopup({
-    event,
-    card: DEMO_CARD,
-    onAccept: (ev, choice, narrative) => {
-      console.log('Accepted:', { event: ev.name, choice: choice.label, archetype: choice.archetype, narrative });
-      alert(`Outcome recorded.\n\nEvent: ${ev.name}\nResponse: ${choice.label} [${choice.archetype}]`);
-    },
-    onDismiss: () => {
-      console.log('Popup dismissed.');
-    },
-  });
+function showToast(message) {
+  let toast = document.getElementById('pfp-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'pfp-toast';
+    toast.style.cssText = `
+      position:fixed; bottom:32px; left:50%; transform:translateX(-50%);
+      background:#1A1025; color:#F5EFD8; border:1px solid #C9A84C;
+      font-family:'EB Garamond',serif; font-size:1rem;
+      padding:14px 28px; border-radius:3px; z-index:9999;
+      box-shadow:0 8px 32px rgba(0,0,0,0.5);
+      white-space:pre-line; text-align:center;
+      opacity:0; transition:opacity 0.3s;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 4000);
 }
 
-})();
+window.showToast = showToast;
