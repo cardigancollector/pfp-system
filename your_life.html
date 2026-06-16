@@ -507,11 +507,14 @@ function renderPage(events, cardData, cardId, reactions) {
   document.getElementById('life-grade-badge').textContent = grade.grade;
   document.getElementById('life-grade-desc').textContent  = grade.desc;
 
-  // Ratio bar
-  const posEvts = events.filter(e => e.xpGained > 0);
-  const negEvts = events.filter(e => e.xpLost   > 0);
-  const posPct  = events.length > 0 ? Math.round((posEvts.length / events.length) * 100) : 0;
-  const negPct  = 100 - posPct;
+  // Ratio bar — XP weighted
+  const posEvts  = events.filter(e => e.xpGained > 0);
+  const negEvts  = events.filter(e => e.xpLost   > 0);
+  const totalPos = posEvts.reduce((s, e) => s + e.xpGained, 0);
+  const totalNeg = negEvts.reduce((s, e) => s + e.xpLost,   0);
+  const totalXP  = totalPos + totalNeg;
+  const posPct   = totalXP > 0 ? Math.round((totalPos / totalXP) * 100) : 0;
+  const negPct   = 100 - posPct;
   document.getElementById('ratio-pos-label').textContent = `✦ Fortunate   ${posPct}%`;
   document.getElementById('ratio-neg-label').textContent = `${negPct}%   Troubled ✦`;
   document.getElementById('ratio-summary').textContent   = ratioSummary(posPct);
