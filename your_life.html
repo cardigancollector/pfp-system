@@ -316,7 +316,7 @@
 
 <script type="module">
 import { initializeApp }     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy, where }
+import { getFirestore, doc, getDoc, collection, getDocs, query, where }
                              from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -581,12 +581,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     setLoading('Reading life events…', 'Consulting the chronicle…');
 
-    // Load ledger — LIFE_EVENT entries only, ordered by date
+    // Load ledger — LIFE_EVENT entries only
+    // Note: no orderBy here to avoid needing a composite index; we sort in JS below
     const ledgerSnap = await getDocs(
       query(
         collection(db, 'cards', cardId, 'ledger'),
-        where('type', '==', 'LIFE_EVENT'),
-        orderBy('date', 'asc')
+        where('type', '==', 'LIFE_EVENT')
       )
     );
 
