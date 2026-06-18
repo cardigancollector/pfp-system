@@ -1156,7 +1156,7 @@ async function logScan() {
               recentHistory:     '',
             },
             onAccept: async (ev, choice, narrative) => {
-  const cardId = ac.card || urlCardId;
+  const cardId = urlCardId;
   try {
     const res = await fetch('https://us-central1-pfp-system.cloudfunctions.net/submitReaction', {
       method: 'POST',
