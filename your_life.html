@@ -173,6 +173,101 @@
   @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
   .animate-in { animation:fadeUp 0.6s ease both; }
 
+  /* ── Thread State Panel ──────────────────────────────────────────────────── */
+  .threads-wrap { margin-bottom:40px; }
+
+  .thread-card {
+    padding:28px 32px; margin-bottom:20px; position:relative; overflow:hidden;
+    border-left:3px solid var(--gold-dim);
+  }
+  .thread-card.status-open   { border-left-color:var(--gold); }
+  .thread-card.status-closed { border-left-color:rgba(201,168,76,0.25); opacity:0.75; }
+
+  /* Subtle shimmer behind open threads */
+  .thread-card.status-open::before {
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(ellipse at top left,rgba(201,168,76,0.05) 0%,transparent 65%);
+    pointer-events:none;
+  }
+
+  .thread-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; }
+  .thread-title-group { flex:1; }
+  .thread-eyebrow { font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:4px; }
+  .thread-name { font-family:'Cinzel',serif; font-size:1rem; color:var(--text); letter-spacing:0.05em; }
+
+  .thread-status-pill {
+    font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.22em; text-transform:uppercase;
+    padding:5px 14px; border:1px solid; flex-shrink:0; margin-top:2px;
+  }
+  .thread-status-pill.open   { color:var(--gold); border-color:rgba(201,168,76,0.45); background:rgba(201,168,76,0.06); }
+  .thread-status-pill.closed { color:var(--text-dim); border-color:rgba(154,138,106,0.3); background:rgba(154,138,106,0.04); }
+
+  /* Stage progress track */
+  .thread-stages { display:flex; gap:0; margin-bottom:18px; }
+  .thread-stage-step {
+    flex:1; position:relative; padding:12px 14px 10px;
+    background:rgba(255,255,255,0.02); border:1px solid rgba(201,168,76,0.1);
+    border-right-width:0;
+  }
+  .thread-stage-step:last-child { border-right-width:1px; }
+  .thread-stage-step.done  { background:rgba(201,168,76,0.07); border-color:rgba(201,168,76,0.22); }
+  .thread-stage-step.active { background:rgba(201,168,76,0.12); border-color:rgba(201,168,76,0.5); }
+  .thread-stage-num { font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:3px; }
+  .thread-stage-step.done   .thread-stage-num { color:var(--gold-dim); }
+  .thread-stage-step.active .thread-stage-num { color:var(--gold); }
+  .thread-stage-label { font-family:'Cinzel',serif; font-size:0.7rem; color:var(--text-dim); }
+  .thread-stage-step.done   .thread-stage-label { color:var(--text); }
+  .thread-stage-step.active .thread-stage-label { color:var(--gold-light); }
+  .thread-stage-check { position:absolute; top:10px; right:10px; font-size:0.65rem; color:var(--gold-dim); }
+  .thread-stage-step.active .thread-stage-check { color:var(--gold); }
+
+  /* Days-in-stage counter */
+  .thread-progress-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:12px; }
+  .thread-days-badge {
+    font-family:'Cinzel',serif; font-size:0.68rem; letter-spacing:0.12em; color:var(--gold-dim);
+    border:1px solid rgba(201,168,76,0.2); padding:4px 12px; background:rgba(201,168,76,0.04);
+  }
+  .thread-days-badge span { color:var(--gold); }
+
+  /* Stage progress bar */
+  .thread-bar-track { flex:1; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+  .thread-bar-fill  { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); transition:width 1s ease; width:0%; }
+
+  /* Flavour / entry event */
+  .thread-entry-note { font-size:0.82rem; color:var(--text-dim); font-style:italic; line-height:1.65; margin-bottom:14px; }
+  .thread-entry-note strong { font-style:normal; color:var(--text); font-weight:normal; font-family:'Cinzel',serif; font-size:0.78rem; }
+
+  /* Resolution block (closed threads) */
+  .thread-resolution {
+    border-top:1px solid rgba(201,168,76,0.15); padding-top:14px; margin-top:4px;
+    display:flex; align-items:flex-start; gap:14px;
+  }
+  .thread-resolution-badge { font-size:1.6rem; flex-shrink:0; margin-top:2px; }
+  .thread-resolution-label { font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:4px; }
+  .thread-resolution-label.positive { color:var(--green); }
+  .thread-resolution-label.negative { color:var(--red); }
+  .thread-resolution-label.neutral  { color:var(--gold-dim); }
+  .thread-resolution-flavour { font-size:0.82rem; color:var(--text-dim); font-style:italic; line-height:1.6; }
+
+  /* Markers earned row */
+  .thread-markers { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .thread-marker-pill {
+    font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.18em; text-transform:uppercase;
+    padding:4px 12px; border:1px solid rgba(201,168,76,0.3); color:var(--gold-dim);
+    background:rgba(201,168,76,0.05);
+  }
+
+  /* Empty state */
+  .threads-empty { padding:32px; text-align:center; color:var(--text-dim); font-style:italic; font-size:0.9rem; line-height:1.7; }
+
+  @media (max-width:700px) {
+    .thread-stages { flex-direction:column; gap:4px; }
+    .thread-stage-step { border-right-width:1px; border-bottom-width:0; }
+    .thread-stage-step:last-child { border-bottom-width:1px; }
+    .thread-header { flex-direction:column; }
+    .thread-status-pill { align-self:flex-start; }
+  }
+
   @media (max-width:700px) {
     .header-title { font-size:2.2rem; }
     .life-grade-hero { grid-template-columns:1fr; gap:24px; padding:24px; }
@@ -237,6 +332,12 @@
       <div class="life-stat-value" id="stat-days-lived">—</div>
       <div class="life-stat-sub">since claiming</div>
     </div>
+  </div>
+
+  <!-- Active & Recent Threads -->
+  <div id="threads-section" class="threads-wrap animate-in" style="display:none;">
+    <div class="section-title">Life Threads</div>
+    <div id="threads-container"></div>
   </div>
 
   <!-- Ratio bar -->
@@ -483,6 +584,217 @@ function generateNarrative(cardName, stage, grade, events, reactions) {
   ).join('');
 }
 
+// ── Thread rendering ──────────────────────────────────────────────────────────
+
+const THREAD_STAGE_LABELS = {
+  LONG_ILLNESS:   ['The Diagnosis', 'The Struggle', 'The Crisis Point'],
+  GAINING_WEALTH: ['The Opportunity', 'The Build', 'The Test'],
+  MARRIAGE:       ['The Relationship', 'The Proposal', 'The Union'],
+  CHILDBIRTH:     ['The News', 'The Wait', 'The Birth'],
+};
+
+const THREAD_STAGE_DURATIONS = {
+  LONG_ILLNESS:   [4, 11, 1],
+  GAINING_WEALTH: [4, 14, 1],
+  MARRIAGE:       [7, 4, 1],
+  CHILDBIRTH:     [7, 14, 1],
+};
+
+const RESOLUTION_POLARITY = {
+  // Long Illness
+  FULL_RECOVERY:      'positive',
+  CHRONIC_CONDITION:  'neutral',
+  DEATH_CHAPTER:      'negative',
+  // Gaining Wealth
+  FREEDOM:            'positive',
+  CAPTIVITY:          'neutral',
+  MORAL_COMPROMISE:   'negative',
+  // Marriage
+  UNION:              'positive',
+  PARTNERSHIP:        'positive',
+  HEARTBREAK:         'negative',
+  // Childbirth
+  HEALTHY_BIRTH:      'positive',
+  DIFFICULT_BIRTH:    'neutral',
+  LOSS:               'negative',
+};
+
+const RESOLUTION_BADGES = {
+  FULL_RECOVERY: '🌅', CHRONIC_CONDITION: '🩺', DEATH_CHAPTER: '🕯️',
+  FREEDOM: '🦅', CAPTIVITY: '🔐', MORAL_COMPROMISE: '🌑',
+  UNION: '💍', PARTNERSHIP: '🤝', HEARTBREAK: '💔',
+  HEALTHY_BIRTH: '🌱', DIFFICULT_BIRTH: '⚡', LOSS: '🫂',
+};
+
+const MARKER_LABELS = {
+  SURVIVED_ILLNESS: 'Survived Illness', CHRONIC_CONDITION: 'Chronic Condition',
+  DEATH_CHAPTER: 'Death Chapter', RESURRECTION: 'Resurrection',
+  FINANCIAL_INDEPENDENCE: 'Financial Independence', CAPTIVITY: 'Captivity',
+  SHADOW: 'Shadow', MARRIED: 'Married', LONG_PARTNERSHIP: 'Long Partnership',
+  HEARTBREAK: 'Heartbreak', PARENT: 'Parent', GRIEF: 'Grief',
+  TESTED: 'Tested',
+};
+
+function formatResolutionKey(key) {
+  if (!key) return '—';
+  return key.split('_').map(w => w[0] + w.slice(1).toLowerCase()).join(' ');
+}
+
+function buildThreadCard(thread) {
+  const type        = thread.type || '';
+  const status      = thread.status || 'OPEN'; // OPEN or CLOSED
+  const stage       = thread.stage || 1;
+  const stageLabels = THREAD_STAGE_LABELS[type] || ['Stage 1', 'Stage 2', 'Stage 3'];
+  const stageDurs   = THREAD_STAGE_DURATIONS[type] || [4, 14, 1];
+  const resolution  = thread.resolution || null;
+  const markers     = thread.markers || [];
+
+  // Days in current stage
+  const stageStarted = thread.stageStartedAt ? thread.stageStartedAt.toDate() : new Date();
+  const daysInStage  = Math.floor((Date.now() - stageStarted.getTime()) / 86400000);
+  const stageDur     = stageDurs[stage - 1] || 1;
+  const stagePct     = Math.min(100, Math.round((daysInStage / stageDur) * 100));
+
+  // Opened date
+  const openedAt  = thread.openedAt ? thread.openedAt.toDate() : null;
+  const openedStr = openedAt ? openedAt.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }) : '—';
+
+  // Thread label
+  const threadLabel = type.split('_').map(w => w[0] + w.slice(1).toLowerCase()).join(' ');
+
+  // Stage steps HTML
+  const stepsHtml = stageLabels.map((label, i) => {
+    const stepNum  = i + 1;
+    let   cls      = '';
+    let   checkMark = '';
+    if (status === 'CLOSED' || stepNum < stage) {
+      cls = 'done'; checkMark = '<div class="thread-stage-check">✓</div>';
+    } else if (stepNum === stage && status === 'OPEN') {
+      cls = 'active'; checkMark = '<div class="thread-stage-check">◆</div>';
+    }
+    return `<div class="thread-stage-step ${cls}">
+      <div class="thread-stage-num">Stage ${stepNum}</div>
+      <div class="thread-stage-label">${esc(label)}</div>
+      ${checkMark}
+    </div>`;
+  }).join('');
+
+  // Progress bar (only shown for open threads in stage 2)
+  const showProgress = status === 'OPEN' && stage === 2;
+  const progressHtml = showProgress ? `
+    <div class="thread-progress-row">
+      <div class="thread-days-badge">Day <span>${daysInStage}</span> of <span>${stageDur}</span></div>
+      <div class="thread-bar-track"><div class="thread-bar-fill" data-pct="${stagePct}"></div></div>
+    </div>` : '';
+
+  // Entry note
+  const entryNote = thread.entryEventName
+    ? `<div class="thread-entry-note">Opened by: <strong>${esc(thread.entryEventName)}</strong> &nbsp;·&nbsp; ${openedStr}</div>`
+    : `<div class="thread-entry-note">Opened ${openedStr}</div>`;
+
+  // Resolution block (closed threads)
+  let resolutionHtml = '';
+  if (status === 'CLOSED' && resolution) {
+    const polarity   = RESOLUTION_POLARITY[resolution] || 'neutral';
+    const badge      = RESOLUTION_BADGES[resolution]   || '◆';
+    const resLabel   = formatResolutionKey(resolution);
+    const resFlavour = thread.resolutionFlavourText || '';
+    resolutionHtml = `
+      <div class="thread-resolution">
+        <div class="thread-resolution-badge">${badge}</div>
+        <div>
+          <div class="thread-resolution-label ${polarity}">${esc(resLabel)}</div>
+          ${resFlavour ? `<div class="thread-resolution-flavour">${esc(resFlavour)}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // Markers
+  const markersHtml = markers.length > 0 ? `
+    <div class="thread-markers">
+      ${markers.map(m => `<div class="thread-marker-pill">${esc(MARKER_LABELS[m] || m)}</div>`).join('')}
+    </div>` : '';
+
+  const isOpen = status === 'OPEN';
+
+  return `
+    <div class="thread-card glass status-${status.toLowerCase()}">
+      <div class="thread-header">
+        <div class="thread-title-group">
+          <div class="thread-eyebrow">Life Thread</div>
+          <div class="thread-name">${esc(threadLabel)}</div>
+        </div>
+        <div class="thread-status-pill ${isOpen ? 'open' : 'closed'}">${isOpen ? '● Active' : '✓ Resolved'}</div>
+      </div>
+      <div class="thread-stages">${stepsHtml}</div>
+      ${progressHtml}
+      ${entryNote}
+      ${resolutionHtml}
+      ${markersHtml}
+    </div>`;
+}
+
+async function loadAndRenderThreads(cardId) {
+  const cardRef     = db.collection ? db.collection('cards').doc(cardId) : null;
+
+  // Use modular Firestore API (same import style as rest of the file)
+  const threadsSnap = await getDocs(
+    query(
+      collection(db, 'cards', cardId, 'threads'),
+    )
+  );
+
+  if (threadsSnap.empty) return;
+
+  const threads = [];
+  threadsSnap.forEach(d => threads.push({ id: d.id, ...d.data() }));
+
+  // Sort: OPEN first (oldest first), then CLOSED (most recently closed first)
+  const open   = threads.filter(t => t.status === 'OPEN')
+                        .sort((a,b) => (a.openedAt?.toDate?.() || 0) - (b.openedAt?.toDate?.() || 0));
+  const closed = threads.filter(t => t.status === 'CLOSED')
+                        .sort((a,b) => (b.closedAt?.toDate?.() || 0) - (a.closedAt?.toDate?.() || 0));
+
+  // Show up to 3 closed threads (most recent) so the page doesn't get huge
+  const visibleClosed = closed.slice(0, 3);
+  const all = [...open, ...visibleClosed];
+
+  if (all.length === 0) return;
+
+  const container = document.getElementById('threads-container');
+  container.innerHTML = all.map(t => buildThreadCard(t)).join('');
+
+  // Also enrich closed threads with resolution flavour from ledger if possible
+  // (THREAD_CLOSE ledger entries carry notes; attach inline)
+  // This is a best-effort lookup — doesn't block render
+  try {
+    const closeSnap = await getDocs(
+      query(collection(db, 'cards', cardId, 'ledger'), where('type', '==', 'THREAD_CLOSE'))
+    );
+    const flavourMap = {};
+    closeSnap.forEach(d => {
+      const data = d.data();
+      if (data.threadId) flavourMap[data.threadId] = data.notes || '';
+    });
+    // Re-render closed cards with flavour text if we got any
+    visibleClosed.forEach(t => {
+      if (flavourMap[t.id]) t.resolutionFlavourText = flavourMap[t.id];
+    });
+    if (Object.keys(flavourMap).length > 0) {
+      container.innerHTML = [...open, ...visibleClosed].map(t => buildThreadCard(t)).join('');
+    }
+  } catch (_) { /* non-critical */ }
+
+  // Animate progress bars after render
+  setTimeout(() => {
+    document.querySelectorAll('.thread-bar-fill').forEach(el => {
+      el.style.width = (el.dataset.pct || '0') + '%';
+    });
+  }, 300);
+
+  document.getElementById('threads-section').style.display = 'block';
+}
+
 // ── Render page ───────────────────────────────────────────────────────────────
 function renderPage(events, cardData, cardId, reactions) {
   const cardName  = cardData.cardName  || cardId;
@@ -661,6 +973,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     renderPage(events, cardData, cardId, reactions);
     showPage();
+
+    // Load thread state async — non-blocking so the page shows immediately
+    loadAndRenderThreads(cardId).catch(err => {
+      console.warn('Thread load failed (non-critical):', err);
+    });
 
   } catch (err) {
     console.error('Your Life boot error:', err);
