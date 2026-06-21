@@ -722,6 +722,7 @@ async function boot(evoId) {
         'Claimed':            d.claimed ? 'YES' : 'NO',
         'Claim Date':         d.claimDate        ? d.claimDate.toDate().toISOString() : null,
         'Current XP':         d.currentXP        || 0,
+        'Lifetime XP':        d.lifetimeXP       || 0,
         'Current Level':      d.currentLevel     || 1,
         'Evolution Stage':    d.evolutionStage   || 'DORMANT',
         'Streak (days)':      d.streakDays       || 0,
@@ -959,7 +960,9 @@ function buildDashboard(asOwner) {
     `<span class="grade-badge grade-${gradeClass}">◆ ${ac.rarity || 'Standard'}</span>`;
 
   const xp           = parseInt(lc['Current XP'])        || 0;
+  const lifetimeXP   = parseInt(lc['Lifetime XP'])       || 0;
   const gamingXP     = (gamingData && parseInt(gamingData['Gaming XP'])) || 0;
+
   const streak       = parseInt(lc['Streak (days)'])      || 0;
   const views        = parseInt(lc['Page Views'])         || 0;
   const interactions = parseInt(lc['Total Interactions']) || 0;
@@ -984,7 +987,7 @@ function buildDashboard(asOwner) {
   document.getElementById('d-next-stage').textContent   = STAGES[stageIdx+1] || 'Mythic (Max)';
 
   const baseValue = parseFloat(ac.value) || 0;
-  const liveValue = (xp + gamingXP) * 0.4;
+  const liveValue = (lifetimeXP + gamingXP) * 0.4;
   const stripFields = [
     { label:'Base Value', value: baseValue ? '$' + baseValue.toFixed(2) : '—', green:true, base:true },
     { label:'Live Value', value: liveValue ? '$' + liveValue.toFixed(2) : '—', blue:true, live:true },
