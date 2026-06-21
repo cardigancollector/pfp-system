@@ -1155,7 +1155,7 @@ async function logScan() {
               financialStanding: ac.financialStanding || 'Unknown',
               recentHistory:     '',
             },
-            onAccept: async (ev, choice, narrative) => {
+onAccept: async (ev, choice, narrative) => {
   const cardId = urlCardId;
   try {
     const res = await fetch('https://us-central1-pfp-system.cloudfunctions.net/submitReaction', {
@@ -1173,6 +1173,18 @@ async function logScan() {
     let msg = `${choice.archetype} — ${result.coherenceRating} coherence\n${xpSign}${result.reactionXP} XP`;
     if (result.streakMessage) msg += `\n${result.streakMessage}`;
     showToast(msg);
+
+    // ── NEW: if the active thread needs a real-world decision, open the action layer ──
+    if (result.activeThread && result.activeThread.requiresAction) {
+      setTimeout(() => {
+        openDecisionPopup({
+          activeThread: result.activeThread,
+          cardId:       cardId,
+          ownerToken:   savedOwner ? savedOwner.ownerToken : null,
+        });
+      }, 1200); // slight delay so the toast is visible first
+    }
+
   } catch (err) {
     console.error('submitReaction failed:', err);
     showToast('Could not save reaction. Try again.');
@@ -1574,5 +1586,6 @@ document.addEventListener('keydown', e => {
      EVENT REACTION POPUP — overlay injected from event_reaction_popup.html
 ════════════════════════════════════════════════════════════════════════ -->
 <script src="event_reaction_popup.js"></script>
+<script src="submit_decision_popup.js"></script>
 </body>
 </html>
