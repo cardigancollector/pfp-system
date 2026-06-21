@@ -515,7 +515,7 @@ function showToast(message) {
   toast.textContent = message;
   toast.style.opacity = '1';
   clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 4000);
+  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 8000);
 }
 
 window.showToast = showToast;
