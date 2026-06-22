@@ -1109,7 +1109,76 @@ async function incrementView(cardId) {
   } catch(e) { console.warn('Page view increment failed:', e); }
 }
 
+function strikeGong() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+  const master = ctx.createGain();
+  master.connect(ctx.destination);
+
+  // Reverb
+  const convLen = Math.floor(ctx.sampleRate * 5);
+  const convBuf = ctx.createBuffer(2, convLen, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = convBuf.getChannelData(c);
+    for (let i = 0; i < convLen; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / convLen, 1.8);
+  }
+  const reverb   = ctx.createConvolver();
+  reverb.buffer  = convBuf;
+  const rvbGain  = ctx.createGain();
+  rvbGain.gain.value = 0.6;
+  master.connect(reverb);
+  reverb.connect(rvbGain);
+  rvbGain.connect(ctx.destination);
+
+  const now = ctx.currentTime;
+  const layers = [
+    { freq: 80,  type: 'sine',     gain: 1.0,  decay: 4.5 },
+    { freq: 126, type: 'sine',     gain: 0.55, decay: 3.8 },
+    { freq: 187, type: 'sine',     gain: 0.35, decay: 3.0 },
+    { freq: 253, type: 'triangle', gain: 0.22, decay: 2.2 },
+    { freq: 334, type: 'sine',     gain: 0.14, decay: 1.6 },
+    { freq: 440, type: 'triangle', gain: 0.08, decay: 1.1 },
+    { freq: 78,  type: 'sine',     gain: 0.18, decay: 5.0, detune: 7 },
+  ];
+
+  layers.forEach(l => {
+    const osc = ctx.createOscillator();
+    const g   = ctx.createGain();
+    osc.type = l.type;
+    osc.frequency.value = l.freq;
+    if (l.detune) osc.detune.value = l.detune;
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.linearRampToValueAtTime(l.gain, now + 0.004);
+    g.gain.setTargetAtTime(0.001, now + 0.06, l.decay * 0.38);
+    osc.connect(g);
+    g.connect(master);
+    osc.start(now);
+    osc.stop(now + l.decay + 1);
+  });
+
+  // Mallet noise transient
+  const noiseLen = Math.floor(ctx.sampleRate * 0.12);
+  const noiseBuf = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
+  const nd = noiseBuf.getChannelData(0);
+  for (let i = 0; i < noiseLen; i++) nd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / noiseLen, 2);
+  const noiseSrc = ctx.createBufferSource();
+  noiseSrc.buffer = noiseBuf;
+  const noiseG   = ctx.createGain();
+  noiseG.gain.value = 0.18;
+  const noiseHPF = ctx.createBiquadFilter();
+  noiseHPF.type = 'bandpass';
+  noiseHPF.frequency.value = 600;
+  noiseHPF.Q.value = 0.8;
+  noiseSrc.connect(noiseHPF);
+  noiseHPF.connect(noiseG);
+  noiseG.connect(master);
+  noiseSrc.start(now);
+
+  master.gain.value = 0.85;
+}
+
 async function logScan() {
+  strikeGong();
   const cardId   = urlCardId;
   const token    = (savedOwner && savedOwner.ownerToken) ? savedOwner.ownerToken : null;
   const btn      = document.getElementById('scan-btn');
