@@ -1578,13 +1578,17 @@ async function fetchScanHistory(cardId, streak) {
       ? cardSnap.data().claimDate.toDate()
       : null;
     const days = [];
-    for (let i = 27; i >= 0; i--) {
-      const d = new Date();
-      d.setUTCDate(d.getUTCDate() - i);
-      const key = d.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-      const beforeClaim = claimDate && d < claimDate;
-      days.push({ beforeClaim, scanned: scanDates.has(key) });
-    }
+// Get today's date in Eastern Time as a baseline (YYYY-MM-DD)
+const nowET = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+nowET.setHours(0, 0, 0, 0);
+
+for (let i = 27; i >= 0; i--) {
+  const d = new Date(nowET);
+  d.setDate(d.getDate() - i);     // subtract whole calendar days, no UTC confusion
+  const key = d.toLocaleDateString('en-CA');  // already in ET, so no timeZone needed here
+  const beforeClaim = claimDate && d < claimDate;
+  days.push({ beforeClaim, scanned: scanDates.has(key) });
+}
 
     // If ledger has no DAILY_SCAN entries, fall back to streak count from Firestore
     if (scanDates.size === 0 && streak > 0) {
