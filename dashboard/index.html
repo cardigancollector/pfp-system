@@ -1369,8 +1369,8 @@ async function fetchLifeEvents(cardId) {
     }
 
     const total    = events.length;
-    const positive = events.filter(e => e.polarity === 'positive').length;
-    const negative = events.filter(e => e.polarity === 'negative').length;
+    const negative = events.filter(e => e.polarity === 'negative' && (e.xpLost || 0) > 0).length;
+    const positive = total - negative;
 
     const bestEvent  = events.reduce((best, e) => (e.xpGained || 0) > (best.xpGained || 0) ? e : best, events[0]);
     const worstEvent = events.reduce((worst, e) => (e.xpLost || 0) > (worst.xpLost || 0) ? e : worst, events[0]);
