@@ -225,11 +225,14 @@
   .chart-wrap { padding:24px; }
   .chart-title { font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:16px; }
 
-  .streak-grid { display:grid; grid-template-columns:repeat(14,1fr); gap:4px; margin-top:8px; }
-  .streak-day { aspect-ratio:1; border-radius:2px; background:var(--charcoal); transition:background 0.3s; }
-  .streak-day.active { background:var(--gold); box-shadow:0 0 6px rgba(201,168,76,0.5); }
-  .streak-day.partial { background:var(--gold-dim); }
-  .streak-day.decay { background:rgba(192,57,43,0.4); }
+  .life-events-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(201,168,76,0.07); font-size:0.85rem; }
+  .life-events-row:last-child { border-bottom:none; }
+  .life-events-label { color:var(--text-dim); font-size:0.75rem; letter-spacing:0.06em; }
+  .life-events-val { font-family:'Cinzel',serif; font-size:0.88rem; color:var(--text); text-align:right; }
+  .life-events-val.pos { color:var(--green); }
+  .life-events-val.neg { color:var(--red); }
+  .life-events-val.gold { color:var(--gold); }
+  .life-events-name { font-size:0.7rem; color:var(--text-dim); font-style:italic; margin-top:2px; }
 
   .log-wrap { padding:24px; }
   .log-list { display:flex; flex-direction:column; gap:0; }
@@ -542,12 +545,9 @@
 
     <div class="two-col animate-in delay-3">
       <div class="glass chart-wrap">
-        <div class="chart-title">28-Day Streak Calendar</div>
-        <div class="streak-grid" id="streak-grid"></div>
-        <div style="display:flex;gap:16px;margin-top:14px;font-size:0.7rem;color:var(--text-dim);">
-          <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold);border-radius:2px;margin-right:4px;"></span>Active</span>
-          <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold-dim);border-radius:2px;margin-right:4px;"></span>Partial</span>
-          <span><span style="display:inline-block;width:10px;height:10px;background:rgba(192,57,43,0.4);border-radius:2px;margin-right:4px;"></span>Decay</span>
+        <div class="chart-title">Life Events</div>
+        <div id="life-events-box">
+          <div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">Loading events…</div>
         </div>
       </div>
       <div class="glass health-wrap">
@@ -1075,7 +1075,7 @@ function buildDashboard(asOwner) {
   ).join('');
 
   buildMilestones(xp, streak, interactions);
-  buildStreakCalendar(streak, daysSince);
+  fetchLifeEvents(urlCardId);
   buildLog(interactions, daysSince);
 
   const eventIndicator = document.getElementById('active-event-indicator');
@@ -1280,16 +1280,6 @@ onAccept: async (ev, choice, narrative) => {
         if (livingCard) livingCard['Evolution Stage'] = data.stage;
       }
 
-      const grid = document.getElementById('streak-grid');
-      if (grid) {
-        const days = grid.querySelectorAll('.streak-day');
-        if (days.length > 0) {
-          const todayCell = days[days.length - 1];
-          todayCell.classList.remove('decay');
-          todayCell.classList.add('active');
-        }
-      }
-
       await new Promise(resolve => setTimeout(resolve, 2000));
       await fetchFreshLivingCard(data.totalXP !== undefined ? data.totalXP : undefined);
       buildDashboard(true);
@@ -1356,33 +1346,71 @@ function buildMilestones(xp, streak, interactions) {
     .catch(() => {});
 }
 
-function buildStreakCalendar(streak, daysSince) {
-  const grid = document.getElementById('streak-grid');
-  grid.innerHTML = Array.from({length:28}, (_,i) =>
-    `<div class="streak-day" title="${i===0?'Today':i+' days ago'}"></div>`
-  ).join('');
-  fetchScanHistory(urlCardId, streak);
-}
+async function fetchLifeEvents(cardId) {
+  const box = document.getElementById('life-events-box');
+  if (!box) return;
+  try {
+    const snap = await window._pfpFirestoreGetDocs(
+      window._pfpFirestoreQuery(
+        window._pfpFirestoreCollection(window._pfpFirestore, 'cards', cardId, 'ledger'),
+        window._pfpFirestoreOrderBy('date', 'desc')
+      )
+    );
 
-function applyStreakCalendar(days) {
-  const grid = document.getElementById('streak-grid');
-  if (!grid) return;
-  grid.innerHTML = days.map((d, i) => {
-    let cls = '';
-    const isToday = i === days.length - 1;
-    if (d.beforeClaim) {
-      cls = '';
-    } else if (d.scanned) {
-      cls = 'active';
-    } else if (isToday) {
-      cls = '';
-    } else {
-      const claimDayIdx = days.findIndex(x => !x.beforeClaim);
-      cls = i === claimDayIdx ? '' : 'decay';
+    const events = [];
+    snap.forEach(d => {
+      const e = d.data();
+      if (e.type === 'LIFE_EVENT') events.push(e);
+    });
+
+    if (events.length === 0) {
+      box.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;font-style:italic;">No life events recorded yet.</div>';
+      return;
     }
-    const label = isToday ? 'Today' : (days.length - 1 - i) + ' days ago';
-    return `<div class="streak-day ${cls}" title="${label}"></div>`;
-  }).join('');
+
+    const total    = events.length;
+    const positive = events.filter(e => e.polarity === 'positive').length;
+    const negative = events.filter(e => e.polarity === 'negative').length;
+
+    const bestEvent  = events.reduce((best, e) => (e.xpGained || 0) > (best.xpGained || 0) ? e : best, events[0]);
+    const worstEvent = events.reduce((worst, e) => (e.xpLost || 0) > (worst.xpLost || 0) ? e : worst, events[0]);
+
+    const bestXP   = bestEvent.xpGained || 0;
+    const bestName = bestEvent.notes    || '—';
+    const worstXP  = worstEvent.xpLost  || 0;
+    const worstName= worstEvent.notes   || '—';
+
+    box.innerHTML = `
+      <div class="life-events-row">
+        <span class="life-events-label">Total Events</span>
+        <div><div class="life-events-val gold">${total}</div></div>
+      </div>
+      <div class="life-events-row">
+        <span class="life-events-label">Positive Events</span>
+        <div><div class="life-events-val pos">▲ ${positive}</div></div>
+      </div>
+      <div class="life-events-row">
+        <span class="life-events-label">Negative Events</span>
+        <div><div class="life-events-val neg">▼ ${negative}</div></div>
+      </div>
+      <div class="life-events-row">
+        <span class="life-events-label">Best XP Gain</span>
+        <div>
+          <div class="life-events-val pos">+${bestXP} XP</div>
+          <div class="life-events-name">${esc(bestName)}</div>
+        </div>
+      </div>
+      <div class="life-events-row">
+        <span class="life-events-label">Worst XP Loss</span>
+        <div>
+          <div class="life-events-val neg">${worstXP > 0 ? '−' + worstXP : '—'} ${worstXP > 0 ? 'XP' : ''}</div>
+          <div class="life-events-name">${worstXP > 0 ? esc(worstName) : 'No losses yet'}</div>
+        </div>
+      </div>`;
+  } catch(e) {
+    console.warn('Life events fetch failed:', e);
+    box.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">Could not load events.</div>';
+  }
 }
 
 function buildLog(interactions, daysSince) {
@@ -1557,52 +1585,6 @@ async function fetchStats() {
     document.getElementById('stat-total-live').textContent  = totalLive.toLocaleString();
     document.getElementById('stat-highest-xp').textContent = highestXP.toLocaleString() + ' XP';
     document.getElementById('stat-top-card').textContent   = topCard;
-  } catch(e) {}
-}
-
-async function fetchScanHistory(cardId, streak) {
-  try {
-    const ledgerSnap = await window._pfpFirestoreGetDocs(
-      window._pfpFirestoreQuery(window._pfpFirestoreCollection(window._pfpFirestore, 'cards', cardId, 'ledger'), window._pfpFirestoreOrderBy('date', 'desc'), window._pfpFirestoreLimit(28))
-    );
-    const scanDates = new Set();
-    ledgerSnap.forEach(d => {
-      const entry = d.data();
-      if (entry.type === 'DAILY_SCAN' && entry.date) {
-        const dt = entry.date.toDate ? entry.date.toDate() : new Date(entry.date);
-        scanDates.add(dt.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }));
-      }
-    });
-    const cardSnap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(window._pfpFirestore, 'cards', cardId));
-    const claimDate = cardSnap.exists() && cardSnap.data().claimDate
-      ? cardSnap.data().claimDate.toDate()
-      : null;
-    const days = [];
-// Get today's date in Eastern Time as a baseline (YYYY-MM-DD)
-const nowET = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
-nowET.setHours(0, 0, 0, 0);
-
-for (let i = 27; i >= 0; i--) {
-  const d = new Date(nowET);
-  d.setDate(d.getDate() - i);     // subtract whole calendar days, no UTC confusion
-  const key = d.toLocaleDateString('en-CA');  // already in ET, so no timeZone needed here
-  const beforeClaim = claimDate && d < claimDate;
-  days.push({ beforeClaim, scanned: scanDates.has(key) });
-}
-
-    // If ledger has no DAILY_SCAN entries, fall back to streak count from Firestore
-    if (scanDates.size === 0 && streak > 0) {
-      const streakCount = Math.min(streak, 28);
-      for (let i = 0; i < 28; i++) {
-        const dayObj = days[i];
-        if (!dayObj.beforeClaim) {
-          const distFromEnd = 27 - i;
-          dayObj.scanned = distFromEnd < streakCount;
-        }
-      }
-    }
-
-    applyStreakCalendar(days);
   } catch(e) {}
 }
 
