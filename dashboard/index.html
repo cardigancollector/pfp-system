@@ -366,6 +366,23 @@
     #readonly-banner, #owner-banner { padding:10px 16px; }
     .claim-box { padding:36px 24px 32px; }
   }
+
+  @keyframes pfp-hb-beat {
+    0%   { transform: scale(1); }
+    8%   { transform: scale(1.18); }
+    16%  { transform: scale(1.05); }
+    22%  { transform: scale(1.22); }
+    32%  { transform: scale(1); }
+    100% { transform: scale(1); }
+  }
+  #pfp-hb-heart { transform-origin: center; transform-box: fill-box; animation: pfp-hb-beat 1500ms ease-in-out infinite; }
+  @keyframes pfp-hb-ripple {
+    0%   { transform: scale(0.9); opacity: 0.5; }
+    100% { transform: scale(1.7); opacity: 0; }
+  }
+  .pfp-hb-ring { transform-origin: center; transform-box: fill-box; animation: pfp-hb-ripple 1500ms ease-out infinite; }
+  .pfp-hb-ring.pfp-r2 { animation-delay: 0.18s; }
+  #pfp-heart-svg { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -452,7 +469,17 @@
 
     <div class="owner-hero animate-in">
       <div>
-        <div class="owner-greeting">Living Card</div>
+        <div class="owner-greeting" style="display:flex;align-items:center;gap:6px;">
+          <svg id="pfp-heart-svg" viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg" style="width:0.72rem;height:0.72rem;overflow:visible;flex-shrink:0;">
+            <ellipse class="pfp-hb-ring" cx="110" cy="100" rx="72" ry="66" fill="none" stroke="#c9a84c" stroke-width="3"/>
+            <ellipse class="pfp-hb-ring pfp-r2" cx="110" cy="100" rx="72" ry="66" fill="none" stroke="#c9a84c" stroke-width="2"/>
+            <g id="pfp-hb-heart">
+              <path d="M110 160 C 80 138,38 118,38 82 C 38 58,56 42,76 42 C 90 42,102 50,110 62 C 118 50,130 42,144 42 C 164 42,182 58,182 82 C 182 118,140 138,110 160 Z" fill="#c9a84c" stroke="#9a7b2f" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M80 58 C 70 62,58 72,56 84" fill="none" stroke="#f0d080" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+            </g>
+          </svg>
+          Living Card
+        </div>
         <div class="owner-name" id="d-card-name">—</div>
         <div class="owner-meta" id="d-card-meta"></div>
         <div id="d-evo-id-pill"></div>
@@ -1645,5 +1672,57 @@ document.addEventListener('keydown', e => {
 ════════════════════════════════════════════════════════════════════════ -->
 <script src="event_reaction_popup.js"></script>
 <script src="submit_decision_popup.js"></script>
+
+<script>
+(function(){
+  const svg = document.getElementById('pfp-heart-svg');
+  if (!svg) return;
+  let muted = false, ac = null, beatTimer = null;
+  const INTERVAL = 60000 / 40;
+
+  function playBeat() {
+    if (!ac || muted) return;
+    const now = ac.currentTime;
+    [[0, 58, 50, 0.9],[0.10, 50, 38, 0.7]].forEach(([delay, freq, fEnd, vol]) => {
+      const g = ac.createGain(), o = ac.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(freq, now + delay);
+      o.frequency.exponentialRampToValueAtTime(fEnd, now + delay + 0.26);
+      g.gain.setValueAtTime(0, now + delay);
+      g.gain.linearRampToValueAtTime(vol, now + delay + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.28);
+      o.connect(g); g.connect(ac.destination);
+      o.start(now + delay); o.stop(now + delay + 0.30);
+      const g2 = ac.createGain(), n = ac.createOscillator();
+      n.type = 'sawtooth'; n.frequency.setValueAtTime(95, now + delay);
+      g2.gain.setValueAtTime(0, now + delay);
+      g2.gain.linearRampToValueAtTime(vol * 0.13, now + delay + 0.005);
+      g2.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.08);
+      n.connect(g2); g2.connect(ac.destination);
+      n.start(now + delay); n.stop(now + delay + 0.09);
+    });
+  }
+
+  function tick() { playBeat(); beatTimer = setTimeout(tick, INTERVAL); }
+
+  function init() {
+    if (ac) return;
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') ac.resume();
+    tick();
+  }
+
+  svg.addEventListener('click', function() {
+    init();
+    muted = !muted;
+    svg.title = muted ? 'Unmute heartbeat' : 'Mute heartbeat';
+  });
+
+  document.addEventListener('click', function initOnce() {
+    init();
+    document.removeEventListener('click', initOnce);
+  }, { once: true });
+})();
+</script>
 </body>
 </html>
