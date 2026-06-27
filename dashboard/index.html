@@ -377,12 +377,12 @@
   }
   #pfp-hb-heart { transform-origin: center; transform-box: fill-box; animation: pfp-hb-beat 1500ms ease-in-out infinite; }
   @keyframes pfp-hb-ripple {
-    0%   { transform: scale(0.9); opacity: 0.5; }
+    0%   { transform: scale(1); opacity: 0.6; }
     100% { transform: scale(1.7); opacity: 0; }
   }
   .pfp-hb-ring { transform-origin: center; transform-box: fill-box; animation: pfp-hb-ripple 1500ms ease-out infinite; }
   .pfp-hb-ring.pfp-r2 { animation-delay: 0.18s; }
-  #pfp-heart-svg { cursor: pointer; }
+  #pfp-heart-svg { cursor: pointer; overflow: visible; }
 </style>
 </head>
 <body>
@@ -470,9 +470,9 @@
     <div class="owner-hero animate-in">
       <div>
         <div class="owner-greeting">Living Card</div>
-        <div class="owner-name" style="display:flex;align-items:center;gap:14px;" id="d-card-name-wrap">
+        <div class="owner-name" style="display:flex;align-items:center;gap:14px;overflow:visible;" id="d-card-name-wrap">
           <span id="d-card-name">—</span>
-          <svg id="pfp-heart-svg" viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg" style="width:2.4rem;height:2.4rem;overflow:visible;flex-shrink:0;margin-bottom:4px;">
+          <svg id="pfp-heart-svg" viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg" style="width:2.4rem;height:2.4rem;overflow:visible;flex-shrink:0;margin-bottom:4px;isolation:isolate;">
             <ellipse class="pfp-hb-ring" cx="110" cy="100" rx="72" ry="66" fill="none" stroke="#c9a84c" stroke-width="3"/>
             <ellipse class="pfp-hb-ring pfp-r2" cx="110" cy="100" rx="72" ry="66" fill="none" stroke="#c9a84c" stroke-width="2"/>
             <g id="pfp-hb-heart">
