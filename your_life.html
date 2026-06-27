@@ -321,15 +321,15 @@
     <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto;">
       <svg id="yl-clock-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"
         style="position:absolute;width:160px;height:160px;opacity:0.18;cursor:pointer;z-index:0;top:50%;left:50%;transform:translate(-50%,-50%);">
-        <circle cx="60" cy="60" r="56" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-        <circle cx="60" cy="60" r="50" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.5"/>
-        <g stroke="#c9a84c" stroke-width="1.5" opacity="0.8">
+        <circle cx="60" cy="60" r="56" fill="none" stroke="#a78bfa" stroke-width="1.5"/>
+        <circle cx="60" cy="60" r="50" fill="none" stroke="#a78bfa" stroke-width="0.5" opacity="0.5"/>
+        <g stroke="#a78bfa" stroke-width="1.5" opacity="0.8">
           <line x1="60" y1="12" x2="60" y2="20"/>
           <line x1="60" y1="100" x2="60" y2="108"/>
           <line x1="12" y1="60" x2="20" y2="60"/>
           <line x1="100" y1="60" x2="108" y2="60"/>
         </g>
-        <g stroke="#c9a84c" stroke-width="0.75" opacity="0.4">
+        <g stroke="#a78bfa" stroke-width="0.75" opacity="0.4">
           <line x1="60" y1="12" x2="60" y2="17" transform="rotate(30 60 60)"/>
           <line x1="60" y1="12" x2="60" y2="17" transform="rotate(60 60 60)"/>
           <line x1="60" y1="12" x2="60" y2="17" transform="rotate(120 60 60)"/>
@@ -339,9 +339,9 @@
           <line x1="60" y1="12" x2="60" y2="17" transform="rotate(300 60 60)"/>
           <line x1="60" y1="12" x2="60" y2="17" transform="rotate(330 60 60)"/>
         </g>
-        <line id="yl-hand-min" x1="60" y1="60" x2="60" y2="22" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" style="transform-origin:60px 60px;"/>
+        <line id="yl-hand-min" x1="60" y1="60" x2="60" y2="22" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" style="transform-origin:60px 60px;"/>
         <line id="yl-hand-sec" x1="60" y1="68" x2="60" y2="16" stroke="#e8e0d0" stroke-width="1" stroke-linecap="round" style="transform-origin:60px 60px;"/>
-        <circle cx="60" cy="60" r="3" fill="#c9a84c"/>
+        <circle cx="60" cy="60" r="3" fill="#a78bfa"/>
         <circle cx="60" cy="60" r="1.5" fill="#1a1814"/>
       </svg>
       <div style="position:relative;z-index:1;">
@@ -1109,16 +1109,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     tick();
   }
 
-  // Start on first user interaction
-  document.addEventListener('click', function startOnce() {
+  // Start automatically when page loads
+  window.addEventListener('load', function() {
     initAudio();
-    document.removeEventListener('click', startOnce);
-  }, { once: true });
+  });
 
   // Clock tap = mute/unmute
   clockSvg.addEventListener('click', function(e) {
     e.stopPropagation();
-    initAudio();
     muted = !muted;
     clockSvg.style.opacity = muted ? '0.08' : '0.18';
   });
