@@ -276,6 +276,14 @@
     .narrative-box { padding:24px 20px; }
     .back-btn { font-size:0.6rem; padding:6px 12px; }
   }
+
+  @keyframes yl-hb-beat {
+    0%,32%,100% { transform: scale(1); }
+    8%  { transform: scale(1.18); }
+    16% { transform: scale(1.05); }
+    22% { transform: scale(1.22); }
+  }
+  #yl-clock-svg:hover { opacity:0.28 !important; }
 </style>
 </head>
 <body>
@@ -310,9 +318,39 @@
     </div>
     <div class="header-title">Your Life</div>
     <div class="header-subtitle">How's Life Treating You?</div>
-    <div class="header-ornament"><span class="ornament-diamond">◆</span></div>
-    <div class="header-card-name" id="header-card-name">—</div>
-    <div class="header-ornament"><span class="ornament-diamond">◆</span></div>
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto;">
+      <svg id="yl-clock-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"
+        style="position:absolute;width:160px;height:160px;opacity:0.18;cursor:pointer;z-index:0;top:50%;left:50%;transform:translate(-50%,-50%);">
+        <circle cx="60" cy="60" r="56" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+        <circle cx="60" cy="60" r="50" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.5"/>
+        <g stroke="#c9a84c" stroke-width="1.5" opacity="0.8">
+          <line x1="60" y1="12" x2="60" y2="20"/>
+          <line x1="60" y1="100" x2="60" y2="108"/>
+          <line x1="12" y1="60" x2="20" y2="60"/>
+          <line x1="100" y1="60" x2="108" y2="60"/>
+        </g>
+        <g stroke="#c9a84c" stroke-width="0.75" opacity="0.4">
+          <line x1="60" y1="12" x2="60" y2="17" transform="rotate(30 60 60)"/>
+          <line x1="60" y1="12" x2="60" y2="17" transform="rotate(60 60 60)"/>
+          <line x1="60" y1="12" x2="60" y2="17" transform="rotate(120 60 60)"/>
+          <line x1="60" y1="12" x2="60" y2="17" transform="rotate(150 60 60)"/>
+          <line x1="60" y1="12" x2="60" y2="17" transform="rotate(210 60 60)"/>
+          <line x1="60" y1="12" x2="60" y2="17" transform="rotate(240 60 60)"/>
+          <line x1="60" y1="12" x2="60" y2="17" transform="rotate(300 60 60)"/>
+          <line x1="60" y1="12" x2="60" y2="17" transform="rotate(330 60 60)"/>
+        </g>
+        <line id="yl-hand-min" x1="60" y1="60" x2="60" y2="22" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" style="transform-origin:60px 60px;"/>
+        <line id="yl-hand-sec" x1="60" y1="68" x2="60" y2="16" stroke="#e8e0d0" stroke-width="1" stroke-linecap="round" style="transform-origin:60px 60px;"/>
+        <circle cx="60" cy="60" r="3" fill="#c9a84c"/>
+        <circle cx="60" cy="60" r="1.5" fill="#1a1814"/>
+      </svg>
+      <div style="position:relative;z-index:1;">
+        <div class="header-ornament"><span class="ornament-diamond">◆</span></div>
+        <div class="header-card-name" id="header-card-name">—</div>
+        <div class="header-ornament"><span class="ornament-diamond">◆</span></div>
+      </div>
+    </div>
+    <div style="font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold-dim);margin-top:6px;opacity:0.6;">(Tap Clock to Mute) &nbsp;·&nbsp; Time Marches On</div>
   </div>
 
   <!-- Hero stats -->
@@ -986,5 +1024,105 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 </script>
 
+
+<script>
+(function(){
+  const clockSvg = document.getElementById('yl-clock-svg');
+  const handSec  = document.getElementById('yl-hand-sec');
+  const handMin  = document.getElementById('yl-hand-min');
+  if (!clockSvg) return;
+
+  let muted = false, ac = null, tickTimer = null, tickCount = 0;
+  let secDeg = 0, minDeg = 0;
+  const TICK_MS = 600;
+
+  const MELODY = [
+    {freq:293.66,vel:0.5,dur:0.4},null,
+    {freq:349.23,vel:0.4,dur:0.3},null,
+    {freq:392.00,vel:0.55,dur:0.45},null,
+    {freq:349.23,vel:0.35,dur:0.25},null,
+    {freq:440.00,vel:0.5,dur:0.5},null,null,null,
+    {freq:392.00,vel:0.4,dur:0.35},null,
+    {freq:293.66,vel:0.45,dur:0.4},null,
+    {freq:261.63,vel:0.55,dur:0.6},null,null,null,
+    {freq:293.66,vel:0.35,dur:0.3},null,
+    {freq:329.63,vel:0.4,dur:0.35},null,
+    {freq:392.00,vel:0.5,dur:0.5},null,null,null,
+    {freq:349.23,vel:0.4,dur:0.4},null,
+    {freq:293.66,vel:0.6,dur:0.7},null,null,null,null,null,null,null,null,null,null,null,
+  ];
+
+  function playTick(isDownbeat) {
+    if (!ac || muted) return;
+    const now = ac.currentTime;
+    const buf = ac.createBuffer(1, ac.sampleRate * 0.04, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ac.sampleRate*0.008));
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type='bandpass';
+    f.frequency.value = isDownbeat ? 1800 : 2400; f.Q.value=3;
+    const g = ac.createGain(); g.gain.value = isDownbeat ? 0.6 : 0.35;
+    src.connect(f); f.connect(g); g.connect(ac.destination); src.start(now);
+  }
+
+  function playNote(freq, vel, dur) {
+    if (!ac || muted) return;
+    const now = ac.currentTime;
+    [[1,0.35,0.012,dur+0.7],[3.01,0.06,0.008,dur+0.3]].forEach(([mult,v,att,release])=>{
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.type='sine'; o.frequency.value=freq*mult;
+      g.gain.setValueAtTime(0,now);
+      g.gain.linearRampToValueAtTime(vel*v,now+att);
+      g.gain.exponentialRampToValueAtTime(0.001,now+release);
+      o.connect(g); g.connect(ac.destination);
+      o.start(now); o.stop(now+release+0.05);
+    });
+    const o3=ac.createOscillator(),g3=ac.createGain();
+    o3.type='sine'; o3.frequency.value=freq;
+    g3.gain.setValueAtTime(0,now+0.22);
+    g3.gain.linearRampToValueAtTime(vel*0.08,now+0.25);
+    g3.gain.exponentialRampToValueAtTime(0.001,now+dur+1.0);
+    o3.connect(g3); g3.connect(ac.destination);
+    o3.start(now+0.22); o3.stop(now+dur+1.05);
+  }
+
+  function advanceHands() {
+    secDeg += 6; minDeg += 0.1;
+    handSec.style.transform = `rotate(${secDeg}deg)`;
+    handMin.style.transform = `rotate(${minDeg}deg)`;
+  }
+
+  function tick() {
+    const isDownbeat = tickCount % 4 === 0;
+    playTick(isDownbeat);
+    advanceHands();
+    const note = MELODY[tickCount % MELODY.length];
+    if (note) playNote(note.freq, note.vel, note.dur);
+    tickCount++;
+    tickTimer = setTimeout(tick, TICK_MS);
+  }
+
+  function initAudio() {
+    if (ac) return;
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') ac.resume();
+    tick();
+  }
+
+  // Start on first user interaction
+  document.addEventListener('click', function startOnce() {
+    initAudio();
+    document.removeEventListener('click', startOnce);
+  }, { once: true });
+
+  // Clock tap = mute/unmute
+  clockSvg.addEventListener('click', function(e) {
+    e.stopPropagation();
+    initAudio();
+    muted = !muted;
+    clockSvg.style.opacity = muted ? '0.08' : '0.18';
+  });
+})();
+</script>
 </body>
 </html>
