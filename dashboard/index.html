@@ -1017,7 +1017,7 @@ function buildDashboard(asOwner) {
   document.getElementById('d-next-stage').textContent   = STAGES[stageIdx+1] || 'Mythic (Max)';
 
   const baseValue = parseFloat(ac.value) || 0;
-  const liveValue = baseValue * (1 + (xp + gamingXP) * 0.0002);
+  const liveValue = baseValue * (0.2 + (xp + gamingXP) * 0.0002);
   const stripFields = [
     { label:'Base Value', value: baseValue ? '$' + baseValue.toFixed(2) : '—', green:true, base:true },
     { label:'Live Value', value: liveValue ? '$' + liveValue.toFixed(2) : '—', blue:true, live:true },
