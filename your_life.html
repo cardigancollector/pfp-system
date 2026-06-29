@@ -283,7 +283,7 @@
     16% { transform: scale(1.05); }
     22% { transform: scale(1.22); }
   }
-  #yl-clock-svg:hover { opacity:0.28 !important; }
+  #yl-clock-svg:hover { opacity:0.42 !important; }
 </style>
 </head>
 <body>
@@ -320,7 +320,7 @@
     <div class="header-subtitle">How's Life Treating You?</div>
     <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto;">
       <svg id="yl-clock-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"
-        style="position:absolute;width:160px;height:160px;opacity:0.18;cursor:pointer;z-index:0;top:50%;left:50%;transform:translate(-50%,-50%);">
+        style="position:absolute;width:160px;height:160px;opacity:0.27;cursor:pointer;z-index:0;top:50%;left:50%;transform:translate(-50%,-50%);">
         <circle cx="60" cy="60" r="56" fill="none" stroke="#a78bfa" stroke-width="1.5"/>
         <circle cx="60" cy="60" r="50" fill="none" stroke="#a78bfa" stroke-width="0.5" opacity="0.5"/>
         <g stroke="#a78bfa" stroke-width="1.5" opacity="0.8">
@@ -1118,7 +1118,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   clockSvg.addEventListener('click', function(e) {
     e.stopPropagation();
     muted = !muted;
-    clockSvg.style.opacity = muted ? '0.08' : '0.18';
+    clockSvg.style.opacity = muted ? '0.12' : '0.27';
   });
 })();
 </script>
