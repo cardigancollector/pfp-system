@@ -19,6 +19,12 @@ const REACTION_POOLS = {
     { label: "Accept charity without shame",          archetype: "Yield"     },
     { label: "Take stock of hidden assets",           archetype: "Reflect"   },
     { label: "Gamble on an unlikely venture",         archetype: "Act"       },
+    { label: "Insist that nothing has truly changed", archetype: "Deny" },
+    { label: "Let the debt consume everything I am", archetype: "Despair" },
+    { label: "Convince myself the ruin was deserved by others", archetype: "Rationalize" },
+    { label: "Seize a neighbour's ruin for my own gain", archetype: "Exploit" },
+    { label: "Let a partner bear the ruin in my stead", archetype: "Betray" },
+    { label: "Accept that this was my own doing", archetype: "Own" },
   ],
 
   social: [
@@ -38,6 +44,12 @@ const REACTION_POOLS = {
     { label: "Follow the crowd's inclination",        archetype: "Yield"     },
     { label: "Observe before passing judgement",      archetype: "Reflect"   },
     { label: "Seek an audience with the host",        archetype: "Act"       },
+    { label: "Pretend the slight was never given", archetype: "Deny" },
+    { label: "Conclude that no one will ever call again", archetype: "Despair" },
+    { label: "Convince myself the betrayal was deserved", archetype: "Rationalize" },
+    { label: "Turn a friend's misfortune to my profit", archetype: "Exploit" },
+    { label: "Sacrifice a friend's trust to protect myself", archetype: "Betray" },
+    { label: "Admit the fault was mine alone", archetype: "Own" },
   ],
 
   health: [
@@ -57,6 +69,12 @@ const REACTION_POOLS = {
     { label: "Accept nature's verdict",               archetype: "Yield"     },
     { label: "Document the ailment precisely",        archetype: "Reflect"   },
     { label: "Seek a second opinion forthwith",       archetype: "Act"       },
+    { label: "Pretend the illness is merely imagined", archetype: "Deny" },
+    { label: "Abandon all hope of recovery", archetype: "Despair" },
+    { label: "Persuade myself the affliction serves some purpose", archetype: "Rationalize" },
+    { label: "Profit from another's affliction while I am able", archetype: "Exploit" },
+    { label: "Pass the contagion on without a warning", archetype: "Betray" },
+    { label: "Confess the neglect that brought this on", archetype: "Own" },
   ],
 
   mental: [
@@ -76,6 +94,12 @@ const REACTION_POOLS = {
     { label: "Rest the mind without guilt",           archetype: "Yield"     },
     { label: "Sit with the discomfort quietly",       archetype: "Reflect"   },
     { label: "Seek a change of scenery at once",      archetype: "Act"       },
+    { label: "Refuse to name what plainly ails me", archetype: "Deny" },
+    { label: "Surrender wholly to the darkness", archetype: "Despair" },
+    { label: "Reason away the harm I have caused", archetype: "Rationalize" },
+    { label: "Use another's weakness to steady my own mind", archetype: "Exploit" },
+    { label: "Unburden myself by wounding someone near", archetype: "Betray" },
+    { label: "Own the thought as truly mine", archetype: "Own" },
   ],
 
   skill: [
@@ -95,6 +119,12 @@ const REACTION_POOLS = {
     { label: "Acknowledge what I do not know",        archetype: "Yield"     },
     { label: "Review each misstep carefully",         archetype: "Reflect"   },
     { label: "Seek a mentor without delay",           archetype: "Act"       },
+    { label: "Insist my technique needs no correction", archetype: "Deny" },
+    { label: "Conclude that talent was never mine to claim", archetype: "Despair" },
+    { label: "Convince myself the failure belonged to my tools", archetype: "Rationalize" },
+    { label: "Claim credit for a rival's careful labour", archetype: "Exploit" },
+    { label: "Let another take the blame in my place", archetype: "Betray" },
+    { label: "Admit the fault was mine to bear", archetype: "Own" },
   ],
 
   creative: [
@@ -114,6 +144,12 @@ const REACTION_POOLS = {
     { label: "Invite chance to take the reins",       archetype: "Yield"     },
     { label: "Sit with the unfinished work quietly",  archetype: "Reflect"   },
     { label: "Present the work raw and unfinished",   archetype: "Act"       },
+    { label: "Declare the failed work a triumph", archetype: "Deny" },
+    { label: "Abandon the work as proof of my worthlessness", archetype: "Despair" },
+    { label: "Persuade myself the unfinished work was always meant to be so", archetype: "Rationalize" },
+    { label: "Take the vision of another and call it mine", archetype: "Exploit" },
+    { label: "Claim a collaborator's work as solely my own", archetype: "Betray" },
+    { label: "Accept that the failure was my own hand's making", archetype: "Own" },
   ],
 
   luck: [
@@ -133,6 +169,12 @@ const REACTION_POOLS = {
     { label: "Take what is given quietly",            archetype: "Yield"     },
     { label: "Search for the pattern beneath",        archetype: "Reflect"   },
     { label: "Act before the luck expires",           archetype: "Act"       },
+    { label: "Refuse to believe the fortune has turned", archetype: "Deny" },
+    { label: "Conclude that fortune has forsaken me forever", archetype: "Despair" },
+    { label: "Convince myself I alone earned the windfall", archetype: "Rationalize" },
+    { label: "Press my advantage at a stranger's expense", archetype: "Exploit" },
+    { label: "Let a companion's misfortune purchase my own luck", archetype: "Betray" },
+    { label: "Admit that the misfortune was earned, not given", archetype: "Own" },
   ],
 
   physical: [
@@ -152,6 +194,12 @@ const REACTION_POOLS = {
     { label: "Listen to what the body asks for",      archetype: "Yield"     },
     { label: "Review my habits with candour",         archetype: "Reflect"   },
     { label: "Begin immediately, without delay",      archetype: "Act"       },
+    { label: "Insist the body has not weakened", archetype: "Deny" },
+    { label: "Resign myself to permanent decline", archetype: "Despair" },
+    { label: "Persuade myself the decline is someone else's doing", archetype: "Rationalize" },
+    { label: "Push another past their limit for my own gain", archetype: "Exploit" },
+    { label: "Spend another's strength to spare my own", archetype: "Betray" },
+    { label: "Confess that the decline was of my own making", archetype: "Own" },
   ],
 
   world: [
@@ -171,6 +219,12 @@ const REACTION_POOLS = {
     { label: "Submit to the larger forces at work",   archetype: "Yield"     },
     { label: "Observe before forming conclusions",    archetype: "Reflect"   },
     { label: "Seek those who might act with me",      archetype: "Act"       },
+    { label: "Pretend the old order still stands", archetype: "Deny" },
+    { label: "Conclude that nothing can be mended now", archetype: "Despair" },
+    { label: "Reason away my part in the upheaval", archetype: "Rationalize" },
+    { label: "Seize the chaos before others can", archetype: "Exploit" },
+    { label: "Deliver an ally to the mob to save myself", archetype: "Betray" },
+    { label: "Accept my part in the trouble at hand", archetype: "Own" },
   ],
 
   mystery: [
@@ -190,6 +244,12 @@ const REACTION_POOLS = {
     { label: "Yield to the call of the unseen",       archetype: "Yield"     },
     { label: "Contemplate what has been revealed",    archetype: "Reflect"   },
     { label: "Step toward the threshold",             archetype: "Act"       },
+    { label: "Refuse to admit what was plainly seen", archetype: "Deny" },
+    { label: "Surrender to dread with no hope of understanding", archetype: "Despair" },
+    { label: "Convince myself there is nothing left to understand", archetype: "Rationalize" },
+    { label: "Turn the omen to my private advantage", archetype: "Exploit" },
+    { label: "Offer another to the unknown in my place", archetype: "Betray" },
+    { label: "Admit that I summoned what I do not understand", archetype: "Own" },
   ],
 
 };
@@ -215,6 +275,55 @@ function pickRandom(arr, n) {
   return shuffled.slice(0, n);
 }
 
+const VIRTUOUS_ARCHETYPES  = ["Resist", "Yield", "Reflect", "Act", "Transform", "Own"];
+const CORROSIVE_ARCHETYPES = ["Deny", "Despair", "Rationalize", "Exploit", "Betray", "Deflect"];
+
+// The 6 virtuous/corrosive pairs, e.g. Resist curdles into Deny.
+const ARCHETYPE_PAIRS = [
+  ["Resist", "Deny"],
+  ["Yield", "Despair"],
+  ["Reflect", "Rationalize"],
+  ["Act", "Exploit"],
+  ["Transform", "Betray"],
+  ["Own", "Deflect"],
+];
+
+// Fisher-Yates shuffle. Returns a new array; does not mutate the input.
+function shuffle(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+// Picks one random entry from the pool matching the given archetype.
+function pickOneEntryForArchetype(pool, archetype) {
+  const matches = pool.filter(entry => entry.archetype === archetype);
+  return matches[Math.floor(Math.random() * matches.length)];
+}
+
+// Draws 6 choices from a category pool: shuffles the 6 virtuous/corrosive
+// pairs, then takes the virtuous side from 3 of them and the corrosive side
+// from the other 3. Every pair is represented exactly once, so a pair's
+// virtuous and corrosive sides never appear together, and the split is
+// always exactly 3 virtuous / 3 corrosive.
+function pickStratifiedChoices(pool) {
+  const shuffledPairs  = shuffle(ARCHETYPE_PAIRS);
+  const virtuousPairs  = shuffledPairs.slice(0, 3);
+  const corrosivePairs = shuffledPairs.slice(3, 6);
+
+  const chosenArchetypes = [
+    ...virtuousPairs.map(pair => pair[0]),  // virtuous side of these 3 pairs
+    ...corrosivePairs.map(pair => pair[1]), // corrosive side of these 3 pairs
+  ];
+
+  const choices = chosenArchetypes.map(archetype => pickOneEntryForArchetype(pool, archetype));
+
+  return shuffle(choices);
+}
+
 function esc(str) {
   return String(str || '')
     .replace(/&/g, '&amp;')
@@ -232,7 +341,7 @@ window.openReactionPopup = function({ event, card, onAccept, onDismiss }) {
   _state.onDismiss     = onDismiss || null;
 
   const pool = REACTION_POOLS[event.category] || REACTION_POOLS.mystery;
-  _state.choices = pickRandom(pool, 9);
+  _state.choices = pickStratifiedChoices(pool);
 
   _ensureOverlay();
   _renderPopup();
@@ -454,7 +563,6 @@ function _renderPopup() {
     btn.className = 'choice-btn';
     btn.setAttribute('data-index', i);
     btn.innerHTML = `
-      <div class="choice-archetype">${esc(choice.archetype)}</div>
       <div class="choice-label">${esc(choice.label)}</div>
     `;
     btn.addEventListener('click', () => _selectChoice(i));
@@ -481,7 +589,7 @@ window._pfpConfirmChoice = function() {
   _state.narrative = 'The matter has been noted in the ledger of one\'s life, and the response recorded for posterity.';
 
   document.getElementById('narrative-text').textContent  = _state.narrative;
-  document.getElementById('archetype-badge').textContent = choice.archetype + ' Response';
+  document.getElementById('archetype-badge').textContent = 'Response Recorded';
   document.getElementById('narrative-panel').style.display = 'block';
 };
 
