@@ -64,6 +64,9 @@
   .header-eyebrow { font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.45em; text-transform:uppercase; color:var(--gold-light); }
   .header-title { font-family:'Cinzel Decorative',serif; font-size:3.2rem; font-weight:900; color:var(--gold); letter-spacing:0.06em; line-height:1; text-shadow:0 0 60px rgba(201,168,76,0.35); margin:10px 0; }
   .header-subtitle { font-family:'EB Garamond',serif; font-size:1.25rem; font-style:italic; color:var(--gold); }
+  /* Reaction Score epithet — a separate system from Life Grade below. Standalone testament: no numbers, no comparison. */
+  .header-epithet { font-family:'Cinzel Decorative',serif; font-size:1.7rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--gold-light); text-shadow:0 0 30px rgba(201,168,76,0.3); }
+  .header-epithet-sub { font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--text-dim); margin-top:6px; }
   .header-ornament { display:flex; align-items:center; justify-content:center; gap:20px; margin:20px 0 0; }
   .header-ornament::before { content:''; height:1px; width:120px; background:linear-gradient(90deg,transparent,var(--gold-light)); }
   .header-ornament::after  { content:''; height:1px; width:120px; background:linear-gradient(90deg,var(--gold-light),transparent); }
@@ -317,7 +320,8 @@
       <div class="header-eyebrow">PfP · Living Card</div>
     </div>
     <div class="header-title">Your Life</div>
-    <div class="header-subtitle">How's Life Treating You?</div>
+    <div class="header-epithet" id="header-epithet">—</div>
+    <div class="header-epithet-sub">The sum total of your actions</div>
     <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto;">
       <svg id="yl-clock-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"
         style="position:absolute;width:160px;height:160px;opacity:0.27;cursor:pointer;z-index:0;top:50%;left:50%;transform:translate(-50%,-50%);">
@@ -519,6 +523,27 @@ function calcLifeGrade(events) {
   if (ratio < 0.65) return { grade:'Seasoned',  desc:'Tested by adversity. Shaped by experience.' };
   if (ratio < 0.8)  return { grade:'Fortunate', desc:'A life tipped toward the light.' };
   return { grade:'Blessed', desc:'Remarkable fortune. Cherish it.' };
+}
+
+// ── Reaction Score epithet ──────────────────────────────────────────────────
+// A separate system from Life Grade above — driven by reaction archetype
+// tallies, not event XP. Score and tally aren't written by the backend yet,
+// so this safely falls back to "Ungraded" until submitReaction starts
+// writing cardData.reactionScore and cardData.archetypeTally.
+function calcEpithet(cardData) {
+  const tally = cardData.archetypeTally || {};
+  const totalReactions = Object.values(tally).reduce((sum, n) => sum + (Number(n) || 0), 0);
+
+  if (totalReactions < 3) return 'Ungraded';
+
+  const score = Number(cardData.reactionScore);
+  if (isNaN(score)) return 'Ungraded'; // tally exists but score missing — stay safe
+
+  if (score < 200) return 'Poor';
+  if (score < 400) return 'Played';
+  if (score < 600) return 'Fair';
+  if (score < 800) return 'Mint';
+  return 'Pristine';
 }
 
 function ratioSummary(posPct) {
@@ -851,6 +876,9 @@ function renderPage(events, cardData, cardId, reactions) {
 
   // Event count
   document.getElementById('stat-event-count').textContent = events.length;
+
+  // Reaction Score epithet (separate system — see calcEpithet)
+  document.getElementById('header-epithet').textContent = calcEpithet(cardData);
 
   // Life grade
   const grade = calcLifeGrade(events);
