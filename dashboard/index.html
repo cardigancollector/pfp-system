@@ -253,6 +253,8 @@
   .health-label { font-size:0.65rem; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
   .decay-warning { background:rgba(192,57,43,0.08); border:1px solid rgba(192,57,43,0.3); border-left:3px solid var(--red); padding:12px 16px; font-size:0.82rem; color:#e8a09a; display:flex; align-items:center; gap:10px; margin-top:12px; }
   .decay-ok { background:rgba(46,204,113,0.06); border:1px solid rgba(46,204,113,0.2); border-left:3px solid var(--green); padding:12px 16px; font-size:0.82rem; color:#8ee4b2; display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .decay-dying { background:rgba(192,57,43,0.16); border-color:rgba(192,57,43,0.6); font-weight:700; letter-spacing:0.03em; animation:decayPulse 1.6s ease-in-out infinite; }
+  @keyframes decayPulse { 0%,100% { opacity:1; } 50% { opacity:0.72; } }
 
   .milestone-list { padding:24px; display:flex; flex-direction:column; gap:14px; }
   .milestone-item { display:flex; align-items:center; gap:14px; }
@@ -1017,7 +1019,12 @@ function buildDashboard(asOwner) {
   document.getElementById('d-next-stage').textContent   = STAGES[stageIdx+1] || 'Mythic (Max)';
 
   const baseValue = parseFloat(ac.value) || 0;
-  const liveValue = baseValue * (0.2 + (xp + gamingXP) * 0.0002);
+  // Live Value decays an extra $50/day once a card has gone 15+ days without
+  // a scan (mirrors the XP decay bands in the backend qrScan function).
+  const dyingDays       = Math.max(daysSince - 14, 0);
+  const liveValuePenalty = dyingDays * 50;
+  const liveValueRaw     = baseValue * (0.2 + (xp + gamingXP) * 0.0002);
+  const liveValue        = Math.max(0, liveValueRaw - liveValuePenalty);
   const stripFields = [
     { label:'Base Value', value: baseValue ? '$' + baseValue.toFixed(2) : '—', green:true, base:true },
     { label:'Live Value', value: liveValue ? '$' + liveValue.toFixed(2) : '—', blue:true, live:true },
@@ -1064,7 +1071,7 @@ function buildDashboard(asOwner) {
   incrementView(urlCardId);
   fetchStats();
 
-  const healthPct = Math.max(0, Math.min(100, 100 - (daysSince * 8)));
+  const healthPct = Math.max(0, Math.min(100, 100 - (daysSince * (100 / 15))));
   document.getElementById('health-pct').textContent   = healthPct + '%';
   document.getElementById('d-last').textContent       = lastDate ? lastDate.toLocaleDateString() : '—';
   document.getElementById('d-days-since').textContent = daysSince <= 0 ? 'Today' : daysSince === 1 ? '1 day ago' : `${daysSince} days ago`;
@@ -1078,9 +1085,9 @@ function buildDashboard(asOwner) {
   const decayEl = document.getElementById('decay-status');
   if (daysSince <= 0)      decayEl.innerHTML = `<div class="decay-ok">✓ Scanned today — full health</div>`;
   else if (daysSince <= 1) decayEl.innerHTML = `<div class="decay-ok">✓ Healthy — scan today to maintain streak</div>`;
-  else if (daysSince <= 3) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −15 XP decay active</div>`;
-  else if (daysSince <= 7) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −50 XP decay zone</div>`;
-  else                     decayEl.innerHTML = `<div class="decay-warning">🔴 ${daysSince} days idle — stage drop risk! Scan now</div>`;
+  else if (daysSince <= 7) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −15 XP/day decay active</div>`;
+  else if (daysSince <= 14) decayEl.innerHTML = `<div class="decay-warning">⚠ ${daysSince} days idle — −50 XP/day decay zone</div>`;
+  else                     decayEl.innerHTML = `<div class="decay-warning decay-dying">🔴 ${daysSince} days idle — YOU'RE DYING. Scan now.</div>`;
 
   const scanArea = document.getElementById('scan-area');
   if (asOwner) {
