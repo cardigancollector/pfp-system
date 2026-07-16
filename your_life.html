@@ -168,6 +168,14 @@
   .timeline-flavour { font-size:0.88rem; color:var(--text-dim); font-style:italic; line-height:1.6; margin-bottom:6px; }
   .timeline-meta { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:rgba(232,201,122,0.6); }
 
+  /* Decay chronicle beats — neglect / dying / reborn */
+  .timeline-dot.decay-neglect  { border-color:#8a8578; background:rgba(138,133,120,0.15); }
+  .timeline-dot.decay-dying    { border-color:var(--red); background:rgba(192,57,43,0.18); box-shadow:0 0 10px rgba(192,57,43,0.35); }
+  .timeline-dot.decay-reborn   { border-color:var(--gold-light); background:rgba(232,201,122,0.18); box-shadow:0 0 10px rgba(232,201,122,0.3); }
+  .timeline-card.decay-neglect { border-left:3px solid rgba(138,133,120,0.5); }
+  .timeline-card.decay-dying   { border-left:3px solid rgba(192,57,43,0.55); }
+  .timeline-card.decay-reborn  { border-left:3px solid rgba(232,201,122,0.6); }
+
   /* ── Footer ──────────────────────────────────────────────────────────── */
   .page-footer { text-align:center; padding-top:40px; border-top:1px solid rgba(201,168,76,0.1); }
   .footer-text { font-size:0.82rem; color:var(--text-dim); font-style:italic; line-height:1.8; }
@@ -858,8 +866,92 @@ async function loadAndRenderThreads(cardId) {
   document.getElementById('threads-section').style.display = 'block';
 }
 
+// ── Decay chronicle ──────────────────────────────────────────────────────────
+// Turns raw DECAY / DECAY_STAGE_DROP ledger docs into narrative chronicle
+// beats. No new backend fields are needed: a DECAY_STAGE_DROP doc (15+ day
+// gap) implies the card crossed BOTH the day-8 (neglect) and day-15 (dying)
+// thresholds sometime during that gap, and that this scan is the moment it
+// came back — so a single doc yields three beats, backdated using the doc's
+// own daysSinceLast. A plain DECAY doc (8-14 day gap) yields just the one
+// neglect beat. Assumes decay docs carry `date` and `xpLost` fields, matching
+// the convention every other ledger entry type in this file already uses.
+function buildDecayEntries(decayDocs) {
+  const out = [];
+  decayDocs.forEach(d => {
+    const scanDate      = d.date instanceof Date ? d.date : new Date();
+    const daysSinceLast = Number(d.daysSinceLast) || 0;
+    const xpLost        = Number(d.xpLost) || 0;
+    const isSevere       = d.type === 'DECAY_STAGE_DROP';
+
+    if (daysSinceLast >= 8) {
+      const neglectDate = new Date(scanDate.getTime() - Math.max(daysSinceLast - 8, 0) * 86400000);
+      out.push({
+        date: neglectDate,
+        decayType: 'neglect',
+        title: 'This Card Is Being Neglected',
+        xpLost: 0, // the real XP loss is attributed to the dying beat below when severe
+      });
+    }
+    if (isSevere) {
+      const dyingDate = new Date(scanDate.getTime() - Math.max(daysSinceLast - 15, 0) * 86400000);
+      out.push({
+        date: dyingDate,
+        decayType: 'dying',
+        title: 'Card Is Dying',
+        xpLost: xpLost,
+      });
+      out.push({
+        date: scanDate,
+        decayType: 'reborn',
+        title: 'Card Reborn',
+        xpLost: 0,
+      });
+    }
+  });
+  return out;
+}
+
+function buildDecayTimelineItem(e) {
+  const badge   = e.decayType === 'neglect' ? '🥀' : e.decayType === 'dying' ? '💀' : '🕊️';
+  const cls     = 'decay-' + e.decayType;
+  const dateStr = e.date ? e.date.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—';
+  const xpStr   = e.xpLost > 0 ? `−${e.xpLost.toLocaleString()} XP` : '';
+  return `<div class="timeline-item">
+    <div class="timeline-dot ${cls}"></div>
+    <div class="timeline-card glass ${cls}">
+      <div class="timeline-top">
+        <div class="timeline-badge">${badge}</div>
+        <div class="timeline-name">${esc(e.title)}</div>
+        ${xpStr ? `<div class="timeline-xp neg">${xpStr}</div>` : ''}
+      </div>
+      <div class="timeline-meta">${dateStr}</div>
+    </div>
+  </div>`;
+}
+
+function buildLifeEventTimelineItem(e) {
+  const isPos   = e.xpGained > 0;
+  const isNeg   = e.xpLost   > 0;
+  const dotCls  = isPos ? 'pos' : isNeg ? 'neg' : '';
+  const xpStr   = isPos ? '+' + e.xpGained.toLocaleString() + ' XP' : isNeg ? '−' + e.xpLost.toLocaleString() + ' XP' : '—';
+  const dateStr = e.date ? e.date.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—';
+  const badge   = e.badge || (isPos ? '✦' : isNeg ? '◆' : '·');
+  return `<div class="timeline-item">
+    <div class="timeline-dot ${dotCls}"></div>
+    <div class="timeline-card glass ${dotCls}">
+      <div class="timeline-top">
+        <div class="timeline-badge">${badge}</div>
+        <div class="timeline-name">${esc(e.notes || '—')}</div>
+        <div class="timeline-xp ${dotCls}">${xpStr}</div>
+      </div>
+      ${e.flavourText ? `<div class="timeline-flavour">${esc(e.flavourText)}</div>` : ''}
+      <div class="timeline-meta">${dateStr}</div>
+    </div>
+  </div>`;
+}
+
 // ── Render page ───────────────────────────────────────────────────────────────
-function renderPage(events, cardData, cardId, reactions) {
+function renderPage(events, cardData, cardId, reactions, decayEntries) {
   const cardName  = cardData.cardName  || cardId;
   const claimDate = cardData.claimDate ? cardData.claimDate.toDate() : null;
   const stage     = cardData.evolutionStage || 'DORMANT';
@@ -947,29 +1039,17 @@ function renderPage(events, cardData, cardId, reactions) {
     catWrap.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:8px 0;">No category data yet.</div>';
   }
 
-  // Timeline
+  // Timeline — life events + decay chronicle beats, merged into one lifeline and sorted together.
+  // Note: decay entries are display-only here — they do NOT feed into Life Grade, the ratio bar,
+  // highlights, or category bars above, which still read only from `events` as before.
   const timelineEl = document.getElementById('timeline');
-  const sorted = [...events].sort((a,b) => b.date - a.date);
-  timelineEl.innerHTML = sorted.map(e => {
-    const isPos   = e.xpGained > 0;
-    const isNeg   = e.xpLost   > 0;
-    const dotCls  = isPos ? 'pos' : isNeg ? 'neg' : '';
-    const xpStr   = isPos ? '+' + e.xpGained.toLocaleString() + ' XP' : isNeg ? '−' + e.xpLost.toLocaleString() + ' XP' : '—';
-    const dateStr = e.date ? e.date.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—';
-    const badge   = e.badge || (isPos ? '✦' : isNeg ? '◆' : '·');
-    return `<div class="timeline-item">
-      <div class="timeline-dot ${dotCls}"></div>
-      <div class="timeline-card glass ${dotCls}">
-        <div class="timeline-top">
-          <div class="timeline-badge">${badge}</div>
-          <div class="timeline-name">${esc(e.notes || '—')}</div>
-          <div class="timeline-xp ${dotCls}">${xpStr}</div>
-        </div>
-        ${e.flavourText ? `<div class="timeline-flavour">${esc(e.flavourText)}</div>` : ''}
-        <div class="timeline-meta">${dateStr}</div>
-      </div>
-    </div>`;
-  }).join('');
+  const timelineItems = [
+    ...events.map(e => ({ ...e, _kind: 'event' })),
+    ...(decayEntries || []).map(e => ({ ...e, _kind: 'decay' })),
+  ].sort((a, b) => b.date - a.date);
+  timelineEl.innerHTML = timelineItems
+    .map(e => e._kind === 'decay' ? buildDecayTimelineItem(e) : buildLifeEventTimelineItem(e))
+    .join('');
 
   // Generate narrative from local data (no API needed)
   generateNarrative(cardName, stage, grade.grade, events, reactions || []);
@@ -1037,7 +1117,33 @@ window.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    renderPage(events, cardData, cardId, reactions);
+    // Load DECAY / DECAY_STAGE_DROP entries for the neglect/dying/reborn chronicle beats.
+    // Non-fatal by design: an older card with no decay history, or a query hiccup, should
+    // never take down the rest of the page — it should just show a lifeline with no decay beats.
+    let decayEntries = [];
+    try {
+      const decaySnap = await getDocs(
+        query(
+          collection(db, 'cards', cardId, 'ledger'),
+          where('type', 'in', ['DECAY', 'DECAY_STAGE_DROP'])
+        )
+      );
+      const decayDocs = [];
+      decaySnap.forEach(d => {
+        const dd = d.data();
+        decayDocs.push({
+          type:          dd.type || '',
+          date:          dd.date ? dd.date.toDate() : new Date(),
+          daysSinceLast: Number(dd.daysSinceLast) || 0,
+          xpLost:        Number(dd.xpLost) || 0,
+        });
+      });
+      decayEntries = buildDecayEntries(decayDocs);
+    } catch (err) {
+      console.warn('Decay chronicle load failed (non-critical):', err);
+    }
+
+    renderPage(events, cardData, cardId, reactions, decayEntries);
     showPage();
 
     // Load thread state async — non-blocking so the page shows immediately
