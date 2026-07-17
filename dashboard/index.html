@@ -1279,8 +1279,7 @@ onAccept: async (ev, choice, narrative) => {
     });
     const result = await res.json();
     const xpSign = result.reactionXP >= 0 ? '+' : '';
-    let msg = `${choice.archetype} — ${result.coherenceRating} coherence\n${xpSign}${result.reactionXP} XP`;
-    if (result.streakMessage) msg += `\n${result.streakMessage}`;
+    const msg = `${choice.archetype} — Tier ${result.tier}\n${xpSign}${result.reactionXP} XP`;
     showToast(msg);
 
     // ── NEW: if the active thread needs a real-world decision, open the action layer ──
