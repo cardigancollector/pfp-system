@@ -329,7 +329,7 @@
     </div>
     <div class="header-title">Your Life</div>
     <div class="header-epithet" id="header-epithet">—</div>
-    <div class="header-epithet-sub">The sum total of your actions</div>
+    <div class="header-epithet-sub" id="header-epithet-sub">The sum total of your actions</div>
     <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto;">
       <svg id="yl-clock-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"
         style="position:absolute;width:160px;height:160px;opacity:0.27;cursor:pointer;z-index:0;top:50%;left:50%;transform:translate(-50%,-50%);">
@@ -534,24 +534,106 @@ function calcLifeGrade(events) {
 }
 
 // ── Reaction Score epithet ──────────────────────────────────────────────────
-// A separate system from Life Grade above — driven by reaction archetype
-// tallies, not event XP. Score and tally aren't written by the backend yet,
-// so this safely falls back to "Ungraded" until submitReaction starts
-// writing cardData.reactionScore and cardData.archetypeTally.
-function calcEpithet(cardData) {
-  const tally = cardData.archetypeTally || {};
-  const totalReactions = Object.values(tally).reduce((sum, n) => sum + (Number(n) || 0), 0);
+// A separate system from Life Grade above — driven by reaction trio/polarity,
+// not event XP. Live scan of the ledger's REACTION docs every load, no cache,
+// nothing stored on the card. Archetypes (Resist, Betray, etc.) are internal
+// scaffolding only — never surfaced as the literal epithet text.
+//
+// Algorithm (confirmed):
+//   - Every reaction counts equally — no recency weighting.
+//   - Dominant TRIO (which of the 6 archetype families appears most, across
+//     all three polarities of that trio) picks the epithet's "family".
+//   - Net polarity balance (virtuous XP earned vs corrosive XP lost, neutral
+//     excluded from the ratio) picks the lean: virtuous / balanced / corrosive.
+//   - Trio × lean = one of 18 flavour titles below.
 
-  if (totalReactions < 3) return 'Ungraded';
+const TRIO_MAP = {
+  Resist: 'RESIST', Waver: 'RESIST', Deny: 'RESIST',
+  Yield: 'YIELD', Drift: 'YIELD', Despair: 'YIELD',
+  Reflect: 'REFLECT', Muse: 'REFLECT', Rationalize: 'REFLECT',
+  Act: 'ACT', Observe: 'ACT', Exploit: 'ACT',
+  Transform: 'TRANSFORM', Stall: 'TRANSFORM', Betray: 'TRANSFORM',
+  Own: 'OWN', Evade: 'OWN', Deflect: 'OWN',
+};
 
-  const score = Number(cardData.reactionScore);
-  if (isNaN(score)) return 'Ungraded'; // tally exists but score missing — stay safe
+const TRIO_TITLES = {
+  RESIST:    { virtuous: 'The Unshaken',   balanced: 'The Guarded',    corrosive: 'The Stonewalled' },
+  YIELD:     { virtuous: 'The Adaptable',  balanced: 'The Unmoored',   corrosive: 'The Broken' },
+  REFLECT:   { virtuous: 'The Clear-Eyed', balanced: 'The Distracted', corrosive: 'The Self-Deceived' },
+  ACT:       { virtuous: 'The Resolute',   balanced: 'The Watchful',   corrosive: 'The Ruthless' },
+  TRANSFORM: { virtuous: 'The Reforged',   balanced: 'The Stagnant',   corrosive: 'The Faithless' },
+  OWN:       { virtuous: 'The Accountable', balanced: 'The Absent',    corrosive: 'The Blame-Shifter' },
+};
 
-  if (score < 200) return 'Poor';
-  if (score < 400) return 'Played';
-  if (score < 600) return 'Fair';
-  if (score < 800) return 'Mint';
-  return 'Pristine';
+function calcEpithet(reactions) {
+  const list = (reactions || []).filter(r => r.reactionArchetype && TRIO_MAP[r.reactionArchetype]);
+
+  if (list.length < 3) return { title: 'Ungraded', turningPoint: '' };
+
+  // Dominant trio — raw count, every reaction weighted equally.
+  const trioCounts = {};
+  const trioXPMagnitude = {};
+  list.forEach(r => {
+    const trio = TRIO_MAP[r.reactionArchetype];
+    trioCounts[trio] = (trioCounts[trio] || 0) + 1;
+    trioXPMagnitude[trio] = (trioXPMagnitude[trio] || 0) + Math.abs(r.reactionXP || 0);
+  });
+  let dominantTrio = null, maxCount = -1;
+  Object.keys(trioCounts).forEach(trio => {
+    if (
+      trioCounts[trio] > maxCount ||
+      (trioCounts[trio] === maxCount && trioXPMagnitude[trio] > (trioXPMagnitude[dominantTrio] || -1))
+    ) {
+      dominantTrio = trio;
+      maxCount = trioCounts[trio];
+    }
+  });
+
+  // Net polarity balance — virtuous XP earned vs corrosive XP lost. Neutral excluded.
+  let virtuousXP = 0, corrosiveXP = 0;
+  list.forEach(r => {
+    if (r.reactionPolarity === 'virtuous') virtuousXP += Math.max(0, r.reactionXP || 0);
+    if (r.reactionPolarity === 'corrosive') corrosiveXP += Math.abs(Math.min(0, r.reactionXP || 0));
+  });
+  const totalLean = virtuousXP + corrosiveXP;
+  const posRatio = totalLean > 0 ? virtuousXP / totalLean : 0.5;
+  const lean = posRatio >= 0.65 ? 'virtuous' : posRatio <= 0.35 ? 'corrosive' : 'balanced';
+
+  const title = (TRIO_TITLES[dominantTrio] && TRIO_TITLES[dominantTrio][lean]) || 'Ungraded';
+
+  return { title, turningPoint: detectTurningPoint(list) };
+}
+
+// Scans chronologically for a run of 3+ same-polarity reactions broken by a
+// high-tier (5–6) opposite-polarity reaction — a pattern-break, not a slow
+// drift. Returns a short, direction-aware flavour line, or '' if none found.
+// Deliberately doesn't name the specific archetype involved.
+function detectTurningPoint(list) {
+  const sorted = [...list]
+    .filter(r => r.reactionPolarity === 'virtuous' || r.reactionPolarity === 'corrosive')
+    .sort((a, b) => a.date - b.date);
+
+  let streakPolarity = null, streakLen = 0, found = '';
+
+  sorted.forEach(r => {
+    const isBreak = streakPolarity && r.reactionPolarity !== streakPolarity &&
+      streakLen >= 3 && r.reactionTier >= 5;
+
+    if (isBreak) {
+      found = r.reactionPolarity === 'corrosive'
+        ? 'A long steady pattern broke here, sharply and without warning.'
+        : 'After a long, difficult stretch, something changed here — sharply, and for the better.';
+    }
+
+    if (r.reactionPolarity === streakPolarity) {
+      streakLen += 1;
+    } else {
+      streakPolarity = r.reactionPolarity;
+      streakLen = 1;
+    }
+  });
+
+  return found;
 }
 
 function ratioSummary(posPct) {
@@ -969,8 +1051,13 @@ function renderPage(events, cardData, cardId, reactions, decayEntries) {
   // Event count
   document.getElementById('stat-event-count').textContent = events.length;
 
-  // Reaction Score epithet (separate system — see calcEpithet)
-  document.getElementById('header-epithet').textContent = calcEpithet(cardData);
+  // Reaction Score epithet (separate system — see calcEpithet). Live scan of
+  // the ledger's REACTION docs, not cardData — archetypeTally/reactionScore
+  // are retired fields the backend no longer writes.
+  const epithet = calcEpithet(reactions);
+  document.getElementById('header-epithet').textContent = epithet.title;
+  document.getElementById('header-epithet-sub').textContent =
+    epithet.turningPoint || 'The sum total of your actions';
 
   // Life grade
   const grade = calcLifeGrade(events);
@@ -1099,7 +1186,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // Load REACTION entries for the narrative archetype portrait
+    // Load REACTION entries — feeds both the narrative archetype portrait
+    // and calcEpithet() (which needs tier/polarity/XP/date, not just the label).
     const reactionSnap = await getDocs(
       query(
         collection(db, 'cards', cardId, 'ledger'),
@@ -1114,6 +1202,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         reactionChoice:    r.reactionChoice    || '',
         coherenceRating:   r.coherenceRating   || '',
         eventCategory:     r.eventCategory     || '',
+        reactionTier:      Number(r.reactionTier) || 0,
+        reactionPolarity:  r.reactionPolarity  || '',
+        reactionXP:        Number(r.reactionXP) || 0,
+        date:              r.date ? r.date.toDate() : new Date(),
       });
     });
 
