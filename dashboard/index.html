@@ -208,6 +208,20 @@
   .aei-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
   .aei-flavour { font-size: 0.82rem; font-style: italic; opacity: 0.75; margin-bottom: 6px; }
   .aei-meta { font-size: 0.75rem; opacity: 0.6; letter-spacing: 0.04em; }
+  #active-thread-indicator {
+    margin: 16px 0;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(155,89,182,0.06);
+    border: 1px solid rgba(155,89,182,0.35);
+    text-align: center;
+  }
+  .ati-label { font-size: 0.62rem; letter-spacing: 0.12em; color: #b07cc6; margin-bottom: 6px; opacity: 0.85; }
+  .ati-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; color: #cda3dc; }
+  .ati-stage { font-size: 0.82rem; font-style: italic; opacity: 0.8; margin-bottom: 8px; }
+  .ati-progress-track { height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+  .ati-progress-fill { height: 100%; background: linear-gradient(90deg, #7d5493, #b07cc6); border-radius: 3px; transition: width 1s ease; }
+  .ati-meta { font-size: 0.72rem; opacity: 0.6; letter-spacing: 0.04em; }
   .scan-event-line  { margin-top: 6px; font-size: 0.95em; }
   .scan-flavour-line { font-style: italic; font-size: 0.88em; opacity: 0.85; margin-top: 2px; }
   .scan-xp-line     { margin-bottom: 2px; }
@@ -543,6 +557,7 @@
     </div>
 
     <div id="active-event-indicator" style="display:none;"></div>
+    <div id="active-thread-indicator" style="display:none;"></div>
 
     <!-- YOUR LIFE BUTTON — always visible once dashboard loads -->
     <a class="your-life-btn" id="your-life-btn" href="#">📖 &nbsp; Your Life</a>
@@ -691,6 +706,24 @@ const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflB
 const STAGES      = ['Dormant','Awakened','Growing','Established','Renowned','Legendary','Mythic'];
 const STAGE_ICONS = ['💤','🌅','🌱','🏛️','🌟','⚚','🔮'];
 const STAGE_XP = [0, 500, 1500, 5000, 12000, 25000, 50000];
+
+// Display-only labels for the Thread system's stages — mirrors what's
+// defined server-side in threads.js. Purely cosmetic; the backend is the
+// source of truth for actual stage timing and content.
+const THREAD_META = {
+  LONG_ILLNESS: {
+    label: 'Long Illness',
+    icon: '🩺',
+    stageLabels:    { 1: 'The Diagnosis', 2: 'The Struggle', 3: 'The Crisis Point' },
+    stageDurations: { 1: 4, 2: 11, 3: 1 },
+  },
+  GAINING_WEALTH: {
+    label: 'Gaining Wealth',
+    icon: '💰',
+    stageLabels:    { 1: 'The Opportunity', 2: 'The Build', 3: 'The Test' },
+    stageDurations: { 1: 4, 2: 14, 3: 1 },
+  },
+};
 const STAGE_MULT  = [1.00, 1.05, 1.10, 1.20, 1.35, 1.55, 2.00];
 const STAGE_CLASS = ['stage-dormant','stage-awakened','stage-growing','stage-established','stage-renowned','stage-legendary','stage-mythic'];
 
@@ -1158,6 +1191,7 @@ function buildDashboard(asOwner) {
 
   buildMilestones(xp, streak, interactions);
   fetchLifeEvents(urlCardId);
+  fetchActiveThread(urlCardId).then(renderActiveThread).catch(() => renderActiveThread(null));
   buildLog(interactions, daysSince);
 
   const eventIndicator = document.getElementById('active-event-indicator');
@@ -1386,6 +1420,48 @@ function buildMilestones(xp, streak, interactions) {
       render(earned);
     })
     .catch(() => {});
+}
+
+// Reads this card's currently open thread (if any) straight from Firestore
+// (cards/{cardId}/threads, status == 'OPEN'), same pattern the reaction
+// widget uses to read the ledger. Mirrors the backend's "always work the
+// oldest open thread first" rule via orderBy + limit(1).
+async function fetchActiveThread(cardId) {
+  const snap = await window._pfpFirestoreGetDocs(
+    window._pfpFirestoreQuery(
+      window._pfpFirestoreCollection(window._pfpFirestore, 'cards', cardId, 'threads'),
+      window._pfpFirestoreWhere('status', '==', 'OPEN'),
+      window._pfpFirestoreOrderBy('openedAt', 'asc'),
+      window._pfpFirestoreLimit(1)
+    )
+  );
+  if (snap.empty) return null;
+  const doc = snap.docs[0];
+  return { id: doc.id, ...doc.data() };
+}
+
+function renderActiveThread(thread) {
+  const el = document.getElementById('active-thread-indicator');
+  if (!thread) { el.style.display = 'none'; return; }
+
+  const meta = THREAD_META[thread.type];
+  if (!meta) { el.style.display = 'none'; return; }
+
+  const stage        = thread.stage || 1;
+  const stageLabel    = meta.stageLabels[stage]    || `Stage ${stage}`;
+  const stageDuration = meta.stageDurations[stage]  || 1;
+  const stageStarted  = thread.stageStartedAt && thread.stageStartedAt.toDate
+    ? thread.stageStartedAt.toDate() : new Date();
+  const daysInStage   = Math.max(0, Math.floor((Date.now() - stageStarted.getTime()) / 86400000));
+  const pct           = Math.max(4, Math.min(100, Math.round((daysInStage / stageDuration) * 100)));
+
+  el.innerHTML =
+    '<div class="ati-label">ONGOING THREAD</div>' +
+    '<div class="ati-name">' + meta.icon + ' ' + meta.label + '</div>' +
+    '<div class="ati-stage">Stage ' + stage + ': ' + stageLabel + '</div>' +
+    '<div class="ati-progress-track"><div class="ati-progress-fill" style="width:' + pct + '%"></div></div>' +
+    '<div class="ati-meta">Opened by: ' + esc(thread.entryEventName || '—') + '</div>';
+  el.style.display = 'block';
 }
 
 async function fetchLifeEvents(cardId) {
