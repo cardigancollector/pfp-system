@@ -154,17 +154,23 @@
   .live-value-mult { font-size:0.72rem; color:var(--green); letter-spacing:0.05em; }
   .cas-live { background:linear-gradient(135deg,rgba(52,152,219,0.08),rgba(52,152,219,0.16)); border:1px solid rgba(52,152,219,0.4) !important; }
   .cas-base { background:linear-gradient(135deg,rgba(46,204,113,0.08),rgba(46,204,113,0.16)); border:1px solid rgba(46,204,113,0.4) !important; }
+  .cas-life { background:linear-gradient(135deg,rgba(192,57,43,0.1),rgba(201,168,76,0.16)); border:1px solid rgba(192,57,43,0.4) !important; }
   .cas-value.green { color:#2ecc71; }
   .cas-value.blue  { color:#3498db; }
   .cas-value.white { color:#ffffff; }
+  .cas-value.redgold { color:#e0a458; }
 
   .evo-id-pill { display:inline-flex; align-items:center; gap:8px; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.35); border-radius:4px; padding:5px 12px; margin-top:10px; font-family:monospace; font-size:0.82rem; color:#d8b4fe; letter-spacing:1px; }
   .evo-id-pill span { color:rgba(196,181,253,0.5); font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; font-family:'Cinzel',serif; }
 
-  .card-analyzer-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:32px; }
-  .cas-item { background:var(--glass); border:1px solid var(--glass-border); padding:14px 16px; backdrop-filter:blur(12px); }
-  .cas-label { font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; }
-  .cas-value { font-family:'Cinzel',serif; font-size:0.95rem; color:var(--text); }
+  /* Strip now holds 7 boxes (Base/Live/Life Value, Rank, Set, Qty, Condition).
+     Sized down proportionally from the old 6-box version so the row still
+     fits on one line on desktop; the existing 900px breakpoint below still
+     collapses it to 2 columns on narrow screens. */
+  .card-analyzer-strip { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-bottom:32px; }
+  .cas-item { background:var(--glass); border:1px solid var(--glass-border); padding:10px 10px; backdrop-filter:blur(12px); min-width:0; }
+  .cas-label { font-size:0.54rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cas-value { font-family:'Cinzel',serif; font-size:0.8rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .cas-value.gold { color:var(--gold); }
 
   .section-title { font-family:'Cinzel',serif; font-size:0.7rem; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:16px; display:flex; align-items:center; gap:12px; }
@@ -322,6 +328,35 @@
     box-shadow: 0 0 30px rgba(52,152,219,0.12);
     border-color: #5dade2;
     color: #5dade2;
+  }
+
+  /* ── YOUR REACTIONS TO LIFE EVENTS BUTTON ────────────────────────────── */
+  .reactions-life-btn {
+    display: none;
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, rgba(192,57,43,0.08), rgba(201,168,76,0.14));
+    border: 1px solid rgba(192,57,43,0.4);
+    color: #e0a458;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .reactions-life-btn.visible { display: flex; }
+  .reactions-life-btn:hover {
+    background: linear-gradient(135deg, rgba(192,57,43,0.16), rgba(201,168,76,0.24));
+    box-shadow: 0 0 30px rgba(192,57,43,0.12);
+    border-color: #c9a84c;
+    color: #f0c27b;
   }
 
   /* ── GAMING HUB BUTTON ────────────────────────────────────────────────── */
@@ -512,6 +547,9 @@
     <!-- YOUR LIFE BUTTON — always visible once dashboard loads -->
     <a class="your-life-btn" id="your-life-btn" href="#">📖 &nbsp; Your Life</a>
 
+    <!-- YOUR REACTIONS TO LIFE EVENTS BUTTON — owners only -->
+    <button type="button" class="reactions-life-btn" id="reactions-life-btn">📜 &nbsp; Your Reactions to Life Events</button>
+
     <!-- GAMING HUB BUTTON — owners only -->
     <a class="gaming-hub-btn" id="gaming-hub-btn" href="#">🎮 &nbsp; Enter XP Gaming Hub</a>
 
@@ -616,7 +654,7 @@
 import { initializeApp }                        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, doc, getDoc,
          collection, getDocs,
-         query, orderBy, limit,
+         query, orderBy, limit, where,
          updateDoc, increment }                 from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -638,6 +676,7 @@ window._pfpFirestoreGetDocs   = getDocs;
 window._pfpFirestoreQuery     = query;
 window._pfpFirestoreOrderBy   = orderBy;
 window._pfpFirestoreLimit     = limit;
+window._pfpFirestoreWhere     = where;
 window._pfpFirestoreUpdateDoc = updateDoc;
 window._pfpFirestoreIncrement = increment;
 window._pfpFirebaseReady      = true;
@@ -762,6 +801,7 @@ async function boot(evoId) {
         'Total Interactions': d.totalInteractions|| 0,
         'Last Interaction':   d.lastInteraction  ? d.lastInteraction.toDate().toISOString() : null,
         'Live Value':         d.liveValue        || 0,
+        'Life Value':         d.lifeValue        || 0,
         'Active Event': (d.eventName && d.eventExpiryDate && d.eventExpiryDate.toDate() > new Date()) ? {
           eventName:   d.eventName,
           flavourText: d.eventFlavourText || '',
@@ -814,6 +854,9 @@ async function fetchFreshLivingCard(pinnedXP) {
     if (snap.exists()) {
       const d = snap.data();
       const incomingXP = d.currentXP || 0;
+      // Life Value isn't tied to the XP-pinning logic below — reactions move
+      // it independently of scans, so always take the freshest value.
+      livingCard['Life Value'] = d.lifeValue || 0;
       // If a scan just ran, only accept the Firestore XP if it has caught up to the scan value
       if (pinnedXP !== undefined && incomingXP !== pinnedXP) {
         // Firestore stale — preserve pinned XP, update everything else
@@ -1025,16 +1068,18 @@ function buildDashboard(asOwner) {
   const liveValuePenalty = dyingDays * 50;
   const liveValueRaw     = baseValue * (0.2 + (xp + gamingXP) * 0.0002);
   const liveValue        = Math.max(0, liveValueRaw - liveValuePenalty);
+  const lifeValue = parseFloat(lc['Life Value']) || 0;
   const stripFields = [
     { label:'Base Value', value: baseValue ? '$' + baseValue.toFixed(2) : '—', green:true, base:true },
     { label:'Live Value', value: liveValue ? '$' + liveValue.toFixed(2) : '—', blue:true, live:true },
+    { label:'Life Value', value: '$' + lifeValue.toFixed(2), redgold:true, life:true },
     { label:'Base Card Rank', value: ac.rank  ? '#' + ac.rank : '—', white:true },
     { label:'Set',        value: ac.set        || '—' },
     { label:'Qty Issued', value: ac.quantityIssued || '—' },
     { label:'Condition',  value: ac.condition  || '—' },
   ];
   document.getElementById('card-analyzer-strip').innerHTML = stripFields.map(f =>
-    `<div class="cas-item${f.live?' cas-live':f.base?' cas-base':''}"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':f.green?' green':f.blue?' blue':f.white?' white':''}">${f.value}</div>${f.mult?`<div style="font-size:0.62rem;color:var(--green);margin-top:2px;letter-spacing:0.05em;">${f.mult}</div>`:''}</div>`
+    `<div class="cas-item${f.live?' cas-live':f.base?' cas-base':''}${f.life?' cas-life':''}"><div class="cas-label">${f.label}</div><div class="cas-value${f.gold?' gold':f.green?' green':f.blue?' blue':f.white?' white':''}${f.redgold?' redgold':''}">${f.value}</div>${f.mult?`<div style="font-size:0.62rem;color:var(--green);margin-top:2px;letter-spacing:0.05em;">${f.mult}</div>`:''}</div>`
   ).join('');
 
   artWrap.classList.add(STAGE_CLASS[stageIdx] || 'stage-dormant');
@@ -1247,57 +1292,17 @@ async function logScan() {
           '<div class="scan-event-line">' + polarityIcon + ' <strong>' + data.badge + ' ' + data.eventName + '</strong></div>' +
           '<div class="scan-flavour-line">' + data.flavourText + '</div>';
 
-        // Fire the reaction popup
-        const ac = analyzerCard || {};
+        // Fire the reaction widget — verb/phrase/object picker (Frame 1).
+        // Locking in and logging both happen inside the widget itself; it
+        // calls back here once a reaction has actually been saved.
         setTimeout(() => {
           openReactionPopup({
-            event: {
-              name:        data.eventName,
-              category:    data.eventCategory || 'mystery',
-              polarity:    data.polarity      || 'positive',
-              flavourText: data.flavourText   || '',
+            cardId: urlCardId,
+            onLogged: () => {
+              // Life Value just moved server-side — refresh the card so the
+              // strip picks up the new number.
+              fetchFreshLivingCard().then(() => buildDashboard(isOwner));
             },
-            card: {
-              cardName:          ac.card              || urlCardId,
-              dominantDomain:    ac.dominantDomain    || ac.type || 'unknown',
-              rarityTier:        ac.rarity            || 'Common',
-              financialStanding: ac.financialStanding || 'Unknown',
-              recentHistory:     '',
-            },
-onAccept: async (ev, choice, narrative) => {
-  const cardId = urlCardId;
-  try {
-    const res = await fetch('https://us-central1-pfp-system.cloudfunctions.net/submitReaction', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        cardId:          cardId,
-        eventCategory:   ev.category,
-        chosenArchetype: choice.archetype,
-        chosenLabel:     choice.label,
-      }),
-    });
-    const result = await res.json();
-    const xpSign = result.reactionXP >= 0 ? '+' : '';
-    const msg = `${choice.archetype} — Tier ${result.tier}\n${xpSign}${result.reactionXP} XP`;
-    showToast(msg);
-
-    // ── NEW: if the active thread needs a real-world decision, open the action layer ──
-    if (result.activeThread && result.activeThread.requiresAction) {
-      setTimeout(() => {
-        openDecisionPopup({
-          activeThread: result.activeThread,
-          cardId:       cardId,
-          ownerToken:   savedOwner ? savedOwner.ownerToken : null,
-        });
-      }, 1200); // slight delay so the toast is visible first
-    }
-
-  } catch (err) {
-    console.error('submitReaction failed:', err);
-    showToast('Could not save reaction. Try again.');
-  }
-},
             onDismiss: () => {},
           });
         }, 600);
@@ -1648,12 +1653,29 @@ function showGamingBtn(asOwner) {
     btn.classList.remove('visible');
   }
 
+  // YOUR REACTIONS TO LIFE EVENTS — visible to owners, opens the Lifetime
+  // Choices page on demand (not just right after a scan).
+  const reactionsBtn = document.getElementById('reactions-life-btn');
+  if (reactionsBtn) {
+    reactionsBtn.classList.toggle('visible', !!(asOwner && urlCardId));
+  }
+
   // XP Marketplace — visible to everyone (owners and visitors)
   const mktBtn = document.getElementById('xp-market-btn');
   if (!mktBtn) return;
   const marketUrl = '../Marketplace/spotlight.html' + (urlCardId ? '?ref_card=' + encodeURIComponent(urlCardId) : '');
   mktBtn.href = marketUrl;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const reactionsBtn = document.getElementById('reactions-life-btn');
+  if (reactionsBtn) {
+    reactionsBtn.addEventListener('click', () => {
+      if (!urlCardId) return;
+      showLifetimeChoices({ cardId: urlCardId });
+    });
+  }
+});
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
@@ -1677,9 +1699,10 @@ document.addEventListener('keydown', e => {
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
-     EVENT REACTION POPUP — overlay injected from event_reaction_popup.html
+     EVENT REACTION WIDGET — overlay injected from event_reaction_widget.js
+     (replaces the old event_reaction_popup.js six-archetype popup)
 ════════════════════════════════════════════════════════════════════════ -->
-<script src="event_reaction_popup.js"></script>
+<script src="event_reaction_widget.js"></script>
 <script src="submit_decision_popup.js"></script>
 
 <script>
