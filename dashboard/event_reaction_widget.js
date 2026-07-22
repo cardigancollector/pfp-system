@@ -532,6 +532,7 @@ async function openLifetimeChoices(cardId, opts) {
     renderLifeSummary(entries);
     renderHistoryList(entries);
   } catch (err) {
+    console.error('Lifetime Choices load failed:', err);
     document.getElementById('erw-life-summary').innerHTML = '<p>Could not load reaction history — try again shortly.</p>';
   }
 }
