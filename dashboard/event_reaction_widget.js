@@ -189,6 +189,7 @@ function injectMarkup() {
       <button class="erw-close" id="erw-close-btn" aria-label="Close">&times;</button>
 
       <div class="erw-page active" id="erw-page-frame1">
+        <h2 class="erw-title" id="erw-frame1-title"></h2>
         <div class="erw-row-section">
           <div class="erw-row-label">Verb</div>
           <div class="erw-row-grid erw-verb-grid" id="erw-verb-options"></div>
@@ -242,6 +243,7 @@ function injectMarkup() {
 /* ── State ─────────────────────────────────────────────────────────────── */
 let _state = {
   cardId: null,
+  eventName: null,
   onLogged: null,
   onDismiss: null,
   selected: { verb: null, phrase: null, object: null },
@@ -309,6 +311,10 @@ function updateConfirmButton() {
 function startFrame1() {
   _state.selected = { verb: null, phrase: null, object: null };
   _state.pendingResult = null;
+  const titleEl = document.getElementById('erw-frame1-title');
+  titleEl.textContent = _state.eventName
+    ? `The ${_state.eventName} event just fired! How do you react?`
+    : 'An event just fired! How do you react?';
   renderOptions('erw-verb-options', 'verb', sample(VERBS, DRAW_COUNT));
   renderOptions('erw-phrase-options', 'phrase', sample(PHRASES, DRAW_COUNT));
   renderOptions('erw-object-options', 'object', sample(OBJECTS, DRAW_COUNT));
@@ -545,9 +551,10 @@ function init() {
   document.getElementById('erw-confirm-btn').addEventListener('click', lockInSelection);
 }
 
-window.openReactionPopup = function ({ cardId, onLogged, onDismiss }) {
+window.openReactionPopup = function ({ cardId, eventName, onLogged, onDismiss }) {
   init();
   _state.cardId = cardId;
+  _state.eventName = eventName || null;
   _state.onLogged = onLogged || null;
   _state.onDismiss = onDismiss || null;
   startFrame1();

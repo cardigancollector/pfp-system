@@ -1298,6 +1298,7 @@ async function logScan() {
         setTimeout(() => {
           openReactionPopup({
             cardId: urlCardId,
+            eventName: data.eventName,
             onLogged: () => {
               // Life Value just moved server-side — refresh the card so the
               // strip picks up the new number.
