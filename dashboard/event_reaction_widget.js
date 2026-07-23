@@ -477,7 +477,7 @@ function renderHistoryList(entries) {
     <div class="erw-history-entry">
       <div class="erw-h-date">${esc(e.dateStr)}</div>
       ${e.eventName ? `<div class="erw-h-event">${esc(e.eventName)}</div>` : ''}
-      <div class="erw-h-sentence">You decided to ${esc(toClause(e.sentence))}.</div>
+      ${e.sentence ? `<div class="erw-h-sentence">You decided to ${esc(toClause(e.sentence))}.</div>` : ''}
       <div class="erw-h-total-row">
         <span class="erw-h-total ${e.total >= 0 ? 'erw-hl-pos' : 'erw-hl-neg'}">${formatNum(e.total)}</span>
         <button class="erw-h-icon" data-idx="${i}" title="View full breakdown">&#9432;</button>
