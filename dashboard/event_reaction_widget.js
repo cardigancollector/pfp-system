@@ -160,6 +160,7 @@ function injectStyles() {
 
 .erw-history-entry { border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px; background: var(--ink-soft); }
 .erw-history-entry .erw-h-date { font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color: var(--gold-bright); margin-bottom:6px; }
+.erw-history-entry .erw-h-event { font-family:'Fraunces',serif; font-weight:700; font-size:16px; margin-bottom:2px; }
 .erw-history-entry .erw-h-sentence { font-family:'Fraunces',serif; font-weight:700; font-size:16px; margin-bottom:6px; }
 .erw-history-entry .erw-h-total-row { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
 .erw-history-entry .erw-h-total { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px; }
@@ -334,7 +335,7 @@ async function lockInSelection() {
     const res = await fetch(PREVIEW_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cardId: _state.cardId, verb, phrase, object }),
+      body: JSON.stringify({ cardId: _state.cardId, verb, phrase, object, eventName: _state.eventName }),
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Could not lock in selection.');
@@ -475,7 +476,8 @@ function renderHistoryList(entries) {
   container.innerHTML = entries.map((e, i) => `
     <div class="erw-history-entry">
       <div class="erw-h-date">${esc(e.dateStr)}</div>
-      <div class="erw-h-sentence">${esc(e.sentence)}</div>
+      ${e.eventName ? `<div class="erw-h-event">${esc(e.eventName)}</div>` : ''}
+      <div class="erw-h-sentence">You decided to ${esc(toClause(e.sentence))}.</div>
       <div class="erw-h-total-row">
         <span class="erw-h-total ${e.total >= 0 ? 'erw-hl-pos' : 'erw-hl-neg'}">${formatNum(e.total)}</span>
         <button class="erw-h-icon" data-idx="${i}" title="View full breakdown">&#9432;</button>
@@ -506,6 +508,7 @@ async function fetchReactionHistory(cardId) {
   snap.forEach(doc => {
     const d = doc.data();
     entries.push({
+      eventName: d.eventName || null,
       verb: d.verb, phrase: d.phrase, object: d.object,
       total: d.total, intensity: d.intensity, dominant: d.dominant,
       agreement: d.agreement, spread: d.spread, drivenBy: d.drivenBy,
