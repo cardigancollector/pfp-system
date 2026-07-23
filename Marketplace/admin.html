@@ -646,6 +646,61 @@
 
   </div>
 
+  <!-- DEBUG TOOLS -->
+  <div class="section-title" style="margin-top:52px;">Debug Tools</div>
+  <div class="form-card">
+
+    <div class="form-header">
+      <div class="form-title">Thread &amp; Event Testing</div>
+      <div class="form-mode-badge" style="color:var(--red);border-color:var(--red);">Admin Only</div>
+    </div>
+
+    <div class="form-body">
+      <div class="field-grid">
+
+        <div class="field">
+          <label class="field-label">Card ID <span class="field-required">*</span></label>
+          <input class="field-input" type="text" id="dbg-card-id" placeholder="e.g. EVO-ART-1-108">
+          <span class="field-hint">Required for all three actions below.</span>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Event Name</label>
+          <input class="field-input" type="text" id="dbg-event-name" placeholder="e.g. Right Place, Right Time">
+          <span class="field-hint">Only used by Force Event. Leave blank otherwise.</span>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Fast-Forward Days</label>
+          <input class="field-input" type="number" id="dbg-days" value="30" min="1">
+          <span class="field-hint">Only used by Fast-Forward.</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="form-actions" style="flex-wrap:wrap;">
+      <button class="btn-submit" id="btn-force-event" onclick="debugAction('forceEvent')">
+        <span class="spinner" id="dbg-spinner-forceEvent"></span>
+        <span>Force Event</span>
+      </button>
+      <button class="btn-submit" id="btn-force-scan" onclick="debugAction('forceScan')">
+        <span class="spinner" id="dbg-spinner-forceScan"></span>
+        <span>Force Scan</span>
+      </button>
+      <button class="btn-submit" id="btn-fast-forward" onclick="debugAction('fastForward')">
+        <span class="spinner" id="dbg-spinner-fastForward"></span>
+        <span>Fast-Forward</span>
+      </button>
+    </div>
+
+    <div class="form-body" style="padding-top:0;">
+      <div class="form-msg" id="dbg-msg" style="margin-left:0;margin-bottom:10px;"></div>
+      <pre id="dbg-output" style="white-space:pre-wrap;word-break:break-word;background:rgba(255,255,255,0.03);border:1px solid var(--border);padding:16px;font-family:'Crimson Pro',serif;font-size:0.88rem;color:var(--text);min-height:24px;">Results will appear here.</pre>
+    </div>
+
+  </div>
+
 </main>
 
 <script>
@@ -930,6 +985,73 @@
     const el = document.getElementById('form-msg');
     el.textContent = text;
     el.className   = 'form-msg ' + type;
+  }
+
+  // ── DEBUG TOOLS ──
+  function showDbgMsg(text, type) {
+    const el = document.getElementById('dbg-msg');
+    el.textContent = text;
+    el.className   = 'form-msg ' + (type || '');
+  }
+
+  async function debugAction(action) {
+    const cardId    = document.getElementById('dbg-card-id').value.trim();
+    const output    = document.getElementById('dbg-output');
+    const spinner   = document.getElementById('dbg-spinner-' + action);
+    const buttons   = ['btn-force-event', 'btn-force-scan', 'btn-fast-forward'];
+
+    if (!adminToken) {
+      showDbgMsg('Not logged in — please refresh and log in again.', 'error');
+      return;
+    }
+    if (!cardId) {
+      showDbgMsg('Card ID is required.', 'error');
+      return;
+    }
+
+    let url = FUNCTIONS_BASE + '/debugTrigger'
+      + '?token=' + encodeURIComponent(adminToken)
+      + '&cardId=' + encodeURIComponent(cardId)
+      + '&action=' + encodeURIComponent(action);
+
+    if (action === 'forceEvent') {
+      const eventName = document.getElementById('dbg-event-name').value.trim();
+      if (!eventName) {
+        showDbgMsg('Event name is required for Force Event.', 'error');
+        return;
+      }
+      url += '&eventName=' + encodeURIComponent(eventName);
+    }
+
+    if (action === 'fastForward') {
+      const days = document.getElementById('dbg-days').value.trim() || '30';
+      url += '&days=' + encodeURIComponent(days);
+    }
+
+    buttons.forEach(id => document.getElementById(id).disabled = true);
+    if (spinner) spinner.classList.add('visible');
+    showDbgMsg('Running…', '');
+    output.textContent = '';
+
+    try {
+      const res  = await fetch(url);
+      const text = await res.text();
+
+      // Try to pretty-print if it's JSON, otherwise show raw text.
+      try {
+        output.textContent = JSON.stringify(JSON.parse(text), null, 2);
+      } catch {
+        output.textContent = text;
+      }
+
+      showDbgMsg(res.ok ? 'Done.' : 'Request failed (status ' + res.status + ').', res.ok ? 'success' : 'error');
+    } catch (err) {
+      showDbgMsg('Connection error — please try again.', 'error');
+      output.textContent = String(err);
+    }
+
+    buttons.forEach(id => document.getElementById(id).disabled = false);
+    if (spinner) spinner.classList.remove('visible');
   }
 </script>
 
