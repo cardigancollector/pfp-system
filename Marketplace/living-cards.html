@@ -267,6 +267,74 @@
     .btn-marketplace:hover { opacity: 0.9; }
     .btn-marketplace:active { transform: scale(0.99); }
 
+    .edition-col-headers {
+      display: grid;
+      grid-template-columns: 1fr 100px 110px;
+      gap: 0;
+      padding: 10px 20px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .edition-row {
+      display: grid;
+      grid-template-columns: 1fr 100px 110px;
+      gap: 0;
+      padding: 18px 0;
+      border-bottom: 0.5px solid var(--border);
+      align-items: center;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .edition-row:last-child { border-bottom: none; }
+
+    .edition-name-wrap { display: flex; align-items: center; gap: 12px; }
+
+    .edition-thumb {
+      width: 32px;
+      height: 45px;
+      background: var(--surface);
+      border: 0.5px solid var(--border-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .edition-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .edition-thumb-fallback { opacity: 0.3; font-size: 12px; }
+
+    .edition-name {
+      font-family: var(--font-display);
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .edition-format {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .edition-cell {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .no-editions-row {
+      padding: 24px 20px;
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
     .loading-row {
       padding: 40px 20px;
       text-align: center;
@@ -320,6 +388,23 @@
   <div class="cards-list" id="cards-list">
     <div class="loading-row" id="loading-row">Loading your cards...</div>
     <div class="error-row" id="error-row">Could not load cards. Please try again.</div>
+  </div>
+
+  <div id="editions-section" style="display:none;">
+    <div class="section-rule"><div class="rule-diamond"></div></div>
+
+    <div class="page-intro" style="padding-top:0; border-bottom:none;">
+      <div class="page-eyebrow">Physical &amp; Digital Redemptions</div>
+      <div class="page-title">My Editions</div>
+    </div>
+
+    <div class="edition-col-headers">
+      <div class="col-hdr">Item</div>
+      <div class="col-hdr">Edition</div>
+      <div class="col-hdr">Acquired</div>
+    </div>
+
+    <div class="cards-list" id="editions-list"></div>
   </div>
 
   <div class="section-rule"><div class="rule-diamond"></div></div>
@@ -390,7 +475,23 @@
         return;
       }
 
-      const cardIds = rawCards.map(c => c.cardId || c);
+      // Marketplace redemptions are recorded with source: 'marketplace' and
+      // don't have XP — they get their own section instead of the XP table.
+      const editionEntries = rawCards.filter(c => c && typeof c === 'object' && c.source === 'marketplace');
+      const livingEntries  = rawCards.filter(c => !(c && typeof c === 'object' && c.source === 'marketplace'));
+
+      renderEditions(editionEntries);
+
+      if (livingEntries.length === 0) {
+        document.getElementById('loading-row').style.display = 'none';
+        document.getElementById('total-life').textContent   = fmt(0);
+        document.getElementById('total-gaming').textContent = fmt(0);
+        document.getElementById('total-grand').textContent  = fmt(0);
+        document.getElementById('header-xp').textContent    = fmt(0) + ' XP';
+        return;
+      }
+
+      const cardIds = livingEntries.map(c => c.cardId || c);
 
       const cardPromises = cardIds.map(id => fetchCard(id));
       const cards = await Promise.all(cardPromises);
@@ -471,6 +572,46 @@
     document.getElementById('total-gaming').textContent = fmt(totalGaming);
     document.getElementById('total-grand').textContent  = fmt(grand);
     document.getElementById('header-xp').textContent    = fmt(grand) + ' XP';
+  }
+
+  function renderEditions(editions) {
+    const section = document.getElementById('editions-section');
+    const list    = document.getElementById('editions-list');
+
+    if (!editions.length) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = '';
+
+    list.innerHTML = editions.map((ed, i) => {
+      const editionNum  = ed.editionNumber || '—';
+      const editionSize = ed.editionSize   || '—';
+
+      let dateStr = '';
+      if (ed.acquiredDate && typeof ed.acquiredDate.toDate === 'function') {
+        dateStr = ed.acquiredDate.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+
+      const thumbHtml = ed.imageUrl
+        ? `<img src="${ed.imageUrl}" alt="${ed.itemName || ''}" onerror="this.style.display='none'">`
+        : `<span class="edition-thumb-fallback">✦</span>`;
+
+      return `
+        <div class="edition-row" style="animation-delay:${i * 0.08}s">
+          <div class="edition-name-wrap">
+            <div class="edition-thumb">${thumbHtml}</div>
+            <div>
+              <div class="edition-name">${ed.itemName || ed.cardId}</div>
+              <div class="edition-format">${ed.format || 'Card'}</div>
+            </div>
+          </div>
+          <div class="edition-cell">${editionNum} of ${editionSize}</div>
+          <div class="edition-cell">${dateStr}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   function showError(msg) {
