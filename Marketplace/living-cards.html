@@ -609,6 +609,37 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
+  // Card images live in the Analyzer API (Google Apps Script), not Firestore —
+  // same source the Dashboard page (index.html) uses for its card art.
+  const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflBEX2r7mxTdyBxJOYXSlNcDgLGotqu28buVV4YHfBmO1MOvGDc/exec';
+
+  function jsonpFetch(url, timeout) {
+    return new Promise((resolve, reject) => {
+      const cbName = 'pfp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+      const script = document.createElement('script');
+      const timer  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeout || 12000);
+      function cleanup() {
+        clearTimeout(timer);
+        delete window[cbName];
+        if (document.body.contains(script)) document.body.removeChild(script);
+      }
+      window[cbName] = function(data) { cleanup(); resolve(data); };
+      script.onerror = () => { cleanup(); reject(new Error('script error')); };
+      script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName + '&_=' + Date.now();
+      document.body.appendChild(script);
+    });
+  }
+
+  async function fetchCardImage(cardId) {
+    try {
+      const data = await jsonpFetch(ANALYZER_API + '?action=getCardByEvoId&evoId=' + encodeURIComponent(cardId), 12000);
+      if (data && data.success && data.card && data.card.imageUrl) return data.card.imageUrl;
+    } catch (e) {
+      console.warn('Analyzer API image lookup failed:', cardId, e);
+    }
+    return '';
+  }
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = 'login.html';
@@ -665,9 +696,10 @@
 
   async function fetchCard(cardId) {
     try {
-      const [cardSnap, gamingSnap] = await Promise.all([
+      const [cardSnap, gamingSnap, imageUrl] = await Promise.all([
         getDoc(doc(db, 'cards', cardId)),
-        getDoc(doc(db, 'gaming', cardId))
+        getDoc(doc(db, 'gaming', cardId)),
+        fetchCardImage(cardId)
       ]);
 
       if (!cardSnap.exists()) return null;
@@ -678,7 +710,7 @@
       return {
         cardId:    cardId,
         cardName:  cardData.cardName  || cardId,
-        imageUrl:  cardData.imageUrl  || '',
+        imageUrl:  imageUrl,
         currentXP: Number(cardData.currentXP) || 0,
         gamingXP:  Number(gamingData.gamingXP) || 0
       };
