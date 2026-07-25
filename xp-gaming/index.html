@@ -136,19 +136,6 @@
 
   .puzzle-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:36px; }
 
-  .activity-wrap { background:rgba(4,20,8,0.8); border:1px solid rgba(46,180,90,0.1); border-top:1px solid rgba(46,180,90,0.2); backdrop-filter:blur(16px); }
-  .activity-header { padding:14px 24px; border-bottom:1px solid rgba(46,180,90,0.08); display:flex; justify-content:space-between; align-items:center; font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--green-dim); }
-  .activity-list { display:flex; flex-direction:column; }
-  .activity-item { display:grid; grid-template-columns:32px 1fr auto auto; align-items:center; gap:14px; padding:12px 24px; border-bottom:1px solid rgba(46,180,90,0.05); font-size:0.85rem; }
-  .activity-item:last-child { border-bottom:none; }
-  .activity-icon { width:28px; height:28px; border-radius:50%; background:rgba(46,180,90,0.06); border:1px solid rgba(46,180,90,0.15); display:flex; align-items:center; justify-content:center; font-size:0.85rem; }
-  .activity-desc { color:var(--text-mid); }
-  .activity-game { font-size:0.7rem; color:var(--text-dim); font-style:italic; }
-  .activity-time { font-size:0.72rem; color:var(--text-dim); }
-  .activity-xp   { font-family:'Cinzel',serif; font-size:0.85rem; }
-  .activity-xp.pos { color:var(--win); }
-  .activity-xp.neg { color:var(--red-bright); }
-  .activity-empty { padding:28px; text-align:center; color:var(--text-dim); font-style:italic; font-size:0.85rem; }
 
   @media (max-width:900px) {
     .games-grid  { grid-template-columns:repeat(2,1fr); }
@@ -257,6 +244,8 @@
       </div>
       <div class="game-card-arrow">→</div>
     </a>
+
+    <a class="game-card live" id="maze-link" href="the-maze/index.html"><div class="game-card-bg">🌀</div><div class="game-card-inner"><div class="game-status live-badge">Live Now</div><div class="game-name">The Maze</div><div class="game-tagline">Navigate the chamber before the egg timer expires. Every second costs XP.</div><div class="game-stats-row"><div class="gstat"><div class="gstat-label">Best Time</div><div class="gstat-val dim" id="maze-best-time">—</div></div><div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim" id="maze-xp-earned">—</div></div><div class="gstat"><div class="gstat-label">Escaped</div><div class="gstat-val dim" id="maze-escaped">—</div></div></div></div><div class="game-card-arrow">→</div></a>
 
   </div>
 
