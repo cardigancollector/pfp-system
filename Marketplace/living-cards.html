@@ -1,441 +1,588 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>XP Marketplace — My Cards</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XP Marketplace — My Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #111318;
+    --bg2:       #181b22;
+    --bg3:       #1e2229;
+    --text:      #e8e4dc;
+    --muted:     #a8a9ad;
+    --gold:      #c9a84c;
+    --gold-dim:  #7a6530;
+    --gold-lite: #e8c97a;
+    --green:     #2ecc71;
+    --red:       #e74c3c;
+    --border:    rgba(201,168,76,0.18);
+    --border-h:  rgba(201,168,76,0.55);
+    --glass:     rgba(17,19,24,0.82);
+  }
 
-    :root {
-      --bg:        #111318;
-      --surface:   #1c1f27;
-      --border:    rgba(232, 228, 220, 0.12);
-      --border-md: rgba(232, 228, 220, 0.28);
-      --text:      #e8e4dc;
-      --muted:     #a8a9ad;
-      --font-display: 'Cinzel Decorative', serif;
-      --font-body:    'Crimson Pro', Georgia, serif;
-    }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
-    html, body {
-      min-height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-body);
-      -webkit-font-smoothing: antialiased;
-    }
+  body {
+    font-family: 'Crimson Pro', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
-    }
+  /* ── BACKGROUND ── */
+  .bg-fixed {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(ellipse 120% 80% at 60% 0%, rgba(201,168,76,0.08) 0%, transparent 55%),
+                radial-gradient(ellipse 80% 60% at 0% 100%, rgba(201,168,76,0.05) 0%, transparent 50%),
+                #0f1116;
+  }
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.025) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 20%, transparent 100%);
+  }
+  .bg-card-glow {
+    position: fixed;
+    top: 0; right: 0;
+    width: 700px; height: 700px;
+    background: radial-gradient(ellipse at center, rgba(201,168,76,0.07) 0%, transparent 65%);
+    z-index: 0;
+    pointer-events: none;
+    animation: slowPulse 6s ease-in-out infinite alternate;
+  }
+  @keyframes slowPulse {
+    from { opacity: 0.6; transform: scale(1); }
+    to   { opacity: 1.0; transform: scale(1.08); }
+  }
 
-    .page {
-      position: relative;
-      z-index: 1;
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 0 0 60px;
-    }
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,17,22,0.96);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    padding: 0 48px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.2rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .nav-xp {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(201,168,76,0.07);
+    border: 1px solid var(--border);
+    padding: 7px 16px;
+    cursor: default;
+  }
+  .nav-xp-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .nav-xp-value {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: var(--gold);
+    font-weight: 700;
+    min-width: 60px;
+    text-align: right;
+  }
+  .nav-link {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  .nav-link:hover { color: var(--gold); }
+  .nav-link.active { color: var(--gold); }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 20px 18px;
-      border-bottom: 0.5px solid var(--border);
-      position: sticky;
-      top: 0;
-      background: var(--bg);
-      z-index: 10;
-    }
+  /* ── LOADING ── */
+  #loading {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 2px solid rgba(201,168,76,0.15);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.85s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
 
-    .logo {
-      font-family: var(--font-display);
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--text);
-    }
+  /* ── MAIN CONTENT ── */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 48px 100px;
+    display: none;
+  }
+  main.visible { display: block; }
 
-    .xp-wrap { text-align: right; }
-    .xp-label {
-      display: block;
-      font-size: 8px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-bottom: 1px;
-    }
-    .xp-value {
-      font-family: var(--font-display);
-      font-size: 14px;
-      color: var(--text);
-      letter-spacing: 1px;
-    }
+  /* ── PAGE HEADER ── */
+  .page-eyebrow-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .eyebrow-line {
+    width: 40px; height: 1px;
+    background: var(--gold);
+    opacity: 0.6;
+  }
+  .eyebrow-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .page-headline {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 8px;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) 0.08s both;
+  }
+  .page-headline span { color: var(--gold); }
+  .page-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 56px;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) 0.15s both;
+  }
 
-    .page-intro {
-      padding: 28px 20px 20px;
-      border-bottom: 0.5px solid var(--border);
-      animation: fadeUp 0.7s ease both;
-    }
+  @keyframes riseIn {
+    from { opacity:0; transform: translateY(24px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
 
-    .page-eyebrow {
-      font-size: 9px;
-      letter-spacing: 5px;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 20px;
+  }
 
-    .page-title {
-      font-family: var(--font-display);
-      font-size: 16px;
-      color: var(--text);
-      letter-spacing: 1px;
-    }
+  /* ── CARD / EDITION GRID ── */
+  .tile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 28px;
+  }
 
-    .col-headers {
-      display: grid;
-      grid-template-columns: 1fr 80px 80px 80px;
-      gap: 0;
-      padding: 10px 20px;
-      border-bottom: 0.5px solid var(--border);
-    }
+  .tile {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    animation: riseIn 0.6s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .tile:hover {
+    border-color: var(--border-h);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(201,168,76,0.08);
+  }
 
-    .col-hdr {
-      font-size: 8px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      text-transform: uppercase;
-      text-align: right;
-    }
+  .tile-img-wrap {
+    position: relative;
+    aspect-ratio: 5 / 7;
+    background: #0a0c10;
+    overflow: hidden;
+    cursor: zoom-in;
+  }
+  .tile-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s;
+  }
+  .tile-img-wrap:hover img { transform: scale(1.05); }
+  .tile-noimg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold-dim);
+    opacity: 0.4;
+  }
 
-    .col-hdr:first-child { text-align: left; }
+  .edition-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    background: rgba(201,168,76,0.14);
+    border: 1px solid var(--gold);
+    padding: 4px 10px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold-lite);
+  }
 
-    .cards-list { padding: 0 20px; }
+  .tile-body { padding: 16px 18px 20px; }
 
-    .card-row {
-      display: grid;
-      grid-template-columns: 1fr 80px 80px 80px;
-      gap: 0;
-      padding: 18px 0;
-      border-bottom: 0.5px solid var(--border);
-      align-items: center;
-      animation: fadeUp 0.6s ease both;
-    }
+  .tile-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.92rem;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 3px;
+  }
+  .tile-id {
+    font-family: monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .tile-format {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 4px;
+  }
+  .tile-date {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-style: italic;
+  }
 
-    .card-row:last-child { border-bottom: none; }
+  .tile-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    margin-top: 14px;
+  }
+  .tile-stat {
+    background: rgba(17,19,24,0.9);
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .tile-stat-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.52rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .tile-stat-value {
+    font-family: 'Cinzel', serif;
+    font-size: 0.92rem;
+    color: var(--text);
+    font-weight: 700;
+  }
+  .tile-stat-value.gold { color: var(--gold); }
 
-    .card-name-wrap { display: flex; align-items: center; gap: 12px; }
+  /* ── STATES ── */
+  .state-row {
+    padding: 60px 20px;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: none;
+  }
+  .state-row.error { color: #f1948a; }
 
-    .card-thumb {
-      width: 32px;
-      height: 45px;
-      background: var(--surface);
-      border: 0.5px solid var(--border-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
+  /* ── SECTION RULE ── */
+  .section-rule {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 56px 0 40px;
+  }
+  .section-rule::before,
+  .section-rule::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-h);
+  }
+  .rule-diamond {
+    width: 6px; height: 6px;
+    border: 1px solid var(--gold);
+    transform: rotate(45deg);
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
 
-    .card-thumb svg { opacity: 0.3; }
+  /* ── TOTALS PANEL ── */
+  .totals-panel {
+    border: 1px solid var(--border);
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    margin-top: 56px;
+    padding: 28px 28px 0;
+    animation: riseIn 0.7s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .totals-eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 20px;
+  }
+  .totals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+  .totals-cell {
+    background: rgba(17,19,24,0.9);
+    padding: 26px 20px;
+    text-align: center;
+  }
+  .totals-cell.grand { background: rgba(201,168,76,0.06); }
+  .totals-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .totals-value {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.5rem;
+    color: var(--text);
+  }
+  .totals-value.grand {
+    color: var(--gold);
+    font-size: 1.9rem;
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  }
 
-    .card-name {
-      font-family: var(--font-display);
-      font-size: 9px;
-      letter-spacing: 1px;
-      color: var(--text);
-      line-height: 1.4;
-    }
+  /* ── CTA ── */
+  .cta-wrap {
+    max-width: 420px;
+    margin: 40px auto 0;
+    animation: riseIn 0.8s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .btn-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 17px 24px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s;
+    border: none;
+    outline: none;
+    text-decoration: none;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: #0e1015;
+  }
+  .btn-cta:hover {
+    background: linear-gradient(135deg, var(--gold), var(--gold-lite));
+    box-shadow: 0 0 40px rgba(201,168,76,0.35);
+    transform: translateY(-1px);
+  }
 
-    .card-edition {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
+  /* ── LIGHTBOX ── */
+  #lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(6,7,9,0.94);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    cursor: zoom-out;
+    animation: fadeIn 0.2s ease both;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img {
+    max-width: 90vw;
+    max-height: 88vh;
+    object-fit: contain;
+    box-shadow: 0 0 0 1px rgba(201,168,76,0.25), 0 0 80px rgba(201,168,76,0.15), 0 40px 120px rgba(0,0,0,0.8);
+  }
+  #lightbox-close {
+    position: absolute;
+    top: 24px;
+    right: 32px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  #lightbox-close:hover { color: var(--gold); border-color: var(--border-h); }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 
-    .xp-cell {
-      text-align: right;
-      font-size: 13px;
-      color: var(--text);
-    }
-
-    .xp-cell.total {
-      font-family: var(--font-display);
-      font-size: 11px;
-      color: var(--text);
-    }
-
-    .totals-bar {
-      margin: 0 20px;
-      border: 0.5px solid var(--border-md);
-      background: var(--surface);
-      padding: 20px;
-      animation: fadeUp 0.8s ease 0.2s both;
-    }
-
-    .totals-eyebrow {
-      font-size: 8px;
-      letter-spacing: 4px;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-
-    .totals-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 0;
-    }
-
-    .total-item { text-align: center; }
-
-    .total-item:not(:last-child) {
-      border-right: 0.5px solid var(--border);
-    }
-
-    .total-label {
-      font-size: 8px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      text-transform: uppercase;
-      display: block;
-      margin-bottom: 6px;
-    }
-
-    .total-value {
-      font-family: var(--font-display);
-      font-size: 16px;
-      color: var(--text);
-      display: block;
-    }
-
-    .total-item.grand .total-value { font-size: 20px; }
-
-    .section-rule {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 20px 20px 20px;
-    }
-
-    .section-rule::before,
-    .section-rule::after {
-      content: '';
-      flex: 1;
-      height: 0.5px;
-      background: var(--border-md);
-    }
-
-    .rule-diamond {
-      width: 5px;
-      height: 5px;
-      border: 0.5px solid var(--muted);
-      transform: rotate(45deg);
-      opacity: 0.5;
-      flex-shrink: 0;
-    }
-
-    .cta-wrap {
-      padding: 24px 20px 0;
-      animation: fadeUp 0.9s ease 0.3s both;
-    }
-
-    .btn-marketplace {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      background: var(--text);
-      color: var(--bg);
-      border: none;
-      font-family: var(--font-display);
-      font-size: 9px;
-      letter-spacing: 4px;
-      text-align: center;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.15s;
-      text-decoration: none;
-    }
-
-    .btn-marketplace:hover { opacity: 0.9; }
-    .btn-marketplace:active { transform: scale(0.99); }
-
-    .edition-col-headers {
-      display: grid;
-      grid-template-columns: 1fr 100px 110px;
-      gap: 0;
-      padding: 10px 20px;
-      border-bottom: 0.5px solid var(--border);
-    }
-
-    .edition-row {
-      display: grid;
-      grid-template-columns: 1fr 100px 110px;
-      gap: 0;
-      padding: 18px 0;
-      border-bottom: 0.5px solid var(--border);
-      align-items: center;
-      animation: fadeUp 0.6s ease both;
-    }
-
-    .edition-row:last-child { border-bottom: none; }
-
-    .edition-name-wrap { display: flex; align-items: center; gap: 12px; }
-
-    .edition-thumb {
-      width: 32px;
-      height: 45px;
-      background: var(--surface);
-      border: 0.5px solid var(--border-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .edition-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .edition-thumb-fallback { opacity: 0.3; font-size: 12px; }
-
-    .edition-name {
-      font-family: var(--font-display);
-      font-size: 9px;
-      letter-spacing: 1px;
-      color: var(--text);
-      line-height: 1.4;
-    }
-
-    .edition-format {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 2px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .edition-cell {
-      text-align: right;
-      font-size: 12px;
-      color: var(--text);
-    }
-
-    .no-editions-row {
-      padding: 24px 20px;
-      text-align: center;
-      font-size: 11px;
-      letter-spacing: 1px;
-      color: var(--muted);
-      font-style: italic;
-    }
-
-    .loading-row {
-      padding: 40px 20px;
-      text-align: center;
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      text-transform: uppercase;
-      opacity: 0.5;
-    }
-
-    .error-row {
-      padding: 40px 20px;
-      text-align: center;
-      font-size: 12px;
-      letter-spacing: 2px;
-      color: #c97b6e;
-      text-transform: uppercase;
-      display: none;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 0 20px; }
+    main { padding: 40px 20px 80px; }
+    .page-headline { font-size: 2rem; }
+    .tile-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px; }
+    .totals-grid { grid-template-columns: 1fr; }
+    .totals-cell:not(:last-child) { border-bottom: 1px solid var(--border); }
+  }
+</style>
 </head>
 <body>
 
-<div class="page">
+<div class="bg-fixed"></div>
+<div class="bg-grid"></div>
+<div class="bg-card-glow"></div>
 
-  <header class="header">
-    <span class="logo">XP Marketplace</span>
-    <div class="xp-wrap">
-      <span class="xp-label">Available XP</span>
-      <span class="xp-value" id="header-xp">—</span>
+<!-- LOADING -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading Your Cards</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">XP</div>
+  <div class="nav-right">
+    <div class="nav-xp">
+      <div class="nav-xp-label">Your XP</div>
+      <div class="nav-xp-value" id="nav-xp">—</div>
     </div>
-  </header>
-
-  <div class="page-intro">
-    <div class="page-eyebrow">Your Collection</div>
-    <div class="page-title">Living Cards</div>
+    <a class="nav-link" href="spotlight.html">Spotlight</a>
+    <a class="nav-link" href="marketplace.html">Marketplace</a>
+    <a class="nav-link active" href="living-cards.html">My Cards</a>
+    <button class="nav-link" onclick="doSignOut()">Sign Out</button>
   </div>
+</nav>
 
-  <div class="col-headers">
-    <div class="col-hdr">Card</div>
-    <div class="col-hdr">Life XP</div>
-    <div class="col-hdr">Gaming XP</div>
-    <div class="col-hdr">Total XP</div>
-  </div>
+<!-- MAIN -->
+<main id="main">
 
-  <div class="cards-list" id="cards-list">
-    <div class="loading-row" id="loading-row">Loading your cards...</div>
-    <div class="error-row" id="error-row">Could not load cards. Please try again.</div>
+  <div class="page-eyebrow-row">
+    <div class="eyebrow-line"></div>
+    <div class="eyebrow-text">Your Collection</div>
+    <div class="eyebrow-line"></div>
   </div>
+  <div class="page-headline">Living <span>Cards</span></div>
+  <div class="page-subtitle">Every card you own, and the XP it's earned.</div>
+
+  <div class="section-label">Living Cards</div>
+  <div class="tile-grid" id="cards-list"></div>
+  <div class="state-row" id="loading-row">Loading your cards…</div>
+  <div class="state-row error" id="error-row">Could not load cards. Please try again.</div>
 
   <div id="editions-section" style="display:none;">
     <div class="section-rule"><div class="rule-diamond"></div></div>
-
-    <div class="page-intro" style="padding-top:0; border-bottom:none;">
-      <div class="page-eyebrow">Physical &amp; Digital Redemptions</div>
-      <div class="page-title">My Editions</div>
-    </div>
-
-    <div class="edition-col-headers">
-      <div class="col-hdr">Item</div>
-      <div class="col-hdr">Edition</div>
-      <div class="col-hdr">Acquired</div>
-    </div>
-
-    <div class="cards-list" id="editions-list"></div>
+    <div class="section-label">My Editions — Physical &amp; Digital Redemptions</div>
+    <div class="tile-grid" id="editions-list"></div>
   </div>
 
-  <div class="section-rule"><div class="rule-diamond"></div></div>
-
-  <div class="totals-bar">
+  <div class="totals-panel">
     <div class="totals-eyebrow">All Cards Combined</div>
     <div class="totals-grid">
-      <div class="total-item">
-        <span class="total-label">Life XP</span>
-        <span class="total-value" id="total-life">—</span>
+      <div class="totals-cell">
+        <div class="totals-label">Life XP</div>
+        <div class="totals-value" id="total-life">—</div>
       </div>
-      <div class="total-item">
-        <span class="total-label">Gaming XP</span>
-        <span class="total-value" id="total-gaming">—</span>
+      <div class="totals-cell">
+        <div class="totals-label">Gaming XP</div>
+        <div class="totals-value" id="total-gaming">—</div>
       </div>
-      <div class="total-item grand">
-        <span class="total-label">Spendable XP</span>
-        <span class="total-value" id="total-grand">—</span>
+      <div class="totals-cell grand">
+        <div class="totals-label">Spendable XP</div>
+        <div class="totals-value grand" id="total-grand">—</div>
       </div>
     </div>
   </div>
 
   <div class="cta-wrap">
-    <a class="btn-marketplace" href="spotlight.html">Enter the Marketplace</a>
+    <a class="btn-cta" href="spotlight.html">✦ &nbsp; Enter the Marketplace</a>
   </div>
 
+</main>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox(event)">Close ✕</button>
+  <img id="lightbox-img" src="" alt="">
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -457,6 +604,7 @@
       return;
     }
     await loadUserCards(user.uid);
+    hideLoading();
   });
 
   async function loadUserCards(uid) {
@@ -487,7 +635,7 @@
         document.getElementById('total-life').textContent   = fmt(0);
         document.getElementById('total-gaming').textContent = fmt(0);
         document.getElementById('total-grand').textContent  = fmt(0);
-        document.getElementById('header-xp').textContent    = fmt(0) + ' XP';
+        document.getElementById('nav-xp').textContent        = fmt(0);
         return;
       }
 
@@ -519,6 +667,7 @@
       return {
         cardId:    cardId,
         cardName:  cardData.cardName  || cardId,
+        imageUrl:  cardData.imageUrl  || '',
         currentXP: Number(cardData.currentXP) || 0,
         gamingXP:  Number(gamingData.gamingXP) || 0
       };
@@ -532,46 +681,61 @@
     return Number(n || 0).toLocaleString();
   }
 
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function thumbHtml(imageUrl, alt) {
+    return imageUrl
+      ? `<img src="${esc(imageUrl)}" alt="${esc(alt)}" onclick="event.stopPropagation(); openLightbox('${esc(imageUrl)}', '${esc(alt)}')" onerror="this.parentElement.innerHTML='<div class=&quot;tile-noimg&quot;>✦</div>'">`
+      : `<div class="tile-noimg">✦</div>`;
+  }
+
   function renderCards(cards) {
     const list = document.getElementById('cards-list');
     document.getElementById('loading-row').style.display = 'none';
 
     let totalLife = 0, totalGaming = 0;
 
-    cards.forEach((card, i) => {
-      const lifeXP   = card.currentXP;
+    list.innerHTML = cards.map((card, i) => {
+      const lifeXP = card.currentXP;
       totalLife   += lifeXP;
       totalGaming += card.gamingXP;
 
-      const row = document.createElement('div');
-      row.className = 'card-row';
-      row.style.animationDelay = (i * 0.08) + 's';
-      row.innerHTML = `
-        <div class="card-name-wrap">
-          <div class="card-thumb">
-            <svg width="14" height="14" viewBox="0 0 48 48" fill="none">
-              <rect x="1" y="1" width="46" height="46" stroke="#e8e4dc" stroke-width="0.5"/>
-              <line x1="1" y1="1" x2="47" y2="47" stroke="#e8e4dc" stroke-width="0.5"/>
-              <line x1="47" y1="1" x2="1" y2="47" stroke="#e8e4dc" stroke-width="0.5"/>
-            </svg>
+      return `
+        <div class="tile" style="animation-delay:${i * 0.06}s">
+          <div class="tile-img-wrap" onclick="${card.imageUrl ? `openLightbox('${esc(card.imageUrl)}', '${esc(card.cardName)}')` : ''}">
+            ${thumbHtml(card.imageUrl, card.cardName)}
           </div>
-          <div>
-            <div class="card-name">${card.cardName}</div>
-            <div class="card-edition">${card.cardId}</div>
+          <div class="tile-body">
+            <div class="tile-name">${esc(card.cardName)}</div>
+            <div class="tile-id">${esc(card.cardId)}</div>
+            <div class="tile-stats">
+              <div class="tile-stat">
+                <div class="tile-stat-label">Life</div>
+                <div class="tile-stat-value">${fmt(lifeXP)}</div>
+              </div>
+              <div class="tile-stat">
+                <div class="tile-stat-label">Gaming</div>
+                <div class="tile-stat-value">${fmt(card.gamingXP)}</div>
+              </div>
+              <div class="tile-stat">
+                <div class="tile-stat-label">Total</div>
+                <div class="tile-stat-value gold">${fmt(card.currentXP)}</div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="xp-cell life">${fmt(lifeXP)}</div>
-        <div class="xp-cell gaming">${fmt(card.gamingXP)}</div>
-        <div class="xp-cell total">${fmt(card.currentXP)}</div>
       `;
-      list.appendChild(row);
-    });
+    }).join('');
 
     const grand = totalLife + totalGaming;
     document.getElementById('total-life').textContent   = fmt(totalLife);
     document.getElementById('total-gaming').textContent = fmt(totalGaming);
     document.getElementById('total-grand').textContent  = fmt(grand);
-    document.getElementById('header-xp').textContent    = fmt(grand) + ' XP';
+    document.getElementById('nav-xp').textContent        = fmt(grand);
   }
 
   function renderEditions(editions) {
@@ -588,27 +752,24 @@
     list.innerHTML = editions.map((ed, i) => {
       const editionNum  = ed.editionNumber || '—';
       const editionSize = ed.editionSize   || '—';
+      const name        = ed.itemName || ed.cardId;
 
       let dateStr = '';
       if (ed.acquiredDate && typeof ed.acquiredDate.toDate === 'function') {
         dateStr = ed.acquiredDate.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       }
 
-      const thumbHtml = ed.imageUrl
-        ? `<img src="${ed.imageUrl}" alt="${ed.itemName || ''}" onerror="this.style.display='none'">`
-        : `<span class="edition-thumb-fallback">✦</span>`;
-
       return `
-        <div class="edition-row" style="animation-delay:${i * 0.08}s">
-          <div class="edition-name-wrap">
-            <div class="edition-thumb">${thumbHtml}</div>
-            <div>
-              <div class="edition-name">${ed.itemName || ed.cardId}</div>
-              <div class="edition-format">${ed.format || 'Card'}</div>
-            </div>
+        <div class="tile" style="animation-delay:${i * 0.06}s">
+          <div class="tile-img-wrap" onclick="${ed.imageUrl ? `openLightbox('${esc(ed.imageUrl)}', '${esc(name)}')` : ''}">
+            <div class="edition-badge">${editionNum} of ${editionSize}</div>
+            ${thumbHtml(ed.imageUrl, name)}
           </div>
-          <div class="edition-cell">${editionNum} of ${editionSize}</div>
-          <div class="edition-cell">${dateStr}</div>
+          <div class="tile-body">
+            <div class="tile-name">${esc(name)}</div>
+            <div class="tile-format">${esc(ed.format || 'Card')}</div>
+            <div class="tile-date">${dateStr}</div>
+          </div>
         </div>
       `;
     }).join('');
@@ -620,6 +781,31 @@
     err.textContent = msg;
     err.style.display = 'block';
   }
+
+  function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('main').classList.add('visible');
+  }
+
+  // ── LIGHTBOX ──
+  window.openLightbox = function(src, alt) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-img').alt = alt || '';
+    document.getElementById('lightbox').classList.add('open');
+  };
+  window.closeLightbox = function(e) {
+    if (e) e.stopPropagation();
+    document.getElementById('lightbox').classList.remove('open');
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  // ── SIGN OUT ──
+  window.doSignOut = async function() {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  };
 </script>
 
 </body>
