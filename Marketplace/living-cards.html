@@ -211,6 +211,16 @@
     to   { opacity:1; transform: translateY(0); }
   }
 
+  /* ── SECTION HEADLINE (matches page headline size/font/color) ── */
+  .section-headline {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 28px;
+  }
+  .section-headline span { color: var(--gold); }
+
   /* ── SECTION LABEL ── */
   .section-label {
     font-family: 'Cinzel', serif;
@@ -266,11 +276,12 @@
     opacity: 0.4;
   }
 
+  .edition-badge-row {
+    display: flex;
+    justify-content: center;
+    padding: 14px 0 0;
+  }
   .edition-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 2;
     background: rgba(201,168,76,0.14);
     border: 1px solid var(--gold);
     padding: 4px 10px;
@@ -537,7 +548,7 @@
     <div class="eyebrow-line"></div>
   </div>
   <div class="page-headline">Living <span>Cards</span></div>
-  <div class="page-subtitle">Every card you own, and the XP it's earned.</div>
+  <div class="page-subtitle">Every Living Card you own, and the XP it's earned.</div>
 
   <div class="section-label">Living Cards</div>
   <div class="tile-grid" id="cards-list"></div>
@@ -546,7 +557,7 @@
 
   <div id="editions-section" style="display:none;">
     <div class="section-rule"><div class="rule-diamond"></div></div>
-    <div class="section-label">My Editions — Physical &amp; Digital Redemptions</div>
+    <div class="section-headline">My Editions and <span>Redemptions</span></div>
     <div class="tile-grid" id="editions-list"></div>
   </div>
 
@@ -762,8 +773,10 @@
       return `
         <div class="tile" style="animation-delay:${i * 0.06}s">
           <div class="tile-img-wrap" onclick="${ed.imageUrl ? `openLightbox('${esc(ed.imageUrl)}', '${esc(name)}')` : ''}">
-            <div class="edition-badge">${editionNum} of ${editionSize}</div>
             ${thumbHtml(ed.imageUrl, name)}
+          </div>
+          <div class="edition-badge-row">
+            <div class="edition-badge">${editionNum} of ${editionSize}</div>
           </div>
           <div class="tile-body">
             <div class="tile-name">${esc(name)}</div>
