@@ -598,6 +598,9 @@
   // ── HANDLE AUTHENTICATED USER ──
   async function handleAuthenticatedUser(user, newUser) {
     showLoading('Loading your account…');
+    const params   = new URLSearchParams(window.location.search);
+    const returnTo = params.get('return');
+
     try {
       const userRef  = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
@@ -611,10 +614,20 @@
           xpTotal:    0
         });
         hideLoading();
+        // If some other page sent the person here to sign in, send them
+        // straight back — that page (e.g. the dashboard) handles whatever
+        // comes next, like claiming the card they arrived from.
+        if (returnTo) { window.location.href = returnTo; return; }
         showRegisterPanel([]);
       } else {
         const data = userSnap.data();
         registeredCards = data.cards || [];
+
+        if (returnTo) {
+          hideLoading();
+          window.location.href = returnTo;
+          return;
+        }
 
         if (registeredCards.length === 0) {
           // Has account but no cards yet
@@ -630,7 +643,8 @@
       hideLoading();
       console.error('Firestore error:', err);
       // If Firestore fails, still let them through
-      goToSpotlight();
+      if (returnTo) { window.location.href = returnTo; return; }
+      goToMarketplace();
     }
   }
 
@@ -707,54 +721,64 @@
 
     msgEl.textContent = '';
     if (!code || code.length < 6) { showMsg(msgEl, 'Please enter a valid claim code.', 'error'); return; }
-    if (!code.startsWith('CLAIM-')) { showMsg(msgEl, 'Claim codes start with CLAIM-', 'error'); return; }
-
-    // Check not already registered to this account
-    if (registeredCards.some(c => c.claimCode === code)) {
-      showMsg(msgEl, 'This card is already registered to your account.', 'error');
-      return;
-    }
 
     btn.disabled = true;
     showMsg(msgEl, 'Verifying claim code…', 'info');
 
     try {
-      // Query the cards collection for a matching claimCode
-      const q        = query(collection(db, 'cards'), where('claimCode', '==', code));
-      const snapshot = await getDocs(q);
+      // Claim codes now live in their own collection, one document per code,
+      // keyed by the code itself — this replaces the old approach of
+      // querying the cards collection for a matching claimCode field.
+      const codeSnap = await getDoc(doc(db, 'claimCodes', code));
 
-      if (snapshot.empty) {
+      if (!codeSnap.exists()) {
         showMsg(msgEl, 'Invalid claim code. Please check and try again.', 'error');
         btn.disabled = false;
         return;
       }
 
-      const cardDoc  = snapshot.docs[0];
-      const cardData = cardDoc.data();
+      const codeData = codeSnap.data();
 
-      if (cardData.claimed === true) {
+      if (registeredCards.some(c => c.cardId === codeData.cardId)) {
+        showMsg(msgEl, 'This card is already registered to your account.', 'error');
+        btn.disabled = false;
+        return;
+      }
+
+      if (codeData.status !== 'unused') {
         showMsg(msgEl, 'This claim code has already been used.', 'error');
         btn.disabled = false;
         return;
       }
 
-      const newCard = {
-        cardId:       cardData.cardId,
-        cardName:     cardData.cardName || cardData.cardId,
-        claimCode:    code,
-        registeredAt: new Date().toISOString()
-      };
+      const cardSnap = await getDoc(doc(db, 'cards', codeData.cardId));
+      const cardName = cardSnap.exists() ? (cardSnap.data().cardName || codeData.cardId) : codeData.cardId;
 
-      // Save to Firestore users document
-      const userRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userRef, {
-        cards: arrayUnion(newCard)
+      // The actual claim — checking the code, checking the card, and
+      // attaching it to this account — all happens inside the Cloud
+      // Function's own transaction. This page just asks for it and shows
+      // the result; it doesn't perform the claim itself.
+      const idToken = await currentUser.getIdToken();
+      const res = await fetch('https://us-central1-pfp-system.cloudfunctions.net/claimCardSecure', {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': 'Bearer ' + idToken,
+        },
+        body: JSON.stringify({ cardId: codeData.cardId, claimCode: code }),
       });
+      const result = await res.json();
 
-      registeredCards.push(newCard);
+      if (!result.success) {
+        showMsg(msgEl, result.error || 'Could not claim this card. Please try again.', 'error');
+        btn.disabled = false;
+        return;
+      }
+
+      registeredCards.push({ cardId: codeData.cardId, cardName: cardName });
       input.value = '';
       renderRegisteredCards();
-      showMsg(msgEl, `✓ ${newCard.cardName} registered successfully.`, 'success');
+      showMsg(msgEl, `✓ ${cardName} registered successfully.`, 'success');
 
       // Show enter button now that at least one card is registered
       document.getElementById('enter-btn').style.display = 'flex';

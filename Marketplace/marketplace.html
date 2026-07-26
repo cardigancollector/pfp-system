@@ -514,6 +514,12 @@
   import { getFirestore, doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 
+  let currentUser  = null;
+  let userXP       = 0;
+  let userCardIds  = [];
+  let allCards     = [];
+  let activeFilter = 'all';
+
   // ── BACK TO DASHBOARD ──
   window.goBack = function() {
     const params = new URLSearchParams(window.location.search);
@@ -524,13 +530,9 @@
         return;
     }
 
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('pfp_owner_')) {
-            const cardId = key.replace('pfp_owner_', '');
-            window.location.href = '../dashboard/?card_id=' + encodeURIComponent(cardId);
-            return;
-        }
+    if (userCardIds.length > 0) {
+        window.location.href = '../dashboard/?card_id=' + encodeURIComponent(userCardIds[0]);
+        return;
     }
 
     window.location.href = '../dashboard/';
@@ -550,11 +552,6 @@
   const db   = getFirestore(app);
 
   const LIVING_API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
-
-  let currentUser  = null;
-  let userXP       = 0;
-  let allCards     = [];
-  let activeFilter = 'all';
 
   // ── JSONP ──
   function jsonpFetch(url, timeout) {
@@ -583,14 +580,19 @@
   });
 
   // ── LOAD USER XP ──
+  // Reads which cards belong to this account from the account's own
+  // Firestore document — the same source living-cards.html already uses —
+  // instead of scanning this browser's local storage for tokens.
   async function loadUserXP(user) {
     try {
-      const cardIds = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (!key || !key.startsWith('pfp_owner_')) continue;
-        cardIds.push(key.replace('pfp_owner_', ''));
-      }
+      const userSnap = await getDoc(doc(db, 'users', user.uid));
+      const rawCards = userSnap.exists() ? (userSnap.data().cards || []) : [];
+
+      // Marketplace redemptions aren't Living Cards and don't carry XP —
+      // only count entries that actually correspond to a claimed card.
+      const livingEntries = rawCards.filter(c => c && typeof c === 'object' && c.source !== 'marketplace');
+      const cardIds = livingEntries.map(c => c.cardId || c);
+      userCardIds = cardIds;
 
       if (cardIds.length === 0) { updateXP(0); return; }
 

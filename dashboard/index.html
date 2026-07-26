@@ -667,6 +667,7 @@
 
 <script type="module">
 import { initializeApp }                        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc,
          collection, getDocs,
          query, orderBy, limit, where,
@@ -680,8 +681,9 @@ const firebaseConfig = {
   messagingSenderId: '643360345707',
   appId:             '1:643360345707:web:9e5b9a902b41169ae5eb2e'
 };
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
 
 window._pfpFirestore          = db;
 window._pfpFirestoreDoc       = doc;
@@ -696,6 +698,19 @@ window._pfpFirestoreUpdateDoc = updateDoc;
 window._pfpFirestoreIncrement = increment;
 window._pfpFirebaseReady      = true;
 window.dispatchEvent(new Event('pfp-firebase-ready'));
+
+// ── Sign-in state ────────────────────────────────────────────────────────────
+// The dashboard is the page most people land on first (straight from a QR
+// scan), so it's the one that actually asks someone to sign in if they
+// aren't already. Every other page in the system just recognizes the same
+// session once it exists.
+window._pfpAuth = auth;
+window._pfpSignOut = () => signOut(auth);
+onAuthStateChanged(auth, (user) => {
+  window._pfpUser = user;
+  window.dispatchEvent(new Event('pfp-auth-ready'));
+});
+
 </script>
 
 <script>
@@ -771,21 +786,18 @@ function getMultiplier(stageIdx) {
   return m[Math.min(stageIdx, m.length - 1)] || 1.00;
 }
 
-function storageKey(evoId) { return 'pfp_owner_' + evoId; }
-function saveOwner(evoId, claimCode, cardName, ownerToken) {
-  localStorage.setItem(storageKey(evoId), JSON.stringify({ claimCode, cardName, ownerToken }));
-}
-function loadOwner(evoId) {
-  try { return JSON.parse(localStorage.getItem(storageKey(evoId))); } catch(e) { return null; }
-}
-function clearOwner(evoId) { localStorage.removeItem(storageKey(evoId)); }
+// Card ownership is now determined by whether the signed-in account's ID
+// matches the card's own ownerUid field in Firestore — not by anything
+// saved in this browser. cardOwnerUid gets filled in once the card loads.
+let cardOwnerUid = null;
 
 let analyzerCard = null;
 let livingCard   = null;
 let gamingData   = null;
 let urlCardId    = '';
 let isOwner      = false;
-let savedOwner   = null;
+
+const LOGIN_URL = 'https://cardigancollector.github.io/pfp-system/login.html';
 
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
@@ -794,11 +806,28 @@ window.addEventListener('DOMContentLoaded', () => {
     livingCard   = null;
     analyzerCard = null;
     gamingData   = null;
-    if (window._pfpFirebaseReady) {
-      boot(urlCardId);
-    } else {
-      window.addEventListener('pfp-firebase-ready', () => boot(urlCardId), { once: true });
+
+    function startWhenReady() {
+      if (!window._pfpFirebaseReady) {
+        window.addEventListener('pfp-firebase-ready', startWhenReady, { once: true });
+        return;
+      }
+      // Wait for Firebase to confirm whether anyone is signed in before doing
+      // anything else — the claim/dashboard split depends on knowing that.
+      function gateOnAuth() {
+        if (window._pfpUser === undefined) {
+          window.addEventListener('pfp-auth-ready', gateOnAuth, { once: true });
+          return;
+        }
+        if (!window._pfpUser) {
+          window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href);
+          return;
+        }
+        boot(urlCardId);
+      }
+      gateOnAuth();
     }
+    startWhenReady();
   } else {
     showError('No card ID provided in the URL.');
   }
@@ -842,6 +871,7 @@ async function boot(evoId) {
           expiryDate:  d.eventExpiryDate  ? d.eventExpiryDate.toDate().toLocaleDateString() : ''
         } : null,
       };
+      cardOwnerUid = d.ownerUid || null;
     }
   } catch(e) { console.warn('Firestore card fetch error:', e); }
 
@@ -863,20 +893,23 @@ async function boot(evoId) {
     analyzerCard = { card: livingCard['Card Name'] || evoId, livingCardId: evoId };
   }
 
-  savedOwner = loadOwner(evoId);
   hideLoading();
 
   const cardName = analyzerCard.card || evoId;
   const claimed  = livingCard && String(livingCard['Claimed']).toUpperCase() === 'YES';
+  const signedInUid = window._pfpUser ? window._pfpUser.uid : null;
 
   document.getElementById('claim-card-name').textContent = cardName;
   document.getElementById('claim-evo-id').textContent    = evoId;
 
-  if (savedOwner) {
+  if (cardOwnerUid && cardOwnerUid === signedInUid) {
     showClaimScreen('returning');
-  } else if (!claimed) {
+  } else if (!claimed && !cardOwnerUid) {
     showClaimScreen('unclaimed');
   } else {
+    // Claimed by someone else's account — same as before, land straight on
+    // the read-only dashboard; its banner has its own "Owner Login / Claim"
+    // button for anyone who genuinely does own this card.
     showDashboard(false);
   }
 }
@@ -936,12 +969,14 @@ async function doVisitorClaim() {
 }
 
 async function doTransferClaim() {
-  const code  = document.getElementById('transfer-code-input').value.trim().toUpperCase();
   const errEl = document.getElementById('transfer-error');
-  errEl.textContent = '';
-  if (!code) { errEl.textContent = 'Please enter your claim code.'; return; }
-  clearOwner(urlCardId);
-  await performClaim(code, errEl);
+  // The old "Transfer Ownership" flow relied on being able to reuse an
+  // already-claimed card's code, which was the exact reuse bug this system
+  // was rebuilt to close — a claim code only works once now. Transferring a
+  // card to a new account needs its own proper feature (e.g. a fresh code
+  // issued for the transfer), which hasn't been built yet, so this button
+  // intentionally does nothing but explain that for now.
+  errEl.textContent = 'Transferring a card to a new owner isn\'t available yet — reach out for help with this.';
 }
 
 async function performClaim(claimCode, errEl) {
@@ -950,20 +985,26 @@ async function performClaim(claimCode, errEl) {
   document.getElementById('loading-screen').style.display = 'flex';
 
   try {
-    const url = LIVING_API
-      + '?action=claim_card'
-      + '&card_id='    + encodeURIComponent(urlCardId)
-      + '&claim_code=' + encodeURIComponent(claimCode)
-      + '&owner_token=OWN-PLACEHOLDER';
+    if (!window._pfpUser) {
+      hideLoading();
+      document.getElementById('claim-screen').style.display = 'flex';
+      errEl.textContent = 'You need to be signed in to claim a card.';
+      return;
+    }
 
-    const data = await jsonpFetch(url, 10000);
+    const idToken = await window._pfpUser.getIdToken();
+    const res = await fetch('https://us-central1-pfp-system.cloudfunctions.net/claimCardSecure', {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': 'Bearer ' + idToken,
+      },
+      body: JSON.stringify({ cardId: urlCardId, claimCode: claimCode }),
+    });
+    const data = await res.json();
 
-    const alreadyClaimed = data.error && data.error.toLowerCase().includes('already claimed');
-    if (data.success || data.status === 200 || alreadyClaimed) {
-      const cardName  = analyzerCard ? analyzerCard.card : urlCardId;
-      const realToken = data.ownerToken || ('OWN-' + urlCardId);
-      saveOwner(urlCardId, claimCode, cardName, realToken);
-      savedOwner = { claimCode, cardName, ownerToken: realToken };
+    if (data.success) {
+      cardOwnerUid = window._pfpUser.uid;
 
       setLoadingSub('Loading your card data…');
       await fetchFreshLivingCard();
@@ -1023,13 +1064,9 @@ function showDashboard(asOwner) {
 }
 
 function doSignOut() {
-  clearOwner(urlCardId);
-  savedOwner = null;
-  isOwner    = false;
-  document.getElementById('owner-banner').style.display    = 'none';
-  document.getElementById('readonly-banner').style.display = 'flex';
-  document.getElementById('banner-card-name').textContent  = analyzerCard ? analyzerCard.card : urlCardId;
-  buildDashboard(false);
+  window._pfpSignOut().then(() => {
+    window.location.href = LOGIN_URL;
+  });
 }
 
 // ── YOUR LIFE BUTTON ────────────────────────────────────────────────────────
@@ -1296,11 +1333,10 @@ function strikeGong() {
 async function logScan() {
   strikeGong();
   const cardId   = urlCardId;
-  const token    = (savedOwner && savedOwner.ownerToken) ? savedOwner.ownerToken : null;
   const btn      = document.getElementById('scan-btn');
   const feedback = document.getElementById('scan-feedback');
-  if (!cardId || !token) {
-    feedback.textContent = 'Owner token missing — try signing out and claiming again.';
+  if (!cardId || !window._pfpUser) {
+    feedback.textContent = 'Not signed in — try signing out and back in.';
     feedback.className = 'scan-feedback error';
     return;
   }
@@ -1308,10 +1344,12 @@ async function logScan() {
   btn.innerHTML = '<span>⏳</span> Logging scan...';
   feedback.textContent = '';
   try {
+    const idToken = await window._pfpUser.getIdToken();
     const url = 'https://us-central1-pfp-system.cloudfunctions.net/qrScan'
-      + '?card_id='     + encodeURIComponent(cardId)
-      + '&owner_token=' + encodeURIComponent(token);
-    const data = await fetch(url).then(r => r.json());
+      + '?card_id=' + encodeURIComponent(cardId);
+    const data = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + idToken },
+    }).then(r => r.json());
     if (data.success || data.status === 200) {
       const xpDisplay  = data.totalXP !== undefined ? data.totalXP.toLocaleString() : '--';
       const xpEffect   = data.xpEffect !== undefined ? data.xpEffect : 10;
@@ -1721,9 +1759,9 @@ function esc(str) {
 function showGamingBtn(asOwner) {
   const btn = document.getElementById('gaming-hub-btn');
   if (!btn) return;
-  if (asOwner && urlCardId && savedOwner && savedOwner.ownerToken) {
+  if (asOwner && urlCardId && window._pfpUser) {
     const imageUrl = (analyzerCard && analyzerCard.imageUrl) ? analyzerCard.imageUrl : '';
-    const url = '../xp-gaming/index.html?card_id=' + encodeURIComponent(urlCardId) + '&owner_token=' + encodeURIComponent(savedOwner.ownerToken) + (imageUrl ? '&image_url=' + encodeURIComponent(imageUrl) : '');
+    const url = '../xp-gaming/index.html?card_id=' + encodeURIComponent(urlCardId) + (imageUrl ? '&image_url=' + encodeURIComponent(imageUrl) : '');
     btn.href = url;
     btn.classList.add('visible');
   } else {

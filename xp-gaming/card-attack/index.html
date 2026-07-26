@@ -4,6 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Card Attack — PfP</title>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain: "pfp-system.firebaseapp.com",
+    projectId: "pfp-system",
+    storageBucket: "pfp-system.firebasestorage.app",
+    messagingSenderId: "643360345707",
+    appId: "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
+  const auth = getAuth(app);
+
+  window._pfpFirestore = db;
+  window._pfpFirestoreDoc = doc;
+  window._pfpFirestoreGetDoc = getDoc;
+  window._pfpFirebaseReady = true;
+  window.dispatchEvent(new Event('pfp-firebase-ready'));
+
+  window._pfpAuth = auth;
+  onAuthStateChanged(auth, (user) => {
+    window._pfpUser = user;
+    window.dispatchEvent(new Event('pfp-auth-ready'));
+  });
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -350,10 +380,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const backBtn = document.getElementById('back-btn');
   if (backBtn && cardId) {
-    backBtn.href = '../index.html?card_id=' + encodeURIComponent(cardId) + (ownerToken ? '&owner_token=' + encodeURIComponent(ownerToken) : '');
+    backBtn.href = '../index.html?card_id=' + encodeURIComponent(cardId);
   }
 
-  loadGamingXP();
+  function gateOnAuth() {
+    if (window._pfpUser === undefined) {
+      window.addEventListener('pfp-auth-ready', gateOnAuth, { once: true });
+      return;
+    }
+    if (!window._pfpUser) {
+      window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href);
+      return;
+    }
+    loadGamingXP();
+  }
+  gateOnAuth();
 });
 
 function beep(freq, dur, type='square', vol=0.15, decay=true) {
@@ -386,14 +427,13 @@ const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5C
 // ── IDENTITY FLOW ─────────────────────────────────────────────
 const urlParams  = new URLSearchParams(window.location.search);
 const cardId     = urlParams.get('card_id')     || localStorage.getItem('pfp_gaming_card')  || null;
-const ownerToken = urlParams.get('owner_token') || localStorage.getItem('pfp_gaming_token') || null;
 const imageUrl   = urlParams.get('image_url')   || localStorage.getItem('pfp_gaming_image') || null;
 if (cardId)      localStorage.setItem('pfp_gaming_card',  cardId);
-if (ownerToken)  localStorage.setItem('pfp_gaming_token', ownerToken);
 if (imageUrl)    localStorage.setItem('pfp_gaming_image', imageUrl);
 
+const LOGIN_URL = 'https://cardigancollector.github.io/pfp-system/login.html';
+
 let gamingXpBase = 0;
-let xpLogged     = false;
 
 function jsonp(url, cbParam) {
   return new Promise((resolve, reject) => {
@@ -406,40 +446,30 @@ function jsonp(url, cbParam) {
   });
 }
 
-function loadGamingXP() {
+// Reads the live gaming balance straight from Firestore, the same way Vault
+// and the XP Gaming hub already do — this replaces the old calls to the
+// Apps Script's getGamingData/logGamingXP actions, which were a second,
+// separate way of tracking the same numbers.
+async function loadGamingXP() {
   const cached = parseInt(sessionStorage.getItem('pfp_daily_xp_remaining'));
   if (!isNaN(cached)) {
     const el = document.getElementById('hud-daily-remaining');
     if (el) el.textContent = cached;
   }
-  if (!cardId || !ownerToken) return;
-  jsonp(`${API}?action=getGamingData&card_id=${encodeURIComponent(cardId)}&owner_token=${encodeURIComponent(ownerToken)}`, 'callback')
-    .then(data => {
-      if (data.success && data.gaming) {
-        gamingXpBase = parseInt(data.gaming['Gaming XP']) || 0;
-        const remaining = parseInt(data.gaming['Daily Remaining']);
-        const safeRemaining = isNaN(remaining) ? 100 : remaining;
-        sessionStorage.setItem('pfp_daily_xp_remaining', safeRemaining);
-        const el = document.getElementById('hud-daily-remaining');
-        if (el) el.textContent = safeRemaining;
-      }
-    })
-    .catch(() => {});
-}
-
-function logGamingXP(delta) {
-  if (!cardId || !ownerToken || delta <= 0 || xpLogged) return;
-  xpLogged = true;
-  jsonp(`${API}?action=logGamingXP&card_id=${encodeURIComponent(cardId)}&owner_token=${encodeURIComponent(ownerToken)}&xp_amount=${delta}`, 'callback')
-    .then(data => {
-      if (data.success) {
-        const remaining = Math.max(0, data.remaining ?? 0);
-        sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
-        const el = document.getElementById('hud-daily-remaining');
-        if (el) el.textContent = remaining;
-      }
-    })
-    .catch(() => {});
+  if (!cardId) return;
+  try {
+    const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(window._pfpFirestore, 'gaming', cardId));
+    if (snap.exists()) {
+      const d = snap.data();
+      gamingXpBase = d.gamingXP || 0;
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      const xpToday  = d.gamingXPDate === todayStr ? (d.gamingXPToday || 0) : 0;
+      const remaining = Math.max(0, 100 - xpToday);
+      sessionStorage.setItem('pfp_daily_xp_remaining', remaining);
+      const el = document.getElementById('hud-daily-remaining');
+      if (el) el.textContent = remaining;
+    }
+  } catch(e) { console.warn('Firestore gaming read failed:', e); }
 }
 
 // ── CARD BACK IMAGE ───────────────────────────────────────────
@@ -972,11 +1002,26 @@ function gameOver() {
 
   sessionStorage.setItem('pfp_gaming_stats', JSON.stringify({ game: 'card-attack', score, wave, xp: xpEarned }));
 
-  logGamingXP(xpEarned);
+  if (cardId && window._pfpUser) {
+    (async () => {
+      const idToken = await window._pfpUser.getIdToken();
+      const resultUrl = 'https://us-central1-pfp-system.cloudfunctions.net/logGameResult'
+        + '?card_id='    + encodeURIComponent(cardId)
+        + '&game=card_attack'
+        + '&xp_earned='  + xpEarned
+        + '&rounds=1&wins=0'
+        + '&best_score=' + score
+        + '&best_wave='  + wave;
 
-  if (cardId && ownerToken) {
-    const resultUrl = `${API}?action=logGameResult&card_id=${encodeURIComponent(cardId)}&owner_token=${encodeURIComponent(ownerToken)}&game=card_attack&xp_delta=${xpEarned}&rounds=1&wins=0&best_score=${score}&best_wave=${wave}`;
-    jsonp(resultUrl, 'callback').catch(e => console.warn('logGameResult failed:', e));
+      fetch(resultUrl, { headers: { 'Authorization': 'Bearer ' + idToken } })
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.success) {
+            sessionStorage.setItem('pfp_daily_xp_remaining', data.dailyRemaining ?? 0);
+          }
+        })
+        .catch(e => console.warn('logGameResult failed:', e));
+    })();
   }
 }
   

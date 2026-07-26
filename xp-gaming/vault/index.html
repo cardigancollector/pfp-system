@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -19,14 +20,21 @@
     appId: "1:643360345707:web:9e5b9a902b41169ae5eb2e"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
+  const auth = getAuth(app);
 
   window._pfpFirestore = db;
   window._pfpFirestoreDoc = doc;
   window._pfpFirestoreGetDoc = getDoc;
   window._pfpFirebaseReady = true;
   window.dispatchEvent(new Event('pfp-firebase-ready'));
+
+  window._pfpAuth = auth;
+  onAuthStateChanged(auth, (user) => {
+    window._pfpUser = user;
+    window.dispatchEvent(new Event('pfp-auth-ready'));
+  });
 </script>
 <style>
   :root {
@@ -365,7 +373,6 @@
 const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 
 let CARD_ID     = '';
-let OWNER_TOKEN = '';
 
 function jsonpFetch(url, timeout) {
   return new Promise((resolve, reject) => {
@@ -421,16 +428,30 @@ let sessionWins  = 0;
 let ledgerLog    = [];
 let winStreak    = 0;
 
-document.addEventListener('DOMContentLoaded', async () => {
+const LOGIN_URL = 'https://cardigancollector.github.io/pfp-system/login.html';
+
+document.addEventListener('DOMContentLoaded', () => {
   spawnMotes();
 
   const params = new URLSearchParams(window.location.search);
-  CARD_ID     = params.get('card_id')     || params.get('cardId')     || localStorage.getItem('pfp_gaming_card')  || '';
-  OWNER_TOKEN = params.get('owner_token') || params.get('ownerToken') || localStorage.getItem('pfp_gaming_token') || '';
+  CARD_ID = params.get('card_id') || params.get('cardId') || localStorage.getItem('pfp_gaming_card') || '';
+  if (CARD_ID) localStorage.setItem('pfp_gaming_card', CARD_ID);
 
-  if (CARD_ID)     localStorage.setItem('pfp_gaming_card',  CARD_ID);
-  if (OWNER_TOKEN) localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
+  function gateOnAuth() {
+    if (window._pfpUser === undefined) {
+      window.addEventListener('pfp-auth-ready', gateOnAuth, { once: true });
+      return;
+    }
+    if (!window._pfpUser) {
+      window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href);
+      return;
+    }
+    afterAuth();
+  }
+  gateOnAuth();
+});
 
+async function afterAuth() {
   if (CARD_ID) {
     try {
       const db   = window._pfpFirestore;
@@ -454,7 +475,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateBalanceDisplay();
   updateSliderMax();
   updateBet(bet);
-});
+}
 
 function spawnMotes() {
   const c = document.getElementById('motes');
@@ -584,31 +605,33 @@ function cashOut() {
   updateBet(bet);
   setPhase('bet');
 
-  if (CARD_ID && OWNER_TOKEN && ledgerLog.length > 0) {
+  if (CARD_ID && window._pfpUser && ledgerLog.length > 0) {
     const xpToAward = Math.max(0, sessionDelta);
     const biggestWin  = Math.max(0, ...ledgerLog.map(e => e.xpDelta > 0 ? e.xpDelta : 0));
     const biggestLoss = Math.max(0, ...ledgerLog.map(e => e.xpDelta < 0 ? Math.abs(e.xpDelta) : 0));
 
-    const url = 'https://us-central1-pfp-system.cloudfunctions.net/logGameResult'
-      + '?card_id='      + encodeURIComponent(CARD_ID)
-      + '&owner_token='  + encodeURIComponent(OWNER_TOKEN)
-      + '&game=vault'
-      + '&xp_earned='    + xpToAward
-      + '&rounds='       + ledgerLog.length
-      + '&wins='         + sessionWins
-      + '&net_xp='       + sessionDelta
-      + '&biggest_win='  + biggestWin
-      + '&biggest_loss=' + biggestLoss;
+    (async () => {
+      const idToken = await window._pfpUser.getIdToken();
+      const url = 'https://us-central1-pfp-system.cloudfunctions.net/logGameResult'
+        + '?card_id='      + encodeURIComponent(CARD_ID)
+        + '&game=vault'
+        + '&xp_earned='    + xpToAward
+        + '&rounds='       + ledgerLog.length
+        + '&wins='         + sessionWins
+        + '&net_xp='       + sessionDelta
+        + '&biggest_win='  + biggestWin
+        + '&biggest_loss=' + biggestLoss;
 
-    fetch(url)
-      .then(r => r.json())
-      .then(data => {
-        if (data && data.success) {
-          balance = data.gamingXP;
-          updateBalanceDisplay();
-        }
-      })
-      .catch(e => console.warn('logGameResult failed:', e));
+      fetch(url, { headers: { 'Authorization': 'Bearer ' + idToken } })
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.success) {
+            balance = data.gamingXP;
+            updateBalanceDisplay();
+          }
+        })
+        .catch(e => console.warn('logGameResult failed:', e));
+    })();
   }
 
   // Write session stats to sessionStorage

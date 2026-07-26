@@ -4,6 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XP Gaming — The Maze</title>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain: "pfp-system.firebaseapp.com",
+    projectId: "pfp-system",
+    storageBucket: "pfp-system.firebasestorage.app",
+    messagingSenderId: "643360345707",
+    appId: "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
+  const auth = getAuth(app);
+
+  window._pfpFirestore = db;
+  window._pfpFirestoreDoc = doc;
+  window._pfpFirestoreGetDoc = getDoc;
+  window._pfpFirebaseReady = true;
+  window.dispatchEvent(new Event('pfp-firebase-ready'));
+
+  window._pfpAuth = auth;
+  onAuthStateChanged(auth, (user) => {
+    window._pfpUser = user;
+    window.dispatchEvent(new Event('pfp-auth-ready'));
+  });
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -144,19 +174,18 @@
 <div class="saving-indicator" id="saving-indicator">Saving XP…</div>
 
 <script>
-const API         = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
 const params      = new URLSearchParams(window.location.search);
 const CARD_ID     = params.get('card_id')     || params.get('cardId')     || localStorage.getItem('pfp_gaming_card')  || '';
-const OWNER_TOKEN = params.get('owner_token') || params.get('ownerToken') || localStorage.getItem('pfp_gaming_token') || '';
 if (CARD_ID)      localStorage.setItem('pfp_gaming_card',  CARD_ID);
-if (OWNER_TOKEN)  localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
+
+const LOGIN_URL = 'https://cardigancollector.github.io/pfp-system/login.html';
 
 document.getElementById('back-btn').onclick    = goHub;
 document.getElementById('btn-win-hub').onclick  = goHub;
 document.getElementById('btn-lose-hub').onclick = goHub;
 function goHub() {
   window.location.href = CARD_ID
-    ? '../index.html?card_id='+encodeURIComponent(CARD_ID)+'&owner_token='+encodeURIComponent(OWNER_TOKEN)
+    ? '../index.html?card_id='+encodeURIComponent(CARD_ID)
     : '../index.html';
 }
 
@@ -301,24 +330,36 @@ async function endGame(won) {
   gameActive=false;
   if (animFrame) cancelAnimationFrame(animFrame);
   drawMaze();
-  const dailyUsed=parseInt(localStorage.getItem('pfp_maze_daily_xp'))||0;
-  const dailyDate=localStorage.getItem('pfp_maze_daily_date')||'';
-  const today=new Date().toDateString();
-  const usedToday=dailyDate===today?dailyUsed:0;
-  const remaining=Math.max(0,DAILY_CAP-usedToday);
-  const raw=won?Math.max(5,Math.ceil(xpCurrent)):5;
-  const earned=remaining<=0?0:Math.min(raw,remaining);
-  gamingXP+=earned;
-  localStorage.setItem('pfp_maze_daily_xp',usedToday+earned);
-  localStorage.setItem('pfp_maze_daily_date',today);
+
+  // Daily cap now comes from the same server-tracked number Vault and Card
+  // Attack use, instead of a separate count kept only in this browser.
+  const dailyRemaining = Math.max(0, parseInt(sessionStorage.getItem('pfp_daily_xp_remaining')) || 0);
+  const raw    = won ? Math.max(5, Math.ceil(xpCurrent)) : 5;
+  const earned = dailyRemaining <= 0 ? 0 : Math.min(raw, dailyRemaining);
+  gamingXP += earned;
   if (won) mazesPlayed++;
-  try {
-    showSaving('Saving XP…');
-    await jsonpFetch(API+'?action=mazeResult&card_id='+encodeURIComponent(CARD_ID)+'&owner_token='+encodeURIComponent(OWNER_TOKEN)+'&xp_earned='+earned+'&won='+(won?1:0)+'&mazes_played='+mazesPlayed,12000);
-    showSaving('XP Saved ✓');
-  } catch(e){showSaving('Saved locally');}
-  localStorage.setItem('pfp_maze_played',mazesPlayed);
-  const capMsg=remaining<=0?' (daily cap reached)':earned<raw?' (daily cap — partial)':'';
+  localStorage.setItem('pfp_maze_played', mazesPlayed);
+
+  if (CARD_ID && window._pfpUser) {
+    try {
+      showSaving('Saving XP…');
+      const idToken = await window._pfpUser.getIdToken();
+      const url = 'https://us-central1-pfp-system.cloudfunctions.net/logGameResult'
+        + '?card_id='   + encodeURIComponent(CARD_ID)
+        + '&game=maze'
+        + '&xp_earned=' + earned
+        + '&rounds=1'
+        + '&escaped='   + (won ? 1 : 0);
+      const res  = await fetch(url, { headers: { 'Authorization': 'Bearer ' + idToken } });
+      const data = await res.json();
+      if (data && data.success) {
+        sessionStorage.setItem('pfp_daily_xp_remaining', data.dailyRemaining ?? 0);
+      }
+      showSaving('XP Saved ✓');
+    } catch(e){ showSaving('Saved locally'); }
+  }
+
+  const capMsg=dailyRemaining<=0?' (daily cap reached)':earned<raw?' (daily cap — partial)':'';
   if (won){
     document.getElementById('win-xp').textContent='+'+earned+capMsg;
     document.getElementById('win-total').textContent=gamingXP.toLocaleString();
@@ -404,17 +445,35 @@ window.addEventListener('resize',()=>{
 async function init(){
   spawnMotes();
   mazesPlayed=parseInt(localStorage.getItem('pfp_maze_played'))||0;
-  if (CARD_ID&&OWNER_TOKEN){
-    try{
-      const r=await jsonpFetch(API+'?action=getGamingData&card_id='+encodeURIComponent(CARD_ID)+'&owner_token='+encodeURIComponent(OWNER_TOKEN),10000);
-      if(r&&r.success&&r.gaming){
-        gamingXP=parseInt(r.gaming['Gaming XP'])||0;
-        mazesPlayed=parseInt(r.gaming['Maze Rounds'])||mazesPlayed;
-        localStorage.setItem('pfp_maze_played',mazesPlayed);
+
+  if (CARD_ID) {
+    try {
+      const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(window._pfpFirestore, 'gaming', CARD_ID));
+      if (snap.exists()) {
+        const d = snap.data();
+        gamingXP = d.gamingXP || 0;
+        mazesPlayed = d.mazeRounds || mazesPlayed;
+        localStorage.setItem('pfp_maze_played', mazesPlayed);
+
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+        const xpToday   = d.gamingXPDate === todayStr ? (d.gamingXPToday || 0) : 0;
+        sessionStorage.setItem('pfp_daily_xp_remaining', Math.max(0, 100 - xpToday));
       }
-    }catch(e){}
+    } catch(e) { console.warn('Firestore gaming read failed:', e); }
   }
   refreshStart();
+}
+
+function gateOnAuth() {
+  if (window._pfpUser === undefined) {
+    window.addEventListener('pfp-auth-ready', gateOnAuth, { once: true });
+    return;
+  }
+  if (!window._pfpUser) {
+    window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href);
+    return;
+  }
+  init();
 }
 
 function spawnMotes(){
@@ -427,7 +486,7 @@ function spawnMotes(){
   }
 }
 
-init();
+gateOnAuth();
 </script>
 </body>
 </html>

@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -19,14 +20,21 @@
     appId: "1:643360345707:web:9e5b9a902b41169ae5eb2e"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
+  const auth = getAuth(app);
 
   window._pfpFirestore = db;
   window._pfpFirestoreDoc = doc;
   window._pfpFirestoreGetDoc = getDoc;
   window._pfpFirebaseReady = true;
   window.dispatchEvent(new Event('pfp-firebase-ready'));
+
+  window._pfpAuth = auth;
+  onAuthStateChanged(auth, (user) => {
+    window._pfpUser = user;
+    window.dispatchEvent(new Event('pfp-auth-ready'));
+  });
 </script>
 <style>
   :root {
@@ -346,39 +354,56 @@ async function refreshGamingData() {
   } catch(e) {}
 }
 
+const LOGIN_URL = 'https://cardigancollector.github.io/pfp-system/login.html';
+
 document.addEventListener('DOMContentLoaded', async () => {
   spawnMotes();
 
   const params = new URLSearchParams(window.location.search);
   CARD_ID     = params.get('card_id')     || params.get('cardId')     || localStorage.getItem('pfp_gaming_card')  || '';
-  OWNER_TOKEN = params.get('owner_token') || params.get('ownerToken') || localStorage.getItem('pfp_gaming_token') || '';
   const IMAGE_URL = params.get('image_url') || localStorage.getItem('pfp_gaming_image') || '';
 
   if (CARD_ID)     localStorage.setItem('pfp_gaming_card',  CARD_ID);
-  if (OWNER_TOKEN) localStorage.setItem('pfp_gaming_token', OWNER_TOKEN);
   if (IMAGE_URL)   localStorage.setItem('pfp_gaming_image', IMAGE_URL);
 
   document.getElementById('back-btn').onclick = () => {
-  window.location.href = CARD_ID
-    ? 'https://cardigancollector.github.io/pfp-system/dashboard/?card_id=' + encodeURIComponent(CARD_ID)
-    : 'https://cardigancollector.github.io/pfp-system/dashboard/';
-};
+    window.location.href = CARD_ID
+      ? 'https://cardigancollector.github.io/pfp-system/dashboard/?card_id=' + encodeURIComponent(CARD_ID)
+      : 'https://cardigancollector.github.io/pfp-system/dashboard/';
+  };
 
   const vaultLink = document.getElementById('vault-link');
-  if (vaultLink && CARD_ID && OWNER_TOKEN) {
-    vaultLink.href = 'vault/index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
+  if (vaultLink && CARD_ID) {
+    vaultLink.href = 'vault/index.html?card_id=' + encodeURIComponent(CARD_ID);
   }
 
   const cardAttackLink = document.getElementById('card-attack-link');
-  if (cardAttackLink && CARD_ID && OWNER_TOKEN) {
-    cardAttackLink.href = 'card-attack/index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
+  if (cardAttackLink && CARD_ID) {
+    cardAttackLink.href = 'card-attack/index.html?card_id=' + encodeURIComponent(CARD_ID);
   }
 
   const mazeLink = document.getElementById('maze-link');
-  if (mazeLink && CARD_ID && OWNER_TOKEN) {
-    mazeLink.href = 'the-maze/index.html?card_id=' + encodeURIComponent(CARD_ID) + '&owner_token=' + encodeURIComponent(OWNER_TOKEN);
+  if (mazeLink && CARD_ID) {
+    mazeLink.href = 'the-maze/index.html?card_id=' + encodeURIComponent(CARD_ID);
   }
 
+  // Wait to know whether anyone is actually signed in before doing anything
+  // that depends on it — the games all require it, so the hub does too.
+  function gateOnAuth() {
+    if (window._pfpUser === undefined) {
+      window.addEventListener('pfp-auth-ready', gateOnAuth, { once: true });
+      return;
+    }
+    if (!window._pfpUser) {
+      window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href);
+      return;
+    }
+    afterAuth();
+  }
+  gateOnAuth();
+});
+
+async function afterAuth() {
   await loadAllData();
 
   document.getElementById('loading-overlay').style.display = 'none';
@@ -388,7 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') refreshGamingData();
   });
-});
+};
 
 function renderPlayer() {
   const lc       = CARD_DATA  || {};
