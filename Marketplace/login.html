@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>XP Marketplace — Login</title>
+<title>PfP Collectables — Login</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -435,8 +435,8 @@
   <div class="card">
 
     <div class="card-header">
-      <div class="logo">XP</div>
-      <div class="logo-sub">Marketplace</div>
+      <div class="logo">PfP</div>
+      <div class="logo-sub">Collectables</div>
       <div class="header-title" id="header-title">Welcome Back</div>
       <div class="header-desc" id="header-desc">Sign in to access your card collection</div>
     </div>
@@ -521,7 +521,7 @@
       <div class="hint" id="register-hint">The claim code came with your physical card. Each code can only be registered once.</div>
 
       <button class="btn btn-primary" id="enter-btn" onclick="enterMarketplace()" style="margin-top:8px;">
-        <span>✦</span> Enter the Marketplace
+        <span>✦</span> Enter Collectables
       </button>
       <button class="btn btn-secondary" style="margin-top:8px;" onclick="skipRegistration()">
         Skip for Now
@@ -529,7 +529,7 @@
     </div>
 
     <div class="card-footer">
-      <div class="footer-text">PfP Card System &nbsp;·&nbsp; XP Marketplace</div>
+      <div class="footer-text">PfP Card System</div>
     </div>
 
   </div>
@@ -875,7 +875,7 @@
 
     if (tab === 'signup') {
       document.getElementById('header-title').textContent = 'Create Account';
-      document.getElementById('header-desc').textContent  = 'Join the XP Marketplace';
+      document.getElementById('header-desc').textContent  = 'Join PfP Collectables';
     } else {
       document.getElementById('header-title').textContent = 'Welcome Back';
       document.getElementById('header-desc').textContent  = 'Sign in to access your card collection';
