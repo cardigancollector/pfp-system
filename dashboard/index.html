@@ -1065,7 +1065,7 @@ function showDashboard(asOwner) {
 
 function doSignOut() {
   window._pfpSignOut().then(() => {
-    window.location.href = LOGIN_URL;
+    window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href);
   });
 }
 
