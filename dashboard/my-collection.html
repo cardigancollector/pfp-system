@@ -30,6 +30,12 @@
   }
   .header-logo { font-family:'Cinzel Decorative',serif; font-size:1.3rem; color:var(--gold); letter-spacing:0.06em; text-decoration:none; }
   .header-title { font-family:'Cinzel',serif; font-size:0.78rem; color:var(--text-dim); letter-spacing:0.25em; text-transform:uppercase; }
+  .header-right { display:flex; align-items:center; gap:24px; }
+  .header-link {
+    font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--text-dim); text-decoration:none; background:none; border:none; cursor:pointer; transition:color 0.2s;
+  }
+  .header-link:hover { color:var(--gold); }
 
   /* ── CONTENT ── */
   .content { position:relative; z-index:2; max-width:1400px; margin:0 auto; padding:48px 40px 80px; }
@@ -201,20 +207,23 @@
 <header class="header">
   <a class="header-logo" href="#">PfP</a>
   <div class="header-title">My Collection</div>
+  <div class="header-right">
+    <a class="header-link" id="back-to-dashboard-link" href="../dashboard/">← Back to Dashboard</a>
+    <button class="header-link" id="sign-out-btn">Sign Out</button>
+  </div>
 </header>
 
 <div class="content">
 
   <div class="page-hero">
     <div class="page-title">My Living Card Collection</div>
-    <div class="page-meta" id="page-meta">Scanning for cards on this device…</div>
+    <div class="page-meta" id="page-meta">Loading your cards…</div>
   </div>
 
   <div id="empty-state">
     <div class="empty-icon">🃏</div>
     <div class="empty-title">No Cards Found</div>
-    <div class="empty-msg">No claimed cards were found on this device. Scan a card QR code or visit a card's dashboard and claim it with your claim code.</div>
-    <div class="empty-hint">Cards are stored locally per device.</div>
+    <div class="empty-msg">Your account has no claimed cards yet. Scan a card QR code or visit a card's dashboard and claim it with your claim code.</div>
   </div>
 
   <div id="collection-view" style="display:none;">
@@ -229,6 +238,7 @@
 <script type="module">
 import { initializeApp }       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey:            'AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU',
@@ -238,14 +248,25 @@ const firebaseConfig = {
   messagingSenderId: '643360345707',
   appId:             '1:643360345707:web:9e5b9a902b41169ae5eb2e'
 };
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
 
 window._pfpFirestore       = db;
 window._pfpFirestoreDoc    = doc;
 window._pfpFirestoreGetDoc = getDoc;
 window._pfpFirebaseReady   = true;
 window.dispatchEvent(new Event('pfp-firebase-ready'));
+
+// ── Sign-in state ──
+// Same pattern the dashboard uses: this page waits to know whether anyone
+// is signed in before it does anything else.
+window._pfpAuth     = auth;
+window._pfpSignOut  = () => signOut(auth);
+onAuthStateChanged(auth, (user) => {
+  window._pfpUser = user;
+  window.dispatchEvent(new Event('pfp-auth-ready'));
+});
 </script>
 
 <script>
@@ -285,22 +306,25 @@ function xpBarPct(xp, stageIdx) {
   return Math.min(100, Math.max(0, Math.round(((xp - lo) / (hi - lo)) * 100)));
 }
 
-// ── Scan localStorage for all pfp_owner_* entries ──
-function scanOwnedCards() {
-  const owned = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || !key.startsWith('pfp_owner_')) continue;
-    const cardId = key.replace('pfp_owner_', '');
-    if (!cardId) continue;
-    try {
-      const data = JSON.parse(localStorage.getItem(key));
-      if (data && data.ownerToken) {
-        owned.push({ cardId, ownerToken: data.ownerToken, cardName: data.cardName || cardId });
-      }
-    } catch(e) {}
+// ── Read the signed-in account's card list from Firestore ──
+// This is the same users/{uid} document — with its "cards" list — that
+// the dashboard and marketplace already read from. Marketplace redemptions
+// aren't real Living Cards, so entries with source:'marketplace' are left
+// out, matching marketplace.html's own filtering.
+async function fetchOwnedCards(uid) {
+  try {
+    const snap = await window._pfpFirestoreGetDoc(window._pfpFirestoreDoc(window._pfpFirestore, 'users', uid));
+    if (!snap.exists()) return [];
+    const rawCards = snap.data().cards || [];
+    const livingEntries = rawCards.filter(c => c && (typeof c !== 'object' || c.source !== 'marketplace'));
+    return livingEntries.map(c => {
+      const cardId = (typeof c === 'object') ? c.cardId : c;
+      return { cardId, cardName: cardId };
+    }).filter(o => !!o.cardId);
+  } catch(e) {
+    console.warn('Failed to load account card list:', e);
+    return [];
   }
-  return owned;
 }
 
 // ── Fetch living card data from Firestore ──
@@ -405,18 +429,34 @@ function esc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+const LOGIN_URL = 'https://cardigancollector.github.io/pfp-system/Marketplace/login.html';
+
 // ── Main ──
 async function main() {
-  const owned = scanOwnedCards();
+  document.getElementById('sign-out-btn').addEventListener('click', () => {
+    window._pfpSignOut().then(() => { window.location.href = LOGIN_URL; });
+  });
+
+  const user = window._pfpUser;
+  if (!user) {
+    window.location.href = LOGIN_URL;
+    return;
+  }
+
+  const owned = await fetchOwnedCards(user.uid);
 
   if (owned.length === 0) {
-    document.getElementById('page-meta').textContent = 'No cards claimed on this device.';
+    document.getElementById('page-meta').textContent = 'No cards claimed on this account yet.';
     document.getElementById('empty-state').style.display = 'block';
     return;
   }
 
+  // Point the header's Back to Dashboard link at an actual card.
+  document.getElementById('back-to-dashboard-link').href =
+    '../dashboard/?card_id=' + encodeURIComponent(owned[0].cardId);
+
   document.getElementById('page-meta').textContent =
-    owned.length === 1 ? '1 card on this device' : owned.length + ' cards on this device';
+    owned.length === 1 ? '1 card in your collection' : owned.length + ' cards in your collection';
   document.getElementById('collection-view').style.display = 'block';
   document.getElementById('collection-section-title').textContent =
     'Your Cards (' + owned.length + ')';
@@ -489,17 +529,33 @@ async function main() {
   }
 }
 
-// Wait for Firebase to be ready before running
+// Wait for Firebase to be ready, then for the sign-in check to resolve,
+// before running main() — main() needs to know who (if anyone) is signed
+// in to look up the right account's cards.
+function whenDomReady(fn) {
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', fn);
+  } else {
+    fn();
+  }
+}
+
+function whenAuthReady(fn) {
+  if (window._pfpUser !== undefined) {
+    fn();
+  } else {
+    window.addEventListener('pfp-auth-ready', fn, { once: true });
+  }
+}
+
+function start() {
+  whenDomReady(() => whenAuthReady(main));
+}
+
 if (window._pfpFirebaseReady) {
-  window.addEventListener('DOMContentLoaded', main);
+  start();
 } else {
-  window.addEventListener('pfp-firebase-ready', () => {
-    if (document.readyState === 'loading') {
-      window.addEventListener('DOMContentLoaded', main);
-    } else {
-      main();
-    }
-  });
+  window.addEventListener('pfp-firebase-ready', start, { once: true });
 }
 </script>
 </body>

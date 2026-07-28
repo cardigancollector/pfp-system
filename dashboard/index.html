@@ -820,7 +820,7 @@ window.addEventListener('DOMContentLoaded', () => {
           return;
         }
         if (!window._pfpUser) {
-          window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href);
+          window.location.href = LOGIN_URL;
           return;
         }
         boot(urlCardId);
@@ -1064,8 +1064,10 @@ function showDashboard(asOwner) {
 }
 
 function doSignOut() {
+  // Login always sends people to the dashboard on its own now, so there's
+  // no need to hand it a return address here.
   window._pfpSignOut().then(() => {
-    window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href);
+    window.location.href = LOGIN_URL;
   });
 }
 

@@ -741,20 +741,10 @@
 
   // ── SIGN OUT ──
   window.doSignOut = async function() {
-    const params  = new URLSearchParams(window.location.search);
-    const refCard = params.get('ref_card');
-
-    let returnUrl;
-    if (refCard) {
-      returnUrl = '../dashboard/?card_id=' + encodeURIComponent(refCard);
-    } else if (userCardIds.length > 0) {
-      returnUrl = '../dashboard/?card_id=' + encodeURIComponent(userCardIds[0]);
-    } else {
-      returnUrl = '../dashboard/';
-    }
-
+    // Login always sends people to the dashboard on its own now, so there's
+    // no need to work out a return address here.
     await signOut(auth);
-    window.location.href = 'login.html?return=' + encodeURIComponent(returnUrl);
+    window.location.href = 'login.html';
   };
 
   function esc(str) {

@@ -596,10 +596,15 @@
   });
 
   // ── HANDLE AUTHENTICATED USER ──
+  // Signing in always lands on the dashboard now, no exceptions — there's
+  // no more "send the person back to whatever page they came from"
+  // behavior. The one unavoidable case is a brand new account that hasn't
+  // registered any card yet; the dashboard has nothing to show without a
+  // card, so that still goes to the register-card screen, and "skip" from
+  // there falls back to the marketplace since there's genuinely no card
+  // to open a dashboard on.
   async function handleAuthenticatedUser(user, newUser) {
     showLoading('Loading your account…');
-    const params   = new URLSearchParams(window.location.search);
-    const returnTo = params.get('return');
 
     try {
       const userRef  = doc(db, 'users', user.uid);
@@ -614,36 +619,28 @@
           xpTotal:    0
         });
         hideLoading();
-        // If some other page sent the person here to sign in, send them
-        // straight back — that page (e.g. the dashboard) handles whatever
-        // comes next, like claiming the card they arrived from.
-        if (returnTo) { window.location.href = returnTo; return; }
         showRegisterPanel([]);
       } else {
         const data = userSnap.data();
         registeredCards = data.cards || [];
-
-        if (returnTo) {
-          hideLoading();
-          window.location.href = returnTo;
-          return;
-        }
 
         if (registeredCards.length === 0) {
           // Has account but no cards yet
           hideLoading();
           showRegisterPanel([]);
         } else {
-          // Returning user with cards — go straight to marketplace
+          // Returning user with cards — go straight to the dashboard,
+          // opened on their first registered card.
           hideLoading();
-          goToMarketplace();
+          goToDashboard();
         }
       }
     } catch(err) {
       hideLoading();
       console.error('Firestore error:', err);
-      // If Firestore fails, still let them through
-      if (returnTo) { window.location.href = returnTo; return; }
+      // If Firestore fails we don't know which cards this person has, so
+      // there's no card to open the dashboard on — fall back to the
+      // marketplace rather than showing a broken dashboard.
       goToMarketplace();
     }
   }
@@ -827,12 +824,33 @@
   }
 
   window.enterMarketplace = function() {
-    goToMarketplace();
+    goToDashboard();
   };
 
   window.skipRegistration = function() {
-    goToMarketplace();
+    // With zero cards registered there's nothing for the dashboard to
+    // show, so this one case still goes to the marketplace.
+    goToDashboard();
   };
+
+  // Pulls the first real (non-marketplace-redemption) card ID off a
+  // person's registered-cards list, matching the same filtering the
+  // marketplace page uses. Returns null if there isn't one.
+  function firstCardId(cards) {
+    const livingEntries = (cards || []).filter(c => c && (typeof c !== 'object' || c.source !== 'marketplace'));
+    if (livingEntries.length === 0) return null;
+    const first = livingEntries[0];
+    return (typeof first === 'object') ? first.cardId : first;
+  }
+
+  function goToDashboard() {
+    const cardId = firstCardId(registeredCards);
+    if (cardId) {
+      window.location.href = '../dashboard/?card_id=' + encodeURIComponent(cardId);
+    } else {
+      goToMarketplace();
+    }
+  }
 
   function goToMarketplace() {
     window.location.href = 'marketplace.html';
