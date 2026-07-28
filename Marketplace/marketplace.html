@@ -741,8 +741,20 @@
 
   // ── SIGN OUT ──
   window.doSignOut = async function() {
+    const params  = new URLSearchParams(window.location.search);
+    const refCard = params.get('ref_card');
+
+    let returnUrl;
+    if (refCard) {
+      returnUrl = '../dashboard/?card_id=' + encodeURIComponent(refCard);
+    } else if (userCardIds.length > 0) {
+      returnUrl = '../dashboard/?card_id=' + encodeURIComponent(userCardIds[0]);
+    } else {
+      returnUrl = '../dashboard/';
+    }
+
     await signOut(auth);
-    window.location.href = 'login.html';
+    window.location.href = 'login.html?return=' + encodeURIComponent(returnUrl);
   };
 
   function esc(str) {
