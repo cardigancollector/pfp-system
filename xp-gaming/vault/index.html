@@ -607,6 +607,9 @@ function cashOut() {
 
   if (CARD_ID && window._pfpUser && ledgerLog.length > 0) {
     const xpToAward = Math.max(0, sessionDelta);
+    const roundsPlayed = ledgerLog.length;
+    const winsThisSession = sessionWins;
+    const netXPThisSession = sessionDelta;
     const biggestWin  = Math.max(0, ...ledgerLog.map(e => e.xpDelta > 0 ? e.xpDelta : 0));
     const biggestLoss = Math.max(0, ...ledgerLog.map(e => e.xpDelta < 0 ? Math.abs(e.xpDelta) : 0));
 
@@ -616,9 +619,9 @@ function cashOut() {
         + '?card_id='      + encodeURIComponent(CARD_ID)
         + '&game=vault'
         + '&xp_earned='    + xpToAward
-        + '&rounds='       + ledgerLog.length
-        + '&wins='         + sessionWins
-        + '&net_xp='       + sessionDelta
+        + '&rounds='       + roundsPlayed
+        + '&wins='         + winsThisSession
+        + '&net_xp='       + netXPThisSession
         + '&biggest_win='  + biggestWin
         + '&biggest_loss=' + biggestLoss;
 
