@@ -516,10 +516,6 @@ function renderStats() {
   document.getElementById('ca-best-wave').textContent  = caBestWave  > 0 ? caBestWave.toLocaleString()  : '—';
   document.getElementById('ca-xp-earned').textContent  = caXPEarned  > 0 ? '+' + caXPEarned.toLocaleString() + ' XP' : '—';
 
-  const mazeRounds  = parseInt(gd['Maze Rounds'])   || 0;
-  const mazeXP      = parseInt(gd['Maze XP Earned']) || 0;
-  const mazeEscaped = parseInt(gd['Maze Escaped'])   || 0;
-
   document.getElementById('maze-xp-earned').textContent = mazeXP      > 0 ? '+' + mazeXP.toLocaleString() + ' XP' : '—';
   document.getElementById('maze-escaped').textContent   = mazeRounds  > 0 ? mazeEscaped + '/' + mazeRounds : '—';
   document.getElementById('maze-best-time').textContent = '—';
