@@ -466,16 +466,45 @@ function renderStats() {
   const caBestScore = parseInt(gd['Card Attack Best Score']) || 0;
   const caBestWave  = parseInt(gd['Card Attack Best Wave'])  || 0;
   const caXPEarned  = parseInt(gd['Card Attack XP Earned'])  || 0;
-  const totalRounds = vaultRounds + caRounds;
+  const mazeRounds  = parseInt(gd['Maze Rounds'])    || 0;
+  const mazeXP      = parseInt(gd['Maze XP Earned']) || 0;
+  const mazeEscaped = parseInt(gd['Maze Escaped'])   || 0;
+  const totalRounds = vaultRounds + caRounds + mazeRounds;
   const vaultRate   = vaultRounds > 0 ? Math.round((vaultWins / vaultRounds) * 100) + '%' : '—';
+  const mazeRate    = mazeRounds  > 0 ? Math.round((mazeEscaped / mazeRounds) * 100) + '%' : '—';
 
-  document.getElementById('biggest-win').textContent       = biggestWin  > 0 ? '+' + biggestWin.toLocaleString()  + ' XP' : '—';
-  document.getElementById('biggest-win-game').textContent  = biggestWin  > 0 ? 'The Vault' : '—';
+  // Biggest win across all games (Vault tracks a true single-round best;
+  // Card Attack and Maze only report cumulative XP earned so far)
+  const winCandidates = [
+    { game: 'The Vault',   val: biggestWin },
+    { game: 'Card Attack', val: caXPEarned },
+    { game: 'The Maze',    val: mazeXP }
+  ];
+  const topWin = winCandidates.reduce((a, b) => b.val > a.val ? b : a);
+
+  document.getElementById('biggest-win').textContent       = topWin.val > 0 ? '+' + topWin.val.toLocaleString() + ' XP' : '—';
+  document.getElementById('biggest-win-game').textContent  = topWin.val > 0 ? topWin.game : '—';
+
+  // Only Vault currently tracks losses
   document.getElementById('biggest-loss').textContent      = biggestLoss > 0 ? '−' + biggestLoss.toLocaleString() + ' XP' : '—';
   document.getElementById('biggest-loss-game').textContent = biggestLoss > 0 ? 'The Vault' : '—';
-  document.getElementById('total-rounds').textContent      = totalRounds.toLocaleString();
-  document.getElementById('luckiest-game').textContent     = vaultRounds > 0 ? 'The Vault' : '—';
-  document.getElementById('luckiest-rate').textContent     = vaultRounds > 0 ? vaultRate + ' win rate' : 'Play a game to see';
+
+  document.getElementById('total-rounds').textContent = totalRounds.toLocaleString();
+
+  // Luckiest game = best success rate among games that track one (Vault win rate, Maze escape rate)
+  const rateCandidates = [
+    { game: 'The Vault', rounds: vaultRounds, rate: vaultRounds > 0 ? (vaultWins / vaultRounds) : -1, label: vaultRate + ' win rate' },
+    { game: 'The Maze',  rounds: mazeRounds,  rate: mazeRounds  > 0 ? (mazeEscaped / mazeRounds)  : -1, label: mazeRate + ' escape rate' }
+  ].filter(c => c.rounds > 0);
+
+  if (rateCandidates.length > 0) {
+    const topRate = rateCandidates.reduce((a, b) => b.rate > a.rate ? b : a);
+    document.getElementById('luckiest-game').textContent = topRate.game;
+    document.getElementById('luckiest-rate').textContent = topRate.label;
+  } else {
+    document.getElementById('luckiest-game').textContent = '—';
+    document.getElementById('luckiest-rate').textContent = 'Play a game to see';
+  }
 
   document.getElementById('vault-net').textContent    = (vaultNet >= 0 ? '+' : '') + vaultNet.toLocaleString();
   document.getElementById('vault-net').className      = 'gstat-val ' + (vaultNet > 0 ? 'pos' : vaultNet < 0 ? 'neg' : 'neu');
