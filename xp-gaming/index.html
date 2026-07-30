@@ -509,15 +509,21 @@ function renderStats() {
   document.getElementById('vault-net').textContent    = (vaultNet >= 0 ? '+' : '') + vaultNet.toLocaleString();
   document.getElementById('vault-net').className      = 'gstat-val ' + (vaultNet > 0 ? 'pos' : vaultNet < 0 ? 'neg' : 'neu');
   document.getElementById('vault-rounds').textContent = vaultRounds.toLocaleString();
+  document.getElementById('vault-rounds').className   = 'gstat-val ' + (vaultRounds > 0 ? 'pos' : 'dim');
   document.getElementById('vault-rate').textContent   = vaultRate;
   document.getElementById('vault-rate').className     = 'gstat-val ' + (vaultRounds > 0 ? 'pos' : 'dim');
 
   document.getElementById('ca-best-score').textContent = caBestScore > 0 ? caBestScore.toLocaleString() : '—';
+  document.getElementById('ca-best-score').className   = 'gstat-val ' + (caBestScore > 0 ? 'pos' : 'dim');
   document.getElementById('ca-best-wave').textContent  = caBestWave  > 0 ? caBestWave.toLocaleString()  : '—';
+  document.getElementById('ca-best-wave').className    = 'gstat-val ' + (caBestWave > 0 ? 'pos' : 'dim');
   document.getElementById('ca-xp-earned').textContent  = caXPEarned  > 0 ? '+' + caXPEarned.toLocaleString() + ' XP' : '—';
+  document.getElementById('ca-xp-earned').className    = 'gstat-val ' + (caXPEarned > 0 ? 'pos' : 'dim');
 
   document.getElementById('maze-xp-earned').textContent = mazeXP      > 0 ? '+' + mazeXP.toLocaleString() + ' XP' : '—';
+  document.getElementById('maze-xp-earned').className   = 'gstat-val ' + (mazeXP > 0 ? 'pos' : 'dim');
   document.getElementById('maze-escaped').textContent   = mazeRounds  > 0 ? mazeEscaped + '/' + mazeRounds : '—';
+  document.getElementById('maze-escaped').className     = 'gstat-val ' + (mazeRounds > 0 ? 'pos' : 'dim');
 
 }
 
