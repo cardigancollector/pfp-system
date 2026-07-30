@@ -253,7 +253,7 @@
       <div class="game-card-arrow">→</div>
     </a>
 
-    <a class="game-card live" id="maze-link" href="the-maze/index.html"><div class="game-card-bg">🌀</div><div class="game-card-inner"><div class="game-status live-badge">Live Now</div><div class="game-name">The Maze</div><div class="game-tagline">Navigate the chamber before the egg timer expires. Every second costs XP.</div><div class="game-stats-row"><div class="gstat"><div class="gstat-label">Best Time</div><div class="gstat-val dim" id="maze-best-time">—</div></div><div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim" id="maze-xp-earned">—</div></div><div class="gstat"><div class="gstat-label">Escaped</div><div class="gstat-val dim" id="maze-escaped">—</div></div></div></div><div class="game-card-arrow">→</div></a>
+    <a class="game-card live" id="maze-link" href="the-maze/index.html"><div class="game-card-bg">🌀</div><div class="game-card-inner"><div class="game-status live-badge">Live Now</div><div class="game-name">The Maze</div><div class="game-tagline">Navigate the chamber before the egg timer expires. Every second costs XP.</div><div class="game-stats-row"><div class="gstat"><div class="gstat-label">XP Earned</div><div class="gstat-val dim" id="maze-xp-earned">—</div></div><div class="gstat"><div class="gstat-label">Escaped</div><div class="gstat-val dim" id="maze-escaped">—</div></div></div></div><div class="game-card-arrow">→</div></a>
 
   </div>
 
@@ -518,7 +518,6 @@ function renderStats() {
 
   document.getElementById('maze-xp-earned').textContent = mazeXP      > 0 ? '+' + mazeXP.toLocaleString() + ' XP' : '—';
   document.getElementById('maze-escaped').textContent   = mazeRounds  > 0 ? mazeEscaped + '/' + mazeRounds : '—';
-  document.getElementById('maze-best-time').textContent = '—';
 
 }
 
