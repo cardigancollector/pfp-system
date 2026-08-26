@@ -385,8 +385,17 @@ function pressBlock() {
 }
 
 function storyBlock() {
-  const story = view.story || [];
+  let story = view.story || [];
   if (!story.length) return '';
+
+  // The ending is genuinely the last thing in the story, but when the card at
+  // the top of the page is already showing it, having it again as the first
+  // story entry reads as a repeat. So it comes out of the list here, and the
+  // story below runs back from the crisis instead.
+  if (view.status === 'CLOSED' && view.ending) {
+    story = story.filter(s => s.kind !== 'ending');
+    if (!story.length) return '';
+  }
 
   const items = story.map(s => {
     const isEnding = s.kind === 'ending';
