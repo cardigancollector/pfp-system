@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>PfP — Thread</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#c9a84c; --gold-light:#e8c97a; --gold-dim:#7a6030;
+    --dark:#0e0c09; --dark2:#1a1710; --dark3:#251f14;
+    --charcoal:#2a2520; --text:#e8d9b8; --text-dim:#9a8a6a;
+    --glass:rgba(14,12,9,0.72); --glass-border:rgba(201,168,76,0.25);
+    --thread:#b07cc6; --thread-soft:rgba(155,89,182,0.10); --thread-line:rgba(155,89,182,0.35);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'EB Garamond',serif; background:var(--dark); color:var(--text);
+    min-height:100vh; line-height:1.65;
+  }
+
+  .wrap{max-width:660px;margin:0 auto;padding:0 20px 80px;}
+
+  /* ── loading / error / empty ───────────────────────────────────── */
+  .screen{text-align:center;padding:80px 20px 40px;}
+  .screen-title{font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold);margin-bottom:12px;}
+  .screen-text{font-size:0.92rem;font-style:italic;color:var(--text-dim);max-width:420px;margin:0 auto;}
+  .spinner{
+    width:40px;height:40px;margin:0 auto 22px;border-radius:50%;
+    border:3px solid rgba(201,168,76,0.2);border-top-color:var(--gold);
+    animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ── pinned header ─────────────────────────────────────────────── */
+  .thread-head{
+    position:sticky; top:0; z-index:40;
+    background:linear-gradient(180deg,var(--dark) 72%,rgba(14,12,9,0.92) 100%);
+    border-bottom:1px solid var(--thread-line);
+    padding:26px 0 18px; margin-bottom:26px;
+  }
+  .th-eyebrow{
+    font-size:0.6rem;letter-spacing:0.22em;text-transform:uppercase;
+    color:var(--thread);opacity:0.85;margin-bottom:8px;
+  }
+  .th-title{
+    font-family:'Cinzel',serif;font-size:1.5rem;font-weight:600;
+    color:#cda3dc;letter-spacing:0.03em;margin-bottom:8px;line-height:1.25;
+  }
+  .th-flavour{font-style:italic;font-size:0.95rem;opacity:0.8;margin-bottom:14px;}
+  .th-progress{display:flex;align-items:center;gap:12px;}
+  .th-track{flex:1;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+  .th-fill{height:100%;background:linear-gradient(90deg,#7d5493,#b07cc6);border-radius:2px;transition:width .8s ease;}
+  .th-count{font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;}
+
+  /* ── today ─────────────────────────────────────────────────────── */
+  .today{
+    background:var(--thread-soft);border:1px solid var(--thread-line);
+    border-radius:10px;padding:22px 20px;margin-bottom:12px;
+  }
+  .day-mark{
+    font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;
+    color:var(--thread);opacity:0.8;margin-bottom:10px;
+  }
+  .beat-title{font-family:'Cinzel',serif;font-size:1.12rem;color:var(--text);margin-bottom:8px;}
+  .beat-text{font-size:0.95rem;opacity:0.88;margin-bottom:20px;}
+
+  .checkins{display:flex;flex-direction:column;}
+  .ci{
+    display:flex;align-items:flex-start;gap:14px;
+    padding:13px 0;border-top:1px solid rgba(201,168,76,0.09);
+  }
+  .ci:first-child{border-top:none;}
+  .ci-time{
+    font-family:'Cinzel',serif;font-size:0.78rem;letter-spacing:0.08em;
+    color:var(--text-dim);width:74px;flex-shrink:0;padding-top:3px;
+  }
+  .ci-body{flex:1;min-height:26px;}
+
+  /* Every check-in time reads at full strength, whatever became of it —
+     upcoming, open, caught or gone by. Only the button ever dies. */
+  .ci.pending .ci-time{opacity:1;}
+  .ci.missed  .ci-time{opacity:1;}
+
+  .ci-dead{
+    display:inline-block;font-size:0.74rem;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--text-dim);opacity:0.32;border:1px solid rgba(255,255,255,0.07);
+    padding:5px 14px;border-radius:3px;
+  }
+  .ci-live{
+    font-family:'Cinzel',serif;font-size:0.74rem;font-weight:600;letter-spacing:0.14em;
+    text-transform:uppercase;color:var(--dark);
+    background:linear-gradient(135deg,var(--gold-dim),var(--gold));
+    border:none;padding:7px 18px;border-radius:3px;cursor:pointer;transition:all .25s;
+  }
+  .ci-live:hover{background:linear-gradient(135deg,var(--gold),var(--gold-light));box-shadow:0 0 22px rgba(201,168,76,0.28);}
+  .ci-live[disabled]{opacity:0.5;cursor:wait;}
+
+  /* the signature moment — the line arriving in place of the button */
+  .ci-line{
+    font-style:italic;font-size:0.95rem;color:var(--gold-light);
+    border-left:2px solid var(--gold-dim);padding:1px 0 1px 14px;
+    animation:ink .7s ease both;
+  }
+  @keyframes ink{from{opacity:0;transform:translateX(-6px);}to{opacity:1;transform:none;}}
+
+  .ci-refused{font-size:0.85rem;font-style:italic;color:var(--text-dim);}
+
+  /* ── the press ─────────────────────────────────────────────────── */
+  .press-wrap{margin:0 0 10px;}
+  .press{
+    width:100%;padding:16px;font-family:'Cinzel',serif;font-size:0.85rem;font-weight:700;
+    letter-spacing:0.22em;text-transform:uppercase;cursor:pointer;transition:all .3s;
+    background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.14));
+    border:1px solid var(--gold);color:var(--gold);border-radius:4px;
+  }
+  .press:hover:not([disabled]){background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.28));}
+  .press[disabled]{opacity:0.42;cursor:not-allowed;border-color:var(--charcoal);color:var(--text-dim);background:rgba(14,12,9,0.6);}
+  .press-msg{text-align:center;font-size:0.8rem;font-style:italic;color:var(--text-dim);margin-top:9px;min-height:19px;}
+
+  .yesterday{
+    text-align:center;font-size:0.86rem;font-style:italic;color:var(--text-dim);
+    margin:18px 0 30px;
+  }
+
+  /* ── the story ─────────────────────────────────────────────────── */
+  .story-head{
+    font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.24em;text-transform:uppercase;
+    color:var(--text-dim);text-align:center;margin:34px 0 20px;position:relative;
+  }
+  .story-head::before,.story-head::after{
+    content:'';position:absolute;top:50%;width:24%;height:1px;background:var(--glass-border);
+  }
+  .story-head::before{left:0;} .story-head::after{right:0;}
+
+  .past{
+    border-left:1px solid rgba(201,168,76,0.16);
+    padding:0 0 26px 18px;margin-left:6px;position:relative;
+  }
+  .past::before{
+    content:'';position:absolute;left:-4px;top:6px;width:7px;height:7px;
+    border-radius:50%;background:var(--gold-dim);
+  }
+  .past-mark{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);opacity:0.65;margin-bottom:6px;}
+  .past-title{font-family:'Cinzel',serif;font-size:0.98rem;color:var(--text);margin-bottom:5px;}
+  .past-text{font-size:0.9rem;opacity:0.72;margin-bottom:10px;}
+  .past-line{font-style:italic;font-size:0.9rem;color:var(--gold-light);opacity:0.85;margin:5px 0 0 0;padding-left:12px;border-left:1px solid var(--gold-dim);}
+
+  .past.ending::before{background:var(--gold);box-shadow:0 0 12px rgba(201,168,76,0.6);}
+  .past.ending .past-title{color:var(--gold);font-size:1.1rem;}
+
+  .ending-card{
+    background:linear-gradient(160deg,rgba(201,168,76,0.10),rgba(201,168,76,0.03));
+    border:1px solid var(--gold-dim);border-radius:10px;padding:24px 20px;text-align:center;margin-bottom:14px;
+  }
+  .ec-eyebrow{font-size:0.6rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;}
+  .ec-title{font-family:'Cinzel Decorative',serif;font-size:1.6rem;color:var(--gold);margin-bottom:10px;}
+  .ec-text{font-style:italic;font-size:0.96rem;opacity:0.86;}
+
+  .back{
+    display:block;width:100%;text-align:center;margin-top:34px;padding:13px;
+    border:1px solid var(--glass-border);border-radius:4px;color:var(--text-dim);
+    text-decoration:none;font-size:0.76rem;letter-spacing:0.18em;text-transform:uppercase;
+    font-family:'Cinzel',serif;transition:all .3s;
+  }
+  .back:hover{border-color:var(--gold-dim);color:var(--gold);}
+
+  .zero-note{text-align:center;font-size:0.88rem;font-style:italic;color:var(--text-dim);padding:30px 0 6px;}
+
+  :focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+  @media (max-width:480px){
+    .th-title{font-size:1.24rem;}
+    .ci-time{width:64px;font-size:0.72rem;}
+    .ci{gap:10px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div id="head-slot"></div>
+  <div id="stage">
+    <div class="screen">
+      <div class="spinner"></div>
+      <div class="screen-text">Opening the thread…</div>
+    </div>
+  </div>
+  <a class="back" id="back-link" href="#">← Back to Dashboard</a>
+</div>
+
+<!-- ── Firebase, exactly as the dashboard sets it up ─────────────────────── -->
+<script type="module">
+import { initializeApp }                  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged }    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:            'AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU',
+  authDomain:        'pfp-system.firebaseapp.com',
+  projectId:         'pfp-system',
+  storageBucket:     'pfp-system.firebasestorage.app',
+  messagingSenderId: '643360345707',
+  appId:             '1:643360345707:web:9e5b9a902b41169ae5eb2e'
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window._pfpAuth          = auth;
+window._pfpFirebaseReady = true;
+window.dispatchEvent(new Event('pfp-firebase-ready'));
+
+// This page never asks anyone to sign in — the dashboard is the page that does
+// that. It only recognises a session that already exists, and sends anyone
+// without one to the login page.
+onAuthStateChanged(auth, (user) => {
+  window._pfpUser = user;
+  window.dispatchEvent(new Event('pfp-auth-ready'));
+});
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  PfP Thread Page
+//
+//  One thread, on its own page. Everything drawn here comes from a single
+//  read of the backend, which decides everything — which day is running, which
+//  check-in windows are catchable this minute, what the button says and
+//  whether it can be pressed. This page decides nothing on its own.
+//
+//  There is no XP anywhere on this page, deliberately. What the day was worth
+//  is settled in the background and never shown. The only thing the owner is
+//  ever told about a finished day is how many times they were there.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Things you might want to change ─────────────────────────────────────────
+
+// The file name of the card page, for the back link. If the dashboard is
+// published under a different name, change it here and nowhere else.
+const DASHBOARD_PAGE = 'index.html';
+
+// Where to send someone who isn't signed in — same as the dashboard uses.
+const LOGIN_URL = 'https://cardigancollector.github.io/pfp-system/Marketplace/login.html';
+
+// Check-in times are real moments. 'local' shows them on the owner's own
+// clock, which is the clock they'll actually be watching. Change to 'eastern'
+// to show them on the system's clock instead.
+const SHOW_TIMES_IN = 'local';
+
+// A window can open while the page is just sitting there, so the page quietly
+// re-reads itself on this rhythm rather than making the owner reload. It only
+// does this while a day is running and something is still to come.
+const REFRESH_SECONDS = 60;
+
+// ── Addresses ───────────────────────────────────────────────────────────────
+// The press is the ordinary scan — the same call the dashboard button makes,
+// on the same old address it has always used and which still works. That is
+// what keeps attendance, streak, the daily bonus and decay all working here
+// with no new code.
+const SCAN_URL    = 'https://us-central1-pfp-system.cloudfunctions.net/qrScan';
+const VIEW_URL    = 'https://threadview-mt4z4u77aq-uc.a.run.app';
+const CHECKIN_URL = 'https://threadcheckin-mt4z4u77aq-uc.a.run.app';
+const LOG_URL     = 'https://threadlogtolife-mt4z4u77aq-uc.a.run.app';
+
+// ── State ───────────────────────────────────────────────────────────────────
+let cardId    = '';
+let view      = null;   // the last answer from the read
+let busy      = false;  // a press is in flight — don't let the timer redraw over it
+let timer     = null;
+
+// ── Small helpers ───────────────────────────────────────────────────────────
+
+// Story text is hand-written prose, but it still goes through here before it
+// reaches the page rather than being trusted straight into the markup.
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function fmtTime(when) {
+  if (!when) return '';
+  const d = new Date(when);
+  if (isNaN(d)) return '';
+  const opts = { hour: 'numeric', minute: '2-digit' };
+  if (SHOW_TIMES_IN === 'eastern') opts.timeZone = 'America/New_York';
+  return d.toLocaleTimeString([], opts);
+}
+
+async function idToken() {
+  if (!window._pfpUser) return null;
+  return await window._pfpUser.getIdToken();
+}
+
+function screen(title, text, spinning) {
+  document.getElementById('head-slot').innerHTML = '';
+  document.getElementById('stage').innerHTML =
+    `<div class="screen">
+       ${spinning ? '<div class="spinner"></div>' : ''}
+       ${title ? `<div class="screen-title">${esc(title)}</div>` : ''}
+       <div class="screen-text">${esc(text)}</div>
+     </div>`;
+}
+
+// ── The read ────────────────────────────────────────────────────────────────
+// Writes nothing and awards nothing, so it can be called as often as needed.
+
+async function loadView() {
+  const token = await idToken();
+  if (!token) { window.location.href = LOGIN_URL; return null; }
+
+  const res = await fetch(VIEW_URL + '?card_id=' + encodeURIComponent(cardId), {
+    headers: { 'Authorization': 'Bearer ' + token }
+  }).then(r => r.json());
+
+  if (!res.success) throw new Error(res.error || 'The thread could not be read.');
+  return res.thread;   // null when there is no thread to show
+}
+
+async function refresh() {
+  view = await loadView();
+  draw();
+}
+
+// ── Drawing ─────────────────────────────────────────────────────────────────
+
+function drawHead() {
+  if (!view) { document.getElementById('head-slot').innerHTML = ''; return; }
+  const of   = view.of || 0;
+  const pos  = view.position || 0;
+  const pct  = of ? Math.max(4, Math.round((pos / of) * 100)) : 4;
+
+  document.getElementById('head-slot').innerHTML =
+    `<div class="thread-head">
+       <div class="th-eyebrow">${view.status === 'CLOSED' ? 'Completed Thread' : 'Ongoing Thread'}</div>
+       <div class="th-title">${esc(view.label)}</div>
+       <div class="th-flavour">${esc(view.openingText)}</div>
+       <div class="th-progress">
+         <div class="th-track"><div class="th-fill" style="width:${pct}%"></div></div>
+         <div class="th-count">Day ${pos} of ${of}</div>
+       </div>
+     </div>`;
+}
+
+// The day running right now. Each row shows its time at full strength whatever
+// became of it. A caught window shows its written line in place of the button;
+// a missed one shows its time and nothing beside it.
+function todayBlock(day) {
+  const rows = (day.windows || []).map(w => {
+    let body;
+    if (w.state === 'CAUGHT')       body = `<div class="ci-line">${esc(w.line)}</div>`;
+    else if (w.state === 'OPEN')    body = `<button class="ci-live" data-window="${w.index}">Check in</button>`;
+    else if (w.state === 'PENDING') body = `<span class="ci-dead">Not yet</span>`;
+    else                            body = ``;
+    return `<div class="ci ${w.state.toLowerCase()}" data-row="${w.index}">
+              <div class="ci-time">${esc(fmtTime(w.opensAt))}</div>
+              <div class="ci-body">${body}</div>
+            </div>`;
+  }).join('');
+
+  return `<div class="today">
+            <div class="day-mark">Day ${day.position}</div>
+            <div class="beat-title">${esc(day.beatTitle)}</div>
+            <div class="beat-text">${esc(day.beatText)}</div>
+            <div class="checkins">${rows}</div>
+          </div>`;
+}
+
+function pressBlock() {
+  const b = view.button || {};
+  if (!b.label) {
+    return b.message ? `<div class="press-msg">${esc(b.message)}</div>` : '';
+  }
+  const isLog = view.buttonState === 'ENDED';
+  const msg   = b.message || (isLog ? 'Send this story to Your Life' : '');
+  return `<div class="press-wrap">
+            <button class="press" id="press-btn" ${b.enabled ? '' : 'disabled'}>${esc(b.label)}</button>
+            <div class="press-msg" id="press-msg">${esc(msg)}</div>
+          </div>`;
+}
+
+function storyBlock() {
+  const story = view.story || [];
+  if (!story.length) return '';
+
+  const items = story.map(s => {
+    const isEnding = s.kind === 'ending';
+    const mark = isEnding      ? 'The Ending'
+               : s.kind === 'crisis' ? 'The Turn'
+               : `Day ${s.position}`;
+    const lines = (s.windows || [])
+      .filter(w => w.caught && w.line)
+      .map(w => `<div class="past-line">${esc(w.line)}</div>`)
+      .join('');
+    return `<div class="past${isEnding ? ' ending' : ''}">
+              <div class="past-mark">${esc(mark)}</div>
+              <div class="past-title">${esc(s.title)}</div>
+              <div class="past-text">${esc(s.text)}</div>
+              ${lines}
+            </div>`;
+  }).join('');
+
+  return `<div class="story-head">The Story So Far</div>${items}`;
+}
+
+function draw() {
+  const stage = document.getElementById('stage');
+
+  if (!view) {
+    screen('Nothing running', 'No thread is open on this card. Keep logging your days — one will find you.', false);
+    return;
+  }
+
+  drawHead();
+
+  let body = '';
+
+  if (view.status === 'CLOSED' && view.ending) {
+    body += `<div class="ending-card">
+               <div class="ec-eyebrow">The thread has ended</div>
+               <div class="ec-title">${esc(view.ending.label)}</div>
+               <div class="ec-text">${esc(view.ending.text)}</div>
+             </div>`;
+    body += pressBlock();
+  } else if (view.today) {
+    body += todayBlock(view.today);
+    body += pressBlock();
+    if (view.previousLine) body += `<div class="yesterday">${esc(view.previousLine)}</div>`;
+  } else {
+    // Day zero — the thread has opened and nothing has run yet.
+    body += `<div class="zero-note">Something has begun. Come back tomorrow and it will start to unfold.</div>`;
+    body += pressBlock();
+  }
+
+  body += storyBlock();
+  stage.innerHTML = body;
+
+  wireButtons();
+  scheduleRefresh();
+}
+
+// ── Presses ─────────────────────────────────────────────────────────────────
+
+function wireButtons() {
+  document.querySelectorAll('.ci-live').forEach(btn => {
+    btn.addEventListener('click', () => checkIn(btn));
+  });
+  const press = document.getElementById('press-btn');
+  if (press && !press.disabled) {
+    press.addEventListener('click', () =>
+      view.buttonState === 'ENDED' ? logToLife(press) : beginDay(press)
+    );
+  }
+}
+
+// One check-in. The page never decides whether a window is genuinely open —
+// it sends the press and takes the server's answer. A press outside the hour
+// comes back refused, and the row says so quietly.
+async function checkIn(btn) {
+  if (busy) return;
+  busy = true;
+  btn.disabled = true;
+
+  const row   = btn.closest('.ci');
+  const index = parseInt(btn.dataset.window, 10);
+
+  try {
+    const token = await idToken();
+    const res = await fetch(CHECKIN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ cardId, windowIndex: index })
+    }).then(r => r.json());
+
+    if (res.success) {
+      row.classList.remove('open');
+      row.classList.add('caught');
+      row.querySelector('.ci-body').innerHTML = `<div class="ci-line">${esc(res.line)}</div>`;
+      // Keep the page's copy in step so a later redraw doesn't undo it.
+      if (res.threadDay) view.today = res.threadDay;
+    } else {
+      row.querySelector('.ci-body').innerHTML = `<div class="ci-refused">${esc(res.error)}</div>`;
+      busy = false;
+      await refresh();
+      return;
+    }
+  } catch (e) {
+    btn.disabled = false;
+    row.querySelector('.ci-body').insertAdjacentHTML('beforeend',
+      `<div class="ci-refused">Connection error — try again.</div>`);
+  }
+  busy = false;
+}
+
+// The single press. It is the ordinary scan, so everything the dashboard
+// button does still happens: attendance, streak, the daily bonus and decay.
+// Whatever the scan sends back about XP is deliberately ignored here.
+async function beginDay(btn) {
+  if (busy) return;
+  busy = true;
+
+  const msg = document.getElementById('press-msg');
+  btn.disabled = true;
+  btn.textContent = 'Beginning…';
+  if (msg) msg.textContent = '';
+
+  try {
+    const token = await idToken();
+    const res = await fetch(SCAN_URL + '?card_id=' + encodeURIComponent(cardId), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    }).then(r => r.json());
+
+    if (!res.success && res.status !== 200) {
+      if (msg) msg.textContent = res.error || 'The day could not be started.';
+    }
+  } catch (e) {
+    if (msg) msg.textContent = 'Connection error — try again.';
+  }
+
+  busy = false;
+  // Whatever happened, the read is the truth. Draw from it.
+  try { await refresh(); } catch (e) { /* the message above already says enough */ }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Sending the finished story across to Your Life. This publishes only — the
+// thread was already closed by the engine, so a story nobody remembers to log
+// never blocks the next thread.
+async function logToLife(btn) {
+  if (busy) return;
+  busy = true;
+
+  const msg = document.getElementById('press-msg');
+  btn.disabled = true;
+  btn.textContent = 'Logging…';
+
+  try {
+    const token = await idToken();
+    const res = await fetch(LOG_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ cardId, threadId: view.threadId })
+    }).then(r => r.json());
+
+    if (!res.success) {
+      if (msg) msg.textContent = res.error || 'The story could not be logged.';
+      btn.disabled = false;
+      btn.textContent = 'Log The Event';
+      busy = false;
+      return;
+    }
+  } catch (e) {
+    if (msg) msg.textContent = 'Connection error — try again.';
+    btn.disabled = false;
+    btn.textContent = 'Log The Event';
+    busy = false;
+    return;
+  }
+
+  busy = false;
+  await refresh();   // the thread is logged now, so the page clears
+}
+
+// ── The quiet re-read ───────────────────────────────────────────────────────
+// A window that hasn't arrived yet will arrive while the page is open, and the
+// owner shouldn't have to reload to see it. Only runs while there is something
+// still to come.
+
+function scheduleRefresh() {
+  if (timer) { clearInterval(timer); timer = null; }
+  if (!view || !view.today) return;
+  const waiting = (view.today.windows || []).some(w => w.state === 'PENDING' || w.state === 'OPEN');
+  if (!waiting) return;
+
+  timer = setInterval(async () => {
+    if (busy || document.visibilityState !== 'visible') return;
+    try { await refresh(); } catch (e) { /* leave the page as it is */ }
+  }, REFRESH_SECONDS * 1000);
+}
+
+// ── Start-up ────────────────────────────────────────────────────────────────
+
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  cardId = params.get('card_id') || params.get('cardId') || '';
+
+  document.getElementById('back-link').href =
+    DASHBOARD_PAGE + '?card_id=' + encodeURIComponent(cardId);
+
+  if (!cardId) {
+    screen('No card', 'This page needs a card in its address to know which thread to open.', false);
+    return;
+  }
+
+  function whenFirebaseReady() {
+    if (!window._pfpFirebaseReady) {
+      window.addEventListener('pfp-firebase-ready', whenFirebaseReady, { once: true });
+      return;
+    }
+    function whenSignedIn() {
+      if (window._pfpUser === undefined) {
+        window.addEventListener('pfp-auth-ready', whenSignedIn, { once: true });
+        return;
+      }
+      if (!window._pfpUser) { window.location.href = LOGIN_URL; return; }
+      start();
+    }
+    whenSignedIn();
+  }
+  whenFirebaseReady();
+});
+
+async function start() {
+  try {
+    await refresh();
+  } catch (e) {
+    screen('Something went wrong', e.message || 'The thread could not be read.', false);
+  }
+}
+</script>
+</body>
+</html>
