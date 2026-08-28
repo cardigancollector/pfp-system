@@ -27,8 +27,8 @@
   /* ── page title ─────────────────────────────────────────────────────────── */
   .page-title{
     text-align:center;padding:30px 0 4px;
-    font-family:'Cinzel',serif;font-size:0.66rem;letter-spacing:0.32em;text-transform:uppercase;
-    color:var(--gold-dim);
+    font-family:'Cinzel',serif;font-size:0.78rem;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;
+    color:var(--gold-light);
   }
 
   /* ── loading / error / empty ───────────────────────────────────── */
@@ -180,8 +180,8 @@
 
   /* ── finished threads ───────────────────────────────────────────────────── */
   .finished-head{
-    font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.24em;text-transform:uppercase;
-    color:var(--text-dim);text-align:center;margin:38px 0 18px;position:relative;
+    font-family:'Cinzel',serif;font-size:0.72rem;letter-spacing:0.22em;text-transform:uppercase;
+    color:var(--text);text-align:center;margin:38px 0 18px;position:relative;
   }
   .finished-head::before,.finished-head::after{
     content:'';position:absolute;top:50%;width:24%;height:1px;background:var(--glass-border);
@@ -193,15 +193,18 @@
     background:rgba(14,12,9,0.4);
   }
   .finished-summary{
-    list-style:none;cursor:pointer;padding:16px 18px;display:flex;flex-direction:column;gap:5px;
+    list-style:none;cursor:pointer;padding:16px 18px;
+    display:flex;align-items:flex-start;gap:12px;
   }
   .finished-summary::-webkit-details-marker{display:none;}
   .finished-summary::before{
-    content:'▸';display:inline-block;margin-right:8px;color:var(--gold-dim);transition:transform .2s;
+    content:'▸';display:inline-block;flex-shrink:0;margin-top:4px;
+    font-size:0.8rem;color:var(--gold);transition:transform .2s;
   }
   .finished-item[open] .finished-summary::before{transform:rotate(90deg);}
-  .finished-name{font-family:'Cinzel',serif;font-size:0.98rem;color:var(--text);}
-  .finished-stats{font-size:0.78rem;color:var(--text-dim);letter-spacing:0.02em;padding-left:20px;}
+  .finished-summary-text{display:flex;flex-direction:column;gap:5px;}
+  .finished-name{font-family:'Cinzel',serif;font-size:1rem;color:var(--text);}
+  .finished-stats{font-size:0.82rem;color:var(--text-dim);letter-spacing:0.02em;}
   .finished-body{padding:4px 18px 22px;border-top:1px solid rgba(201,168,76,0.09);}
   .finished-body .ending-card{margin-top:16px;}
 
@@ -547,8 +550,10 @@ function finishedBlock() {
 
     return `<details class="finished-item">
               <summary class="finished-summary">
-                <div class="finished-name">${badge}${esc(t.label)}</div>
-                <div class="finished-stats">${esc(stats)}</div>
+                <div class="finished-summary-text">
+                  <div class="finished-name">${badge}${esc(t.label)}</div>
+                  <div class="finished-stats">${esc(stats)}</div>
+                </div>
               </summary>
               <div class="finished-body">
                 <div class="ending-card">
