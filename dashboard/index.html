@@ -722,23 +722,12 @@ const STAGES      = ['Dormant','Awakened','Growing','Established','Renowned','Le
 const STAGE_ICONS = ['💤','🌅','🌱','🏛️','🌟','⚚','🔮'];
 const STAGE_XP = [0, 500, 1500, 5000, 12000, 25000, 50000];
 
-// Display-only labels for the Thread system's stages — mirrors what's
-// defined server-side in threads.js. Purely cosmetic; the backend is the
-// source of truth for actual stage timing and content.
-const THREAD_META = {
-  LONG_ILLNESS: {
-    label: 'Long Illness',
-    icon: '🩺',
-    stageLabels:    { 1: 'The Diagnosis', 2: 'The Struggle', 3: 'The Crisis Point' },
-    stageDurations: { 1: 4, 2: 11, 3: 1 },
-  },
-  GAINING_WEALTH: {
-    label: 'Gaining Wealth',
-    icon: '💰',
-    stageLabels:    { 1: 'The Opportunity', 2: 'The Build', 3: 'The Test' },
-    stageDurations: { 1: 4, 2: 14, 3: 1 },
-  },
-};
+// The thread strip reads from the same address the Life Changing Events
+// page reads from, so the day count, the thread's name and its button
+// state are all decided by the backend rather than guessed here. This
+// replaces an older, purely-cosmetic local table that only knew two of
+// the three thread types and worked out its progress from wall-clock time.
+const THREAD_VIEW_URL = 'https://threadview-mt4z4u77aq-uc.a.run.app';
 const STAGE_MULT  = [1.00, 1.05, 1.10, 1.20, 1.35, 1.55, 2.00];
 const STAGE_CLASS = ['stage-dormant','stage-awakened','stage-growing','stage-established','stage-renowned','stage-legendary','stage-mythic'];
 
@@ -1009,6 +998,8 @@ async function performClaim(claimCode, errEl) {
       setLoadingSub('Loading your card data…');
       await fetchFreshLivingCard();
 
+      if (await redirectIfUnlogged(urlCardId)) return;
+
       hideLoading();
       showDashboard(true);
     } else {
@@ -1029,6 +1020,8 @@ async function enterAsSavedOwner() {
   setLoadingSub('Loading your card data…');
 
   await fetchFreshLivingCard();
+
+  if (await redirectIfUnlogged(urlCardId)) return;
 
   hideLoading();
   isOwner = true;
@@ -1230,7 +1223,10 @@ function buildDashboard(asOwner) {
 
   buildMilestones(xp, streak, interactions);
   fetchLifeEvents(urlCardId);
-  fetchActiveThread(urlCardId).then(renderActiveThread).catch(() => renderActiveThread(null));
+  fetchThreadView(urlCardId).then(thread => {
+    renderActiveThread(thread);
+    applyThreadGate(thread, asOwner);
+  }).catch(() => renderActiveThread(null));
   buildLog(interactions, daysSince);
 
   const eventIndicator = document.getElementById('active-event-indicator');
@@ -1462,46 +1458,84 @@ function buildMilestones(xp, streak, interactions) {
     .catch(() => {});
 }
 
-// Reads this card's currently open thread (if any) straight from Firestore
-// (cards/{cardId}/threads, status == 'OPEN'), same pattern the reaction
-// widget uses to read the ledger. Mirrors the backend's "always work the
-// oldest open thread first" rule via orderBy + limit(1).
-async function fetchActiveThread(cardId) {
-  const snap = await window._pfpFirestoreGetDocs(
-    window._pfpFirestoreQuery(
-      window._pfpFirestoreCollection(window._pfpFirestore, 'cards', cardId, 'threads'),
-      window._pfpFirestoreWhere('status', '==', 'OPEN'),
-      window._pfpFirestoreOrderBy('openedAt', 'asc'),
-      window._pfpFirestoreLimit(1)
-    )
-  );
-  if (snap.empty) return null;
-  const doc = snap.docs[0];
-  return { id: doc.id, ...doc.data() };
+// Reads this card's thread the same way the Life Changing Events page
+// does — one call to the read-only view address, which hands back a
+// running thread, a finished-but-unlogged one, or nothing at all. Nothing
+// here is worked out locally any more: the day count, the thread's name
+// and whether it has ended all come straight from the backend.
+async function fetchThreadView(cardId) {
+  if (!window._pfpUser) return null;
+  try {
+    const token = await window._pfpUser.getIdToken();
+    const res = await fetch(THREAD_VIEW_URL + '?card_id=' + encodeURIComponent(cardId), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    }).then(r => r.json());
+    if (!res.success) return null;
+    return res.thread || null;   // null when nothing is running and nothing is waiting to be logged
+  } catch (e) {
+    console.warn('Thread view fetch failed:', e);
+    return null;
+  }
 }
 
+// Called right before an owner would land on the dashboard. If this card
+// has a thread that has already ended but hasn't been logged to Your Life
+// yet, the owner is sent to the Life Changing Events page to finish that
+// first, instead of landing on the dashboard at all. Returns true when it
+// has sent the owner away, so the caller knows not to show the dashboard.
+async function redirectIfUnlogged(cardId) {
+  const thread = await fetchThreadView(cardId);
+  if (thread && thread.status === 'CLOSED') {
+    window.location.href = 'thread.html?card_id=' + encodeURIComponent(cardId);
+    return true;
+  }
+  return false;
+}
+
+// Draws the small purple strip under the scan button. Shown to anyone
+// looking at the card, owner or not — it's informational only here; the
+// owner-only decision about what the scan button should do lives in
+// applyThreadGate below.
 function renderActiveThread(thread) {
   const el = document.getElementById('active-thread-indicator');
   if (!thread) { el.style.display = 'none'; return; }
 
-  const meta = THREAD_META[thread.type];
-  if (!meta) { el.style.display = 'none'; return; }
-
-  const stage        = thread.stage || 1;
-  const stageLabel    = meta.stageLabels[stage]    || `Stage ${stage}`;
-  const stageDuration = meta.stageDurations[stage]  || 1;
-  const stageStarted  = thread.stageStartedAt && thread.stageStartedAt.toDate
-    ? thread.stageStartedAt.toDate() : new Date();
-  const daysInStage   = Math.max(0, Math.floor((Date.now() - stageStarted.getTime()) / 86400000));
-  const pct           = Math.max(4, Math.min(100, Math.round((daysInStage / stageDuration) * 100)));
+  const ended = thread.status === 'CLOSED';
+  const of    = thread.of || 0;
+  const pos   = thread.position || 0;
+  const pct   = of ? Math.max(4, Math.min(100, Math.round((pos / of) * 100))) : 4;
 
   el.innerHTML =
-    '<div class="ati-label">ONGOING THREAD</div>' +
-    '<div class="ati-name">' + meta.icon + ' ' + meta.label + '</div>' +
-    '<div class="ati-stage">Stage ' + stage + ': ' + stageLabel + '</div>' +
-    '<div class="ati-progress-track"><div class="ati-progress-fill" style="width:' + pct + '%"></div></div>' +
-    '<div class="ati-meta">Opened by: ' + esc(thread.entryEventName || '—') + '</div>';
+    '<div class="ati-label">' + (ended ? 'THREAD ENDED' : 'ONGOING THREAD') + '</div>' +
+    '<div class="ati-name">' + esc(thread.label || 'A Thread') + '</div>' +
+    '<div class="ati-stage">' + esc(thread.openingText || '') + '</div>' +
+    (ended
+      ? '<div class="ati-meta">Ready to be logged — visit Life Changing Events to finish it.</div>'
+      : '<div class="ati-progress-track"><div class="ati-progress-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="ati-meta">Day ' + pos + ' of ' + of + '</div>'
+    );
   el.style.display = 'block';
+}
+
+// Owner-only: while a thread is running, the ordinary scan does nothing
+// for the story, so the scan button is replaced with a link across to the
+// Life Changing Events page instead of letting the owner press it here.
+// A finished-but-unlogged thread is normally caught earlier, before the
+// dashboard even loads (see redirectIfUnlogged) — this is the same
+// message shown here too, as a safety net in case that check is ever
+// bypassed.
+function applyThreadGate(thread, asOwner) {
+  if (!asOwner || !thread) return;
+
+  const scanArea = document.getElementById('scan-area');
+  const ended    = thread.status === 'CLOSED';
+  const message  = ended
+    ? '📖 &nbsp; This story is ready to close — finish it on Life Changing Events'
+    : '📖 &nbsp; A story is unfolding — continue it on Life Changing Events';
+
+  scanArea.innerHTML =
+    `<a class="scan-locked glass" href="thread.html?card_id=${encodeURIComponent(urlCardId)}" ` +
+    `style="text-decoration:none;display:flex;align-items:center;justify-content:center;">${message}</a>`;
 }
 
 async function fetchLifeEvents(cardId) {
