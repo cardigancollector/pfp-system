@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>PfP — Thread</title>
+<title>PfP — Life Changing Events</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -23,6 +23,13 @@
   }
 
   .wrap{max-width:660px;margin:0 auto;padding:0 20px 80px;}
+
+  /* ── page title ─────────────────────────────────────────────────────────── */
+  .page-title{
+    text-align:center;padding:30px 0 4px;
+    font-family:'Cinzel',serif;font-size:0.66rem;letter-spacing:0.32em;text-transform:uppercase;
+    color:var(--gold-dim);
+  }
 
   /* ── loading / error / empty ───────────────────────────────────── */
   .screen{text-align:center;padding:80px 20px 40px;}
@@ -168,6 +175,36 @@
   }
   .back:hover{border-color:var(--gold-dim);color:var(--gold);}
 
+  .back-links{display:flex;gap:12px;margin-top:34px;}
+  .back-links .back{margin-top:0;flex:1;}
+
+  /* ── finished threads ───────────────────────────────────────────────────── */
+  .finished-head{
+    font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.24em;text-transform:uppercase;
+    color:var(--text-dim);text-align:center;margin:38px 0 18px;position:relative;
+  }
+  .finished-head::before,.finished-head::after{
+    content:'';position:absolute;top:50%;width:24%;height:1px;background:var(--glass-border);
+  }
+  .finished-head::before{left:0;} .finished-head::after{right:0;}
+
+  .finished-item{
+    border:1px solid var(--glass-border);border-radius:8px;margin-bottom:12px;overflow:hidden;
+    background:rgba(14,12,9,0.4);
+  }
+  .finished-summary{
+    list-style:none;cursor:pointer;padding:16px 18px;display:flex;flex-direction:column;gap:5px;
+  }
+  .finished-summary::-webkit-details-marker{display:none;}
+  .finished-summary::before{
+    content:'▸';display:inline-block;margin-right:8px;color:var(--gold-dim);transition:transform .2s;
+  }
+  .finished-item[open] .finished-summary::before{transform:rotate(90deg);}
+  .finished-name{font-family:'Cinzel',serif;font-size:0.98rem;color:var(--text);}
+  .finished-stats{font-size:0.78rem;color:var(--text-dim);letter-spacing:0.02em;padding-left:20px;}
+  .finished-body{padding:4px 18px 22px;border-top:1px solid rgba(201,168,76,0.09);}
+  .finished-body .ending-card{margin-top:16px;}
+
   .zero-note{text-align:center;font-size:0.88rem;font-style:italic;color:var(--text-dim);padding:30px 0 6px;}
 
   :focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
@@ -185,6 +222,7 @@
 <body>
 
 <div class="wrap">
+  <div class="page-title">Life Changing Events</div>
   <div id="head-slot"></div>
   <div id="stage">
     <div class="screen">
@@ -192,7 +230,11 @@
       <div class="screen-text">Opening the thread…</div>
     </div>
   </div>
-  <a class="back" id="back-link" href="#">← Back to Dashboard</a>
+  <div id="finished-slot"></div>
+  <div class="back-links">
+    <a class="back" id="back-link" href="#">← Dashboard</a>
+    <a class="back" id="life-link" href="#">← Your Life</a>
+  </div>
 </div>
 
 <!-- ── Firebase, exactly as the dashboard sets it up ─────────────────────── -->
@@ -244,6 +286,10 @@ onAuthStateChanged(auth, (user) => {
 // published under a different name, change it here and nowhere else.
 const DASHBOARD_PAGE = 'index.html';
 
+// Your Life sits one folder above this page, so the back link has to step
+// out of the dashboard folder to reach it.
+const YOUR_LIFE_PAGE = '../your_life.html';
+
 // Where to send someone who isn't signed in — same as the dashboard uses.
 const LOGIN_URL = 'https://cardigancollector.github.io/pfp-system/Marketplace/login.html';
 
@@ -269,7 +315,8 @@ const LOG_URL     = 'https://threadlogtolife-mt4z4u77aq-uc.a.run.app';
 
 // ── State ───────────────────────────────────────────────────────────────────
 let cardId    = '';
-let view      = null;   // the last answer from the read
+let view      = null;   // the last answer from the read — the running or unlogged thread, or null
+let finished  = [];     // every thread already logged to Your Life, newest first
 let busy      = false;  // a press is in flight — don't let the timer redraw over it
 let timer     = null;
 
@@ -319,11 +366,14 @@ async function loadView() {
   }).then(r => r.json());
 
   if (!res.success) throw new Error(res.error || 'The thread could not be read.');
-  return res.thread;   // null when there is no thread to show
+  return res;   // { thread, finished } — thread is null when nothing is running
 }
 
 async function refresh() {
-  view = await loadView();
+  const res = await loadView();
+  if (!res) return;   // not signed in — loadView already sent the page to login
+  view     = res.thread;
+  finished = res.finished || [];
   draw();
 }
 
@@ -421,7 +471,14 @@ function draw() {
   const stage = document.getElementById('stage');
 
   if (!view) {
-    screen('Nothing running', 'No thread is open on this card. Keep logging your days — one will find you.', false);
+    document.getElementById('head-slot').innerHTML = '';
+    stage.innerHTML = finished.length
+      ? `<div class="zero-note">Nothing is running right now. Keep logging your days — the next one will find you.</div>`
+      : `<div class="screen">
+           <div class="screen-title">Nothing running</div>
+           <div class="screen-text">No thread is open on this card. Keep logging your days — one will find you.</div>
+         </div>`;
+    document.getElementById('finished-slot').innerHTML = finishedBlock();
     return;
   }
 
@@ -449,8 +506,62 @@ function draw() {
   body += storyBlock();
   stage.innerHTML = body;
 
+  document.getElementById('finished-slot').innerHTML = finishedBlock();
+
   wireButtons();
   scheduleRefresh();
+}
+
+// The collapsed history below whatever is running now — one row per thread
+// already logged to Your Life, oldest presses first read but newest thread
+// first shown. Each row carries its own stats; clicking it opens the same
+// kind of story the page shows for the thread running today, built from that
+// thread's own saved record rather than a second read.
+function finishedBlock() {
+  if (!finished.length) return '';
+
+  const items = finished.map(t => {
+    const badge = (t.ending && t.ending.badge) ? esc(t.ending.badge) + ' ' : '';
+    const endLabel = (t.ending && t.ending.label) ? esc(t.ending.label) : 'Ended';
+    const endText  = (t.ending && t.ending.text)  ? esc(t.ending.text)  : '';
+    const xpSign   = t.totalXP > 0 ? '+' : '';
+    const stats = `${t.duration} day${t.duration === 1 ? '' : 's'}`
+                + ` · ${t.caught} of ${t.offered} check-ins caught`
+                + ` · ${xpSign}${t.totalXP} XP`;
+
+    const story = (t.story || []).filter(s => s.kind !== 'ending');
+    const storyItems = story.map(s => {
+      const isCrisis = s.kind === 'crisis';
+      const mark = isCrisis ? 'The Turn' : `Day ${s.position}`;
+      const lines = (s.windows || [])
+        .filter(w => w.caught && w.line)
+        .map(w => `<div class="past-line">${esc(w.line)}</div>`)
+        .join('');
+      return `<div class="past">
+                <div class="past-mark">${esc(mark)}</div>
+                <div class="past-title">${esc(s.title)}</div>
+                <div class="past-text">${esc(s.text)}</div>
+                ${lines}
+              </div>`;
+    }).join('');
+
+    return `<details class="finished-item">
+              <summary class="finished-summary">
+                <div class="finished-name">${badge}${esc(t.label)}</div>
+                <div class="finished-stats">${esc(stats)}</div>
+              </summary>
+              <div class="finished-body">
+                <div class="ending-card">
+                  <div class="ec-eyebrow">The thread ended</div>
+                  <div class="ec-title">${endLabel}</div>
+                  <div class="ec-text">${endText}</div>
+                </div>
+                ${storyItems}
+              </div>
+            </details>`;
+  }).join('');
+
+  return `<div class="finished-head">Finished Threads</div>${items}`;
 }
 
 // ── Presses ─────────────────────────────────────────────────────────────────
@@ -600,6 +711,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('back-link').href =
     DASHBOARD_PAGE + '?card_id=' + encodeURIComponent(cardId);
+  document.getElementById('life-link').href =
+    YOUR_LIFE_PAGE + '?card_id=' + encodeURIComponent(cardId);
 
   if (!cardId) {
     screen('No card', 'This page needs a card in its address to know which thread to open.', false);
