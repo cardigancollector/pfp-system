@@ -300,6 +300,21 @@
   .card-mini-label { color:var(--text-dim); font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; }
   .card-mini-val { color:var(--text); font-family:'Cinzel',serif; font-size:0.82rem; }
 
+  .wealth-box {
+    width:110px; height:110px; flex-shrink:0; margin:0 auto;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    background:var(--glass); border:1px solid var(--glass-border); backdrop-filter:blur(12px);
+    text-align:center; padding:10px;
+  }
+  .wealth-value { font-family:'Cinzel',serif; font-size:1.3rem; font-weight:700; line-height:1; }
+  .wealth-status { font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; line-height:1.3; }
+  .wealth-box.wealth-positive { border-color:rgba(46,204,113,0.5); }
+  .wealth-box.wealth-positive .wealth-value, .wealth-box.wealth-positive .wealth-status { color:var(--green); }
+  .wealth-box.wealth-negative { border-color:rgba(192,57,43,0.5); }
+  .wealth-box.wealth-negative .wealth-value, .wealth-box.wealth-negative .wealth-status { color:var(--red); }
+  .wealth-box.wealth-neutral { border-color:var(--glass-border); }
+  .wealth-box.wealth-neutral .wealth-value, .wealth-box.wealth-neutral .wealth-status { color:var(--nickel); }
+
   .rank-wrap { padding:24px; }
   .rank-number { font-family:'Cinzel Decorative',serif; font-size:4rem; color:var(--gold); line-height:1; text-shadow:0 0 40px rgba(201,168,76,0.3); }
   .rank-label { font-size:0.72rem; color:var(--text-dim); letter-spacing:0.2em; text-transform:uppercase; margin-top:4px; }
@@ -538,9 +553,15 @@
         <div class="owner-meta" id="d-card-meta"></div>
         <div id="d-evo-id-pill"></div>
         <div style="margin-top:12px;" id="d-grade-badge"></div>
-        <div style="margin-top:24px;display:flex;align-items:baseline;gap:12px;">
-          <div style="font-family:'Cinzel Decorative',serif;font-size:5rem;font-weight:900;color:var(--gold);text-shadow:0 0 50px rgba(201,168,76,0.5);line-height:1;" id="d-rank-hero">#—</div>
-          <div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-dim);padding-bottom:8px;">Global Rank</div>
+        <div style="margin-top:24px;display:flex;align-items:center;gap:12px;width:100%;">
+          <div style="display:flex;align-items:baseline;gap:12px;">
+            <div style="font-family:'Cinzel Decorative',serif;font-size:5rem;font-weight:900;color:var(--gold);text-shadow:0 0 50px rgba(201,168,76,0.5);line-height:1;" id="d-rank-hero">#—</div>
+            <div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-dim);padding-bottom:8px;">Global Rank</div>
+          </div>
+          <div class="wealth-box" id="d-wealth-box">
+            <div class="wealth-value" id="d-wealth-value">—</div>
+            <div class="wealth-status" id="d-wealth-status">—</div>
+          </div>
         </div>
       </div>
       <div class="owner-art-badge stage-wrap" id="card-art-wrap">
@@ -1134,6 +1155,28 @@ function buildDashboard(asOwner) {
   const liveValueRaw     = baseValue * (0.2 + (xp + gamingXP) * 0.0002);
   const liveValue        = Math.max(0, liveValueRaw - liveValuePenalty);
   const lifeValue = parseFloat(lc['Life Value']) || 0;
+
+  // Card Wealth = Live Value + Life Value. Live Value is already floored at
+  // zero above; Life Value is not, so the total can land negative (debt).
+  const cardWealth = liveValue + lifeValue;
+  const wealthBox    = document.getElementById('d-wealth-box');
+  const wealthValueEl  = document.getElementById('d-wealth-value');
+  const wealthStatusEl = document.getElementById('d-wealth-status');
+  if (wealthBox && wealthValueEl && wealthStatusEl) {
+    wealthBox.classList.remove('wealth-positive', 'wealth-negative', 'wealth-neutral');
+    let wealthState, wealthStatusText;
+    if (cardWealth > 0) {
+      wealthState = 'wealth-positive'; wealthStatusText = 'You Have Savings';
+    } else if (cardWealth < 0) {
+      wealthState = 'wealth-negative'; wealthStatusText = "You're in Debt";
+    } else {
+      wealthState = 'wealth-neutral'; wealthStatusText = 'Breaking Even';
+    }
+    wealthBox.classList.add(wealthState);
+    wealthValueEl.textContent  = (cardWealth < 0 ? '-$' : '$') + Math.abs(cardWealth).toFixed(2);
+    wealthStatusEl.textContent = wealthStatusText;
+  }
+
   const stripFields = [
     { label:'Base Value', value: baseValue ? '$' + baseValue.toFixed(2) : '—', green:true, base:true },
     { label:'Live Value', value: liveValue ? '$' + liveValue.toFixed(2) : '—', blue:true, live:true },
