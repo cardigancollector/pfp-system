@@ -301,19 +301,42 @@
   .card-mini-val { color:var(--text); font-family:'Cinzel',serif; font-size:0.82rem; }
 
   .wealth-box {
-    width:110px; height:110px; flex-shrink:0; margin:0 auto;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    position:relative; overflow:hidden;
+    flex:1; height:92px; margin:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
     background:var(--glass); border:1px solid var(--glass-border); backdrop-filter:blur(12px);
-    text-align:center; padding:10px;
+    text-align:center; padding:8px 24px;
   }
-  .wealth-value { font-family:'Cinzel',serif; font-size:1.3rem; font-weight:700; line-height:1; }
+  .wealth-box::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; opacity:0.8; }
+  .wealth-icon { position:absolute; top:9px; right:14px; font-size:0.95rem; opacity:0.3; line-height:1; }
+  .wealth-title { font-size:0.58rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--text-dim); }
+  .wealth-value { font-family:'Cinzel',serif; font-size:1.6rem; font-weight:700; line-height:1; }
   .wealth-status { font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; line-height:1.3; }
-  .wealth-box.wealth-positive { border-color:rgba(46,204,113,0.5); }
+
+  .wealth-box.wealth-positive { border-color:rgba(46,204,113,0.5); animation:wealth-pulse-positive 3.4s ease-in-out infinite; }
+  .wealth-box.wealth-positive::before { background:linear-gradient(90deg,transparent,var(--green),transparent); }
   .wealth-box.wealth-positive .wealth-value, .wealth-box.wealth-positive .wealth-status { color:var(--green); }
-  .wealth-box.wealth-negative { border-color:rgba(192,57,43,0.5); }
+
+  .wealth-box.wealth-negative { border-color:rgba(192,57,43,0.5); animation:wealth-pulse-negative 1.6s ease-in-out infinite; }
+  .wealth-box.wealth-negative::before { background:linear-gradient(90deg,transparent,var(--red),transparent); }
   .wealth-box.wealth-negative .wealth-value, .wealth-box.wealth-negative .wealth-status { color:var(--red); }
-  .wealth-box.wealth-neutral { border-color:var(--glass-border); }
+
+  .wealth-box.wealth-neutral { border-color:var(--glass-border); animation:wealth-pulse-neutral 3.4s ease-in-out infinite; }
+  .wealth-box.wealth-neutral::before { background:linear-gradient(90deg,transparent,var(--nickel),transparent); }
   .wealth-box.wealth-neutral .wealth-value, .wealth-box.wealth-neutral .wealth-status { color:var(--nickel); }
+
+  @keyframes wealth-pulse-positive {
+    0%,100% { box-shadow:0 0 10px rgba(46,204,113,0.22), inset 0 0 10px rgba(46,204,113,0.06); }
+    50%      { box-shadow:0 0 26px rgba(46,204,113,0.48), inset 0 0 18px rgba(46,204,113,0.14); }
+  }
+  @keyframes wealth-pulse-neutral {
+    0%,100% { box-shadow:0 0 8px rgba(158,158,158,0.16), inset 0 0 8px rgba(158,158,158,0.05); }
+    50%      { box-shadow:0 0 18px rgba(158,158,158,0.3), inset 0 0 14px rgba(158,158,158,0.1); }
+  }
+  @keyframes wealth-pulse-negative {
+    0%,100% { box-shadow:0 0 14px rgba(192,57,43,0.35), inset 0 0 12px rgba(192,57,43,0.1); opacity:1; }
+    50%      { box-shadow:0 0 34px rgba(192,57,43,0.65), inset 0 0 22px rgba(192,57,43,0.2); opacity:0.78; }
+  }
 
   .rank-wrap { padding:24px; }
   .rank-number { font-family:'Cinzel Decorative',serif; font-size:4rem; color:var(--gold); line-height:1; text-shadow:0 0 40px rgba(201,168,76,0.3); }
@@ -559,6 +582,8 @@
             <div style="font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-dim);padding-bottom:8px;">Global Rank</div>
           </div>
           <div class="wealth-box" id="d-wealth-box">
+            <div class="wealth-icon">🪙</div>
+            <div class="wealth-title">Wealth</div>
             <div class="wealth-value" id="d-wealth-value">—</div>
             <div class="wealth-status" id="d-wealth-status">—</div>
           </div>
