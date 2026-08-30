@@ -365,19 +365,54 @@
 </div>
 
 <script>
-  const ADMIN_PASSWORD = 'EvoLveA2!'; // Change to match your other admin tools
-  const API = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+  const API       = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
+  const LOGIN_URL = 'https://us-central1-pfp-system.cloudfunctions.net/adminLogin';
 
-  function authenticate() {
-    const pass = document.getElementById('admin-pass').value;
-    const err  = document.getElementById('auth-err');
-    if (pass === ADMIN_PASSWORD) {
-      document.getElementById('auth-panel').classList.add('hidden');
-      const main = document.getElementById('main');
-      main.classList.remove('hidden');
-      main.style.display = 'flex';
-      checkAPI();
-    } else {
+  async function authenticate() {
+    const input = document.getElementById('admin-pass');
+    const err   = document.getElementById('auth-err');
+    const btn   = document.querySelector('.btn-access');
+    const pass  = input.value;
+
+    err.style.display = 'none';
+
+    if (!pass) {
+      err.textContent = '// ACCESS DENIED \u2014 NO PASSWORD ENTERED';
+      err.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'CHECKING...';
+
+    try {
+      const res = await fetch(LOGIN_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ password: pass })
+      });
+      const data = await res.json();
+
+      btn.disabled = false;
+      btn.textContent = 'ACCESS SYSTEM';
+      input.value = '';
+
+      if (data.success && data.token) {
+        sessionStorage.setItem('pfpAdminToken', data.token);
+        document.getElementById('auth-panel').classList.add('hidden');
+        const main = document.getElementById('main');
+        main.classList.remove('hidden');
+        main.style.display = 'flex';
+        checkAPI();
+      } else {
+        err.textContent = '// ACCESS DENIED \u2014 ' + ((data.error || 'INVALID PASSWORD').toUpperCase());
+        err.style.display = 'block';
+        input.focus();
+      }
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'ACCESS SYSTEM';
+      err.textContent = '// ACCESS DENIED \u2014 COULD NOT REACH LOGIN SERVER';
       err.style.display = 'block';
     }
   }
