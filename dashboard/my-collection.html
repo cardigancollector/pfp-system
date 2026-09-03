@@ -339,9 +339,13 @@ async function fetchLivingCardFromFirestore(cardId) {
     const lastInteraction = d.lastInteraction ? d.lastInteraction.toDate() : null;
     const todayStr        = new Date().toISOString().slice(0, 10);
     const lastStr         = lastInteraction ? lastInteraction.toISOString().slice(0, 10) : null;
+    // No last-interaction date means the card has never been scanned —
+    // a brand-new card, or one that's just been reset. Leave this empty
+    // rather than substituting a stand-in number, so the tile can say
+    // "never" instead of printing a fake day count.
     const daysSince       = lastStr
       ? Math.floor((new Date(todayStr) - new Date(lastStr)) / 86400000)
-      : 99;
+      : null;
 
     return {
       'Card Name':          d.cardName        || cardId,
@@ -386,7 +390,10 @@ function hydrateTile(tile, card) {
   const gamingXP  = Number(card['Gaming XP']  || 0);
   const totalXP   = xp + gamingXP;
   const streak    = Number(card['Streak (days)'] || 0);
-  const daysSince = Number(card['Days Since Scan'] || 0);
+  const daysSinceRaw = card['Days Since Scan'];
+  const daysSince    = (daysSinceRaw === null || daysSinceRaw === undefined)
+    ? null
+    : Number(daysSinceRaw);
   const pct       = xpBarPct(xp, stageIdx);
 
   // update stage class
@@ -409,7 +416,14 @@ function hydrateTile(tile, card) {
   }
 
   // info
-  const daysSinceClass = daysSince >= 7 ? 'tile-days-warn' : 'tile-days-since';
+  const daysSinceClass = (daysSince !== null && daysSince >= 7)
+    ? 'tile-days-warn'
+    : 'tile-days-since';
+
+  let daysSinceText;
+  if (daysSince === null)   daysSinceText = 'Never scanned';
+  else if (daysSince === 0) daysSinceText = 'Scanned today';
+  else                      daysSinceText = daysSince + 'd since scan';
   tile.querySelector('.tile-info').innerHTML = `
     <div class="tile-card-name">${esc(card['Card Name'] || card['_cardId'])}</div>
     <div class="tile-card-id">${esc(card['_cardId'])}</div>
@@ -420,7 +434,7 @@ function hydrateTile(tile, card) {
     <div class="tile-xp-bar-track"><div class="tile-xp-bar-fill" style="width:${pct}%"></div></div>
     <div class="tile-meta-row">
       <span class="tile-streak">🔥 ${streak}d streak</span>
-      <span class="${daysSinceClass}">${daysSince === 0 ? 'Scanned today' : daysSince + 'd since scan'}</span>
+      <span class="${daysSinceClass}">${daysSinceText}</span>
     </div>
   `;
 }
