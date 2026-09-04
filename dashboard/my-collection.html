@@ -421,9 +421,12 @@ function hydrateTile(tile, card) {
     : 'tile-days-since';
 
   let daysSinceText;
-  if (daysSince === null)   daysSinceText = 'Never scanned';
-  else if (daysSince === 0) daysSinceText = 'Scanned today';
-  else                      daysSinceText = daysSince + 'd since scan';
+  // "Active" rather than "scanned": the underlying date records the last
+  // interaction of any kind, and claiming a card counts as one. Calling
+  // it a scan overstated what's actually known.
+  if (daysSince === null)   daysSinceText = 'Never active';
+  else if (daysSince === 0) daysSinceText = 'Active today';
+  else                      daysSinceText = daysSince + 'd since active';
   tile.querySelector('.tile-info').innerHTML = `
     <div class="tile-card-name">${esc(card['Card Name'] || card['_cardId'])}</div>
     <div class="tile-card-id">${esc(card['_cardId'])}</div>
