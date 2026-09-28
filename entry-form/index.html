@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>PfP Admin — Entry Form</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #d4af37; --gold-light: #f0d060; --purple: #6d28d9; --purple-dark: #1e0a3c;
+    --bg: #0d0618; --surface: #160828; --surface2: #1e1035;
+    --border: rgba(212,175,55,0.25); --text: #e8e0f0; --text-dim: #9d8fbf;
+    --blue: #0ea5e9; --blue-light: #7dd3fc; --success: #22c55e; --error: #ef4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Crimson Pro', Georgia, serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 17px; }
+  .hidden { display: none !important; }
+
+  .topbar { background: linear-gradient(90deg, var(--purple-dark), #2d0a5e, var(--purple-dark)); border-bottom: 2px solid var(--gold);
+            padding: 0.8rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .topbar h1 { font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--gold-light); letter-spacing: 2px; }
+  #whoBox { display: flex; align-items: center; gap: 0.75rem; color: var(--text-dim); font-size: 0.95rem; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .panel.center { text-align: center; max-width: 440px; margin: 3rem auto; }
+  .panel h2 { font-family: 'Cinzel', serif; font-size: 1rem; letter-spacing: 2px; color: var(--gold); margin-bottom: 1rem;
+              padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  .panel.center h2 { border-bottom: none; }
+  .panel.center p { color: var(--text-dim); margin-bottom: 1.25rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+  .group { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem; }
+  .grid .group { margin-bottom: 0; }
+  label { font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); }
+  input, select, textarea { background: var(--surface2); border: 1px solid rgba(212,175,55,0.2); border-radius: 4px; color: var(--text);
+                            font-family: 'Crimson Pro', serif; font-size: 1rem; padding: 0.5rem 0.7rem; width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(212,175,55,0.15); }
+  select option { background: var(--surface2); color: var(--text); }
+  textarea { min-height: 80px; resize: vertical; }
+  #cardSelect { margin-top: 0.4rem; }
+
+  .chosen { margin-top: 0.6rem; padding: 0.7rem 1rem; border: 1px solid rgba(212,175,55,0.4); border-radius: 6px; background: rgba(212,175,55,0.06); }
+  .chosen .name { font-family: 'Cinzel', serif; color: var(--gold-light); }
+  .chosen .meta { color: var(--text-dim); font-size: 0.9rem; }
+
+  .preview { background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.35); border-radius: 8px; padding: 1rem 1.25rem; margin: 0.5rem 0 1rem; }
+  .preview-label { font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 2px; text-transform: uppercase; color: var(--blue-light); }
+  .preview-value { font-family: 'Cinzel', serif; font-size: 1.7rem; font-weight: 700; color: #38bdf8; margin: 0.2rem 0; }
+  .preview-formula { color: var(--text-dim); font-style: italic; font-size: 0.92rem; }
+  .preview-bonus { margin-top: 0.5rem; color: var(--gold-light); font-size: 0.95rem; }
+
+  .row-end { display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap; }
+  button { font-family: 'Cinzel', serif; font-size: 0.78rem; letter-spacing: 1.2px; border-radius: 4px; cursor: pointer; padding: 0.7rem 1.5rem; border: 2px solid; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-gold { background: linear-gradient(135deg, #854d0e, var(--gold)); border-color: var(--gold); color: var(--bg); font-weight: 700; }
+  .btn-ghost { background: transparent; border-color: var(--text-dim); color: var(--text-dim); padding: 0.45rem 1rem; }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold-light); }
+  .btn-danger { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.6); color: #fca5a5; padding: 0.45rem 1rem; }
+  .btn-danger:hover { background: rgba(239,68,68,0.3); color: #fff; }
+
+  .error { color: var(--error); margin-top: 0.75rem; min-height: 1.2rem; }
+  .hint { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 1rem; }
+  .warn { color: var(--gold-light); margin-bottom: 1rem; font-size: 1.05rem; }
+
+  .result { border-color: rgba(34,197,94,0.5); }
+  .result h2 { color: var(--success); }
+  .codes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+  .code-box { background: var(--surface2); border: 2px solid var(--gold); border-radius: 8px; padding: 1rem; text-align: center; }
+  .code-label { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.4rem; }
+  .code { font-family: 'Courier New', monospace; font-size: 2.6rem; font-weight: 700; letter-spacing: 0.35em; color: var(--gold-light); }
+  .facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin-bottom: 1.25rem; }
+  .facts dt { color: var(--text-dim); }
+  .facts dd { font-weight: 600; word-break: break-word; }
+
+  .coll-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid rgba(212,175,55,0.1); }
+  .coll-row:last-child { border-bottom: none; }
+  .coll-name { font-family: 'Cinzel', serif; color: var(--gold-light); }
+  .coll-meta { color: var(--text-dim); font-size: 0.9rem; }
+
+  .spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%;
+             animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.9rem 1.3rem; border-radius: 6px; font-family: 'Cinzel', serif;
+           font-size: 0.8rem; letter-spacing: 1px; opacity: 0; transform: translateY(80px); transition: all 0.35s; pointer-events: none; }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.ok  { background: rgba(34,197,94,0.15); border: 1px solid var(--success); color: var(--success); }
+  #toast.bad { background: rgba(239,68,68,0.15); border: 1px solid var(--error); color: var(--error); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <h1>⚜ PfP Entry Form</h1>
+  <div id="whoBox" class="hidden">
+    <span id="whoEmail"></span>
+    <button id="signOutBtn" class="btn-ghost" type="button">Sign out</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Waiting for Firebase to say who is signed in -->
+  <section id="loadingScreen" class="panel center">
+    <div class="spinner"></div>
+    <p id="loadingText">Checking sign-in…</p>
+  </section>
+
+  <!-- Not signed in -->
+  <section id="signInScreen" class="panel center hidden">
+    <h2>Sign in</h2>
+    <p>Only the PfP Cards Google account can use this page.</p>
+    <button id="signInBtn" class="btn-gold" type="button">Sign in with Google</button>
+    <p id="signInError" class="error"></p>
+  </section>
+
+  <!-- Signed in with the wrong account -->
+  <section id="refusedScreen" class="panel center hidden">
+    <h2>Not allowed</h2>
+    <p>You are signed in as <strong id="refusedEmail"></strong>. This page only works for the PfP Cards account.</p>
+    <button id="refusedSignOutBtn" class="btn-gold" type="button">Sign out and switch account</button>
+  </section>
+
+  <div id="app" class="hidden">
+
+    <!-- ══ Add a print ══ -->
+    <section class="panel" id="printPanel">
+      <h2>🖨 Add Print</h2>
+
+      <div class="group">
+        <label for="cardSearch">Card</label>
+        <input id="cardSearch" type="text" placeholder="Type to search by card name or PFP id…" autocomplete="off">
+        <select id="cardSelect" size="8"></select>
+        <div id="cardChosen" class="chosen hidden">
+          <div class="name" id="chosenName"></div>
+          <div class="meta" id="chosenMeta"></div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="group">
+          <label for="artistName">Artist name</label>
+          <input id="artistName" type="text" maxlength="100">
+        </div>
+        <div class="group">
+          <label for="artistType">Artist type</label>
+          <select id="artistType"></select>
+        </div>
+        <div class="group">
+          <label for="editionSize">Edition size (copies of this image)</label>
+          <input id="editionSize" type="number" min="1" step="1">
+        </div>
+        <div class="group">
+          <label for="editionNumber">Edition number</label>
+          <input id="editionNumber" type="text" maxlength="50">
+        </div>
+        <div class="group">
+          <label for="titled">Titled</label>
+          <select id="titled">
+            <option value="">Select…</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="group">
+          <label for="printCondition">Print condition</label>
+          <select id="printCondition">
+            <option value="">Select…</option>
+            <option>Mint</option><option>Pack Fresh</option><option>Played</option>
+            <option>Worn</option><option>Damaged</option>
+          </select>
+        </div>
+        <div class="group">
+          <label for="differentPrints">Number of different prints</label>
+          <select id="differentPrints">
+            <option value="0">Not a collection</option>
+            <option value="2">2 different prints</option>
+            <option value="3">3 different prints</option>
+            <option value="4">4 different prints</option>
+            <option value="5">5 different prints</option>
+            <option value="6">6 different prints</option>
+            <option value="7">7 different prints</option>
+            <option value="8">8 different prints</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="group">
+        <label for="notes">Notes</label>
+        <textarea id="notes" maxlength="2000"></textarea>
+      </div>
+
+      <div class="preview">
+        <div class="preview-label">Print value at issue</div>
+        <div class="preview-value" id="previewValue">—</div>
+        <div class="preview-formula" id="previewFormula">Choose a card, artist type, edition size and titled to see the value.</div>
+        <div class="preview-bonus hidden" id="previewBonus"></div>
+      </div>
+
+      <div class="row-end">
+        <button id="clearBtn" class="btn-ghost" type="button">Clear</button>
+        <button id="saveBtn" class="btn-gold" type="button">Save print, certificate &amp; pairing</button>
+      </div>
+      <p id="printError" class="error"></p>
+    </section>
+
+    <!-- ══ After a save ══ -->
+    <section class="panel result hidden" id="resultPanel">
+      <h2>✓ Print saved</h2>
+      <p class="warn">Copy these codes onto the print and the certificate before leaving this screen.</p>
+      <div class="codes">
+        <div class="code-box">
+          <div class="code-label">On the print — part one</div>
+          <div class="code" id="rPart1"></div>
+        </div>
+        <div class="code-box">
+          <div class="code-label">On the certificate — part two</div>
+          <div class="code" id="rPart2"></div>
+        </div>
+      </div>
+      <dl class="facts">
+        <dt>Full code</dt>        <dd id="rFull"></dd>
+        <dt>Card</dt>             <dd id="rCard"></dd>
+        <dt>Value at issue</dt>   <dd id="rValue"></dd>
+        <dt>Collection bonus</dt> <dd id="rBonus"></dd>
+        <dt>Date issued</dt>      <dd id="rDate"></dd>
+        <dt>Print ID</dt>         <dd id="rPrintId"></dd>
+        <dt>Certificate ID</dt>   <dd id="rCertId"></dd>
+        <dt>Pairing ID</dt>       <dd id="rPairId"></dd>
+      </dl>
+      <div class="row-end">
+        <button id="anotherBtn" class="btn-gold" type="button">Done — add another print</button>
+      </div>
+    </section>
+
+    <!-- ══ Complete collections ══ -->
+    <section class="panel" id="collectionsPanel">
+      <h2>🗂 Complete Collections</h2>
+      <p class="hint">Mark a collection Broken only when its set has been split up. Its bonus stops counting; its issued value does not change.</p>
+      <div id="collectionsList"></div>
+      <p id="collectionsError" class="error"></p>
+    </section>
+
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, signOut,
+    onAuthStateChanged, setPersistence, browserSessionPersistence
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  // These settings only tell Google which project this page belongs to.
+  // They are meant to be public and are not a password. The real lock
+  // is in the cloud: every request is checked for the PfP Cards account.
+  const firebaseConfig = {
+    apiKey: "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain: "pfp-system.firebaseapp.com",
+    projectId: "pfp-system",
+    storageBucket: "pfp-system.firebasestorage.app",
+    messagingSenderId: "643360345707",
+    appId: "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  };
+
+  const ENDPOINT    = "https://us-central1-pfp-system.cloudfunctions.net/adminEntry";
+  const ADMIN_EMAIL = "pfpcards@gmail.com";
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // Sign-in lasts only while this browser tab is open.
+  try { await setPersistence(auth, browserSessionPersistence); } catch (e) { /* falls back to default */ }
+
+  // ── Page state ─────────────────────────────────────────────
+  let cards        = [];
+  let chosenCard   = null;
+  let lastPreview  = null;
+  let previewTimer = null;
+  let previewSeq   = 0;
+  let toastTimer   = null;
+
+  const $ = (id) => document.getElementById(id);
+
+  function showOnly(id) {
+    ["loadingScreen", "signInScreen", "refusedScreen", "app"].forEach((x) => $(x).classList.toggle("hidden", x !== id));
+  }
+
+  function money(n) {
+    return Number(n || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  }
+
+  function toast(message, ok) {
+    const t = $("toast");
+    if (toastTimer) clearTimeout(toastTimer);
+    t.textContent = message;
+    t.className = (ok ? "ok" : "bad") + " show";
+    toastTimer = setTimeout(() => { t.className = ""; }, 4000);
+  }
+
+  // ── Talking to the cloud ───────────────────────────────────
+  // Every request carries the signed-in account's proof of identity.
+  async function call(action, extra) {
+    const user = auth.currentUser;
+    if (!user) return { success: false, error: "Not signed in." };
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify(Object.assign({ action: action }, extra || {}))
+      });
+      let data;
+      try { data = await res.json(); }
+      catch (e) { data = { success: false, error: "Unexpected reply from the server (" + res.status + ")." }; }
+      if (!data.success && !data.error) data.error = "Request failed (" + res.status + ").";
+      return data;
+    } catch (e) {
+      return { success: false, error: "Could not reach the server. Check your connection and try again." };
+    }
+  }
+
+  // ── Sign-in ────────────────────────────────────────────────
+  $("signInBtn").addEventListener("click", async () => {
+    $("signInError").textContent = "";
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account", login_hint: ADMIN_EMAIL });
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      const code = e && e.code ? e.code : "";
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        $("signInError").textContent = "Sign-in was cancelled.";
+      } else if (code === "auth/popup-blocked") {
+        $("signInError").textContent = "The browser blocked the sign-in window. Allow pop-ups for this site and try again.";
+      } else {
+        $("signInError").textContent = "Sign-in failed: " + (e && e.message ? e.message : "unknown error");
+      }
+    }
+  });
+
+  $("signOutBtn").addEventListener("click", () => signOut(auth));
+  $("refusedSignOutBtn").addEventListener("click", () => signOut(auth));
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      $("whoBox").classList.add("hidden");
+      showOnly("signInScreen");
+      return;
+    }
+
+    const email = String(user.email || "").toLowerCase();
+    $("whoEmail").textContent = user.email || "";
+    $("whoBox").classList.remove("hidden");
+
+    // A friendly early warning only — the cloud makes the real decision.
+    if (email !== ADMIN_EMAIL || !user.emailVerified) {
+      $("refusedEmail").textContent = user.email || "an unknown account";
+      showOnly("refusedScreen");
+      return;
+    }
+
+    $("loadingText").textContent = "Loading cards…";
+    showOnly("loadingScreen");
+    const ok = await loadForm();
+    if (ok) showOnly("app");
+  });
+
+  // ── Loading the card list, artist types and collections ────
+  async function loadForm() {
+    const data = await call("loadForm");
+    if (!data.success) {
+      $("loadingText").textContent = "Could not load the form: " + data.error;
+      return false;
+    }
+
+    cards = data.cards || [];
+    renderCardOptions();
+
+    const sel = $("artistType");
+    const keep = sel.value;
+    sel.textContent = "";
+    sel.appendChild(new Option("Select…", ""));
+    (data.artistTypes || []).forEach((a) => sel.appendChild(new Option(a.artistType, a.artistType)));
+    sel.value = keep;
+
+    renderCollections(data.collections || []);
+    return true;
+  }
+
+  // ── Card picker ────────────────────────────────────────────
+  function renderCardOptions() {
+    const filter = $("cardSearch").value.trim().toLowerCase();
+    const sel = $("cardSelect");
+    sel.textContent = "";
+    cards
+      .filter((c) => filter === "" || c.card.toLowerCase().includes(filter) || c.id.toLowerCase().includes(filter))
+      .forEach((c) => {
+        const opt = new Option(c.card + "  —  " + c.id + "  —  " + money(c.value), c.id);
+        if (chosenCard && chosenCard.id === c.id) opt.selected = true;
+        sel.appendChild(opt);
+      });
+  }
+
+  function showChosenCard() {
+    if (!chosenCard) { $("cardChosen").classList.add("hidden"); return; }
+    $("chosenName").textContent = chosenCard.card;
+    $("chosenMeta").textContent = chosenCard.id + "  ·  " + (chosenCard.rarity || "no rarity") + "  ·  card value " + money(chosenCard.value);
+    $("cardChosen").classList.remove("hidden");
+  }
+
+  $("cardSearch").addEventListener("input", renderCardOptions);
+  $("cardSelect").addEventListener("change", () => {
+    chosenCard = cards.find((c) => c.id === $("cardSelect").value) || null;
+    showChosenCard();
+    schedulePreview();
+  });
+
+  // ── Reading the form ───────────────────────────────────────
+  function readForm() {
+    return {
+      cardId:          chosenCard ? chosenCard.id : "",
+      artistName:      $("artistName").value.trim(),
+      artistType:      $("artistType").value,
+      editionSize:     $("editionSize").value.trim(),
+      titled:          $("titled").value,
+      editionNumber:   $("editionNumber").value.trim(),
+      printCondition:  $("printCondition").value,
+      notes:           $("notes").value.trim(),
+      differentPrints: $("differentPrints").value
+    };
+  }
+
+  // ── Live value preview (worked out by the cloud) ───────────
+  function resetPreview(message) {
+    lastPreview = null;
+    $("previewValue").textContent = "—";
+    $("previewFormula").textContent = message || "Choose a card, artist type, edition size and titled to see the value.";
+    $("previewBonus").classList.add("hidden");
+  }
+
+  function schedulePreview() {
+    if (previewTimer) clearTimeout(previewTimer);
+    const p = readForm();
+    if (!p.cardId || !p.artistType || !p.editionSize || !p.titled) {
+      previewSeq++;          // ignore any preview still on its way
+      resetPreview();
+      return;
+    }
+    $("previewFormula").textContent = "Working it out…";
+    previewTimer = setTimeout(runPreview, 450);
+  }
+
+  async function runPreview() {
+    const seq = ++previewSeq;
+    const p = readForm();
+    // The artist's name doesn't affect the value; a stand-in is sent
+    // if it hasn't been typed yet so the preview can still run.
+    if (!p.artistName) p.artistName = "preview";
+
+    const data = await call("previewPrint", { print: p });
+    if (seq !== previewSeq) return;       // a newer preview has started
+
+    if (!data.success) { resetPreview(data.error); return; }
+
+    const v = data.preview;
+    lastPreview = v;
+    $("previewValue").textContent = money(v.issuedValueShown);
+    $("previewFormula").textContent =
+      money(v.cardValue) + " card × " + v.artistMultiplier.toFixed(2) + " (" + v.artistType + ")" +
+      " × " + v.editionMultiplier.toFixed(2) + " (edition) × " + v.titledMultiplier.toFixed(2) + " (titled)";
+
+    if (v.isCollection) {
+      $("previewBonus").textContent =
+        "Collection bonus: " + money(v.bonusPerPrint) + " × " + v.differentPrints + " prints = " +
+        money(v.bonusTotal) + " (kept beside the value, counts while the set is Complete)";
+      $("previewBonus").classList.remove("hidden");
+    } else {
+      $("previewBonus").classList.add("hidden");
+    }
+  }
+
+  ["artistType", "editionSize", "titled", "differentPrints"].forEach((id) => {
+    $(id).addEventListener("input", schedulePreview);
+    $(id).addEventListener("change", schedulePreview);
+  });
+
+  // ── Save ───────────────────────────────────────────────────
+  $("saveBtn").addEventListener("click", async () => {
+    $("printError").textContent = "";
+    const p = readForm();
+
+    const missing = [];
+    if (!p.cardId)         missing.push("card");
+    if (!p.artistName)     missing.push("artist name");
+    if (!p.artistType)     missing.push("artist type");
+    if (!p.editionSize)    missing.push("edition size");
+    if (!p.editionNumber)  missing.push("edition number");
+    if (!p.titled)         missing.push("titled");
+    if (!p.printCondition) missing.push("print condition");
+    if (missing.length) { $("printError").textContent = "Still needed: " + missing.join(", ") + "."; return; }
+
+    const valueLine = lastPreview ? money(lastPreview.issuedValueShown) : "(worked out on save)";
+    const collLine  = p.differentPrints !== "0" ? "\nCollection: " + p.differentPrints + " different prints" : "";
+    const ok = confirm(
+      "Save this print?\n\n" +
+      "Card: " + chosenCard.card + " (" + chosenCard.id + ")\n" +
+      "Artist: " + p.artistName + " (" + p.artistType + ")\n" +
+      "Edition: " + p.editionNumber + " of " + p.editionSize + "\n" +
+      "Titled: " + p.titled + "\n" +
+      "Value at issue: " + valueLine + collLine + "\n\n" +
+      "This creates the print, its certificate and its pairing together."
+    );
+    if (!ok) return;
+
+    const btn = $("saveBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const data = await call("savePrint", { print: p });
+    btn.disabled = false;
+    btn.textContent = "Save print, certificate & pairing";
+
+    if (!data.success) { $("printError").textContent = data.error; return; }
+
+    showResult(data);
+    toast("Print saved.", true);
+    loadForm();    // refreshes the collections list
+  });
+
+  function showResult(r) {
+    $("rPart1").textContent   = r.codePart1;
+    $("rPart2").textContent   = r.codePart2;
+    $("rFull").textContent    = r.fullCode;
+    $("rCard").textContent    = r.value.cardName + " (" + chosenCard.id + ")";
+    $("rValue").textContent   = money(r.value.issuedValueShown);
+    $("rBonus").textContent   = r.value.isCollection
+      ? money(r.value.bonusTotal) + " (" + r.value.differentPrints + " prints × " + money(r.value.bonusPerPrint) + ")"
+      : "None — not a collection";
+    $("rDate").textContent    = r.dateIssued;
+    $("rPrintId").textContent = r.printId;
+    $("rCertId").textContent  = r.certificateId;
+    $("rPairId").textContent  = r.pairId;
+
+    $("printPanel").classList.add("hidden");
+    $("resultPanel").classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  $("anotherBtn").addEventListener("click", () => {
+    clearPrintForm();
+    $("resultPanel").classList.add("hidden");
+    $("printPanel").classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  function clearPrintForm() {
+    chosenCard = null;
+    ["cardSearch", "artistName", "editionSize", "editionNumber", "notes"].forEach((id) => { $(id).value = ""; });
+    ["artistType", "titled", "printCondition"].forEach((id) => { $(id).value = ""; });
+    $("differentPrints").value = "0";
+    $("printError").textContent = "";
+    renderCardOptions();
+    showChosenCard();
+    previewSeq++;
+    resetPreview();
+  }
+
+  $("clearBtn").addEventListener("click", clearPrintForm);
+
+  // ── Complete collections ───────────────────────────────────
+  function renderCollections(list) {
+    const box = $("collectionsList");
+    box.textContent = "";
+    $("collectionsError").textContent = "";
+
+    if (!list.length) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "No Complete collections.";
+      box.appendChild(p);
+      return;
+    }
+
+    list.forEach((c) => {
+      const row  = document.createElement("div");
+      row.className = "coll-row";
+
+      const info = document.createElement("div");
+      const name = document.createElement("div");
+      name.className = "coll-name";
+      name.textContent = c.cardName;
+      const meta = document.createElement("div");
+      meta.className = "coll-meta";
+      meta.textContent = c.printId + "  ·  " + c.differentPrints + " different prints  ·  bonus " + money(c.bonusTotal);
+      info.appendChild(name);
+      info.appendChild(meta);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn-danger";
+      btn.textContent = "Mark Broken";
+      btn.addEventListener("click", () => markBroken(c, btn));
+
+      row.appendChild(info);
+      row.appendChild(btn);
+      box.appendChild(row);
+    });
+  }
+
+  async function markBroken(c, btn) {
+    const ok = confirm(
+      "Mark \"" + c.cardName + "\" (" + c.printId + ") as Broken?\n\n" +
+      "Its collection bonus of " + money(c.bonusTotal) + " will stop counting.\n" +
+      "Its issued value stays the same.\n\n" +
+      "This cannot be undone from this page."
+    );
+    if (!ok) return;
+
+    btn.disabled = true;
+    btn.textContent = "Working…";
+    const data = await call("markCollectionBroken", { printId: c.printId, confirm: true });
+
+    if (!data.success) {
+      btn.disabled = false;
+      btn.textContent = "Mark Broken";
+      $("collectionsError").textContent = data.error;
+      return;
+    }
+
+    toast(c.cardName + " marked Broken.", true);
+    loadForm();
+  }
+</script>
+</body>
+</html>
