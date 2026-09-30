@@ -313,9 +313,13 @@ function startFrame1() {
   _state.selected = { verb: null, phrase: null, object: null };
   _state.pendingResult = null;
   const titleEl = document.getElementById('erw-frame1-title');
-  titleEl.textContent = _state.eventName
-    ? `The ${_state.eventName} event just fired! How do you react?`
-    : 'An event just fired! How do you react?';
+  titleEl.textContent = _state.missed
+    ? (_state.eventName
+        ? `You haven't reacted to the ${_state.eventName} event yet. How do you react?`
+        : `You haven't reacted to your last event yet. How do you react?`)
+    : (_state.eventName
+        ? `The ${_state.eventName} event just fired! How do you react?`
+        : 'An event just fired! How do you react?');
   renderOptions('erw-verb-options', 'verb', sample(VERBS, DRAW_COUNT));
   renderOptions('erw-phrase-options', 'phrase', sample(PHRASES, DRAW_COUNT));
   renderOptions('erw-object-options', 'object', sample(OBJECTS, DRAW_COUNT));
@@ -352,7 +356,7 @@ async function lockInSelection() {
     const res = await fetch(PREVIEW_URL, {
       method: 'POST',
       headers: await authHeaders(),
-      body: JSON.stringify({ cardId: _state.cardId, verb, phrase, object, eventName: _state.eventName }),
+      body: JSON.stringify({ cardId: _state.cardId, verb, phrase, object }),
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Could not lock in selection.');
@@ -571,10 +575,11 @@ function init() {
   document.getElementById('erw-confirm-btn').addEventListener('click', lockInSelection);
 }
 
-window.openReactionPopup = function ({ cardId, eventName, onLogged, onDismiss }) {
+window.openReactionPopup = function ({ cardId, eventName, missed, onLogged, onDismiss }) {
   init();
   _state.cardId = cardId;
-  _state.eventName = eventName || null;
+  _state.eventName = eventName || null;   // shown in the title only; the cloud decides which event this is
+  _state.missed = !!missed;
   _state.onLogged = onLogged || null;
   _state.onDismiss = onDismiss || null;
   startFrame1();

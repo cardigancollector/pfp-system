@@ -1100,6 +1100,38 @@ function showDashboard(asOwner) {
   buildDashboard(asOwner);
   showYourLifeBtn();
   showGamingBtn(asOwner);
+  if (asOwner) offerWaitingReaction();
+}
+
+// ── Missed reaction ─────────────────────────────────────────────────────────
+// When the owner opens their card, ask the cloud whether an event is still
+// waiting for its one reaction (say they closed the page before reacting).
+// If so, open the picker for it. Asked once per page load.
+const REACTION_STATUS_URL = 'https://us-central1-pfp-system.cloudfunctions.net/reactionStatus';
+let _reactionOffered = false;
+
+async function offerWaitingReaction() {
+  if (_reactionOffered || !window._pfpUser || !urlCardId) return;
+  _reactionOffered = true;
+  try {
+    const token = await window._pfpUser.getIdToken();
+    const data = await fetch(REACTION_STATUS_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body:    JSON.stringify({ cardId: urlCardId }),
+    }).then(r => r.json());
+    if (data.success && data.waiting) {
+      openReactionPopup({
+        cardId:    urlCardId,
+        eventName: data.eventName,
+        missed:    true,
+        onLogged:  () => { fetchFreshLivingCard().then(() => buildDashboard(isOwner)); },
+        onDismiss: () => {},
+      });
+    }
+  } catch (e) {
+    console.warn('Reaction status check failed:', e);
+  }
 }
 
 function doSignOut() {
@@ -1430,10 +1462,12 @@ async function logScan() {
           '<div class="scan-event-line">' + polarityIcon + ' <strong>' + data.badge + ' ' + data.eventName + '</strong></div>' +
           '<div class="scan-flavour-line">' + data.flavourText + '</div>';
 
-        // Fire the reaction widget — verb/phrase/object picker (Frame 1).
+        // Fire the reaction widget — verb/phrase/object picker (Frame 1) —
+        // only when the cloud says this scan left a reaction waiting. A day
+        // being shown again, or a thread day, doesn't.
         // Locking in and logging both happen inside the widget itself; it
         // calls back here once a reaction has actually been saved.
-        setTimeout(() => {
+        if (data.reactionWaiting) setTimeout(() => {
           openReactionPopup({
             cardId: urlCardId,
             eventName: data.eventName,
