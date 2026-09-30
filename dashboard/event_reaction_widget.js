@@ -323,6 +323,23 @@ function startFrame1() {
   document.getElementById('erw-frame1-status').textContent = '';
 }
 
+/* ── Sign-in proof for the cloud ───────────────────────────────────────────
+   Locking in and logging a reaction both change a card's Life Value, so the
+   cloud only accepts them from the card's signed-in owner. This fetches the
+   signed-in user's token from the dashboard page (index.html sets
+   window._pfpUser once Firebase knows who is signed in). */
+async function authHeaders() {
+  const user = window._pfpUser;
+  if (!user || typeof user.getIdToken !== 'function') {
+    throw new Error('Please sign in again to continue.');
+  }
+  const token = await user.getIdToken();
+  return {
+    'Content-Type':  'application/json',
+    'Authorization': 'Bearer ' + token,
+  };
+}
+
 async function lockInSelection() {
   const { verb, phrase, object } = _state.selected;
   if (!verb || !phrase || !object) return;
@@ -334,7 +351,7 @@ async function lockInSelection() {
   try {
     const res = await fetch(PREVIEW_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),
       body: JSON.stringify({ cardId: _state.cardId, verb, phrase, object, eventName: _state.eventName }),
     });
     const data = await res.json();
@@ -414,7 +431,7 @@ async function logReaction() {
   try {
     const res = await fetch(LOG_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),
       body: JSON.stringify({ cardId: _state.cardId }),
     });
     const data = await res.json();
