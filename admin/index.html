@@ -278,12 +278,9 @@
 
   <!-- Auth -->
   <div class="auth-panel" id="auth-panel">
-    <div>
-      <div class="field-label">Admin Password</div>
-      <input type="password" id="admin-pass" placeholder="Enter admin password" />
-    </div>
-    <div class="status-err" id="auth-err">// ACCESS DENIED — INVALID PASSWORD</div>
-    <button class="btn-access" onclick="authenticate()">ACCESS SYSTEM</button>
+    <div class="field-label">Sign in as pfpcards@gmail.com</div>
+    <div class="status-err" id="auth-err"></div>
+    <button class="btn-access" type="button" id="signin-btn">SIGN IN WITH GOOGLE</button>
   </div>
 
   <!-- Main hub (hidden until auth) -->
@@ -366,61 +363,6 @@
 
 <script>
   const API       = 'https://script.google.com/macros/s/AKfycbwtgR6eiGfCtBSij8OhbxNyaQ5CPI0KpbuAZ9Rmw2SXHj-0EmRU20PVGpq5SRPX3OMy/exec';
-  const LOGIN_URL = 'https://us-central1-pfp-system.cloudfunctions.net/adminLogin';
-
-  async function authenticate() {
-    const input = document.getElementById('admin-pass');
-    const err   = document.getElementById('auth-err');
-    const btn   = document.querySelector('.btn-access');
-    const pass  = input.value;
-
-    err.style.display = 'none';
-
-    if (!pass) {
-      err.textContent = '// ACCESS DENIED \u2014 NO PASSWORD ENTERED';
-      err.style.display = 'block';
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'CHECKING...';
-
-    try {
-      const res = await fetch(LOGIN_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ password: pass })
-      });
-      const data = await res.json();
-
-      btn.disabled = false;
-      btn.textContent = 'ACCESS SYSTEM';
-      input.value = '';
-
-      if (data.success && data.token) {
-        sessionStorage.setItem('pfpAdminToken', data.token);
-        document.getElementById('auth-panel').classList.add('hidden');
-        const main = document.getElementById('main');
-        main.classList.remove('hidden');
-        main.style.display = 'flex';
-        checkAPI();
-      } else {
-        err.textContent = '// ACCESS DENIED \u2014 ' + ((data.error || 'INVALID PASSWORD').toUpperCase());
-        err.style.display = 'block';
-        input.focus();
-      }
-    } catch (e) {
-      btn.disabled = false;
-      btn.textContent = 'ACCESS SYSTEM';
-      err.textContent = '// ACCESS DENIED \u2014 COULD NOT REACH LOGIN SERVER';
-      err.style.display = 'block';
-    }
-  }
-
-  document.getElementById('admin-pass').addEventListener('keydown', e => {
-    if (e.key === 'Enter') authenticate();
-  });
-
   async function checkAPI() {
     const dot    = document.getElementById('api-dot');
     const status = document.getElementById('api-status');
@@ -441,6 +383,82 @@
   function go(url) {
     window.location.href = url;
   }
+</script>
+
+<script type="module">
+  // ── SIGN-IN (Google, pfpcards@gmail.com only) ──
+  // The hub stays hidden until the cloud accepts the Google account.
+  // The session lasts only while this tab is open.
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, signOut,
+    onAuthStateChanged, setPersistence, browserSessionPersistence
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+  const app = initializeApp({
+    apiKey:            "AIzaSyCnZez3HLcarYUo8mAYyj9p7K6zbqwE_KU",
+    authDomain:        "pfp-system.firebaseapp.com",
+    projectId:         "pfp-system",
+    storageBucket:     "pfp-system.firebasestorage.app",
+    messagingSenderId: "643360345707",
+    appId:             "1:643360345707:web:9e5b9a902b41169ae5eb2e"
+  });
+  const auth = getAuth(app);
+  try { await setPersistence(auth, browserSessionPersistence); } catch (e) { /* default */ }
+
+  const CHECK_ENDPOINT = 'https://us-central1-pfp-system.cloudfunctions.net/adminCheck';
+  const err  = document.getElementById('auth-err');
+  const main = document.getElementById('main');
+
+  function showErr(text) {
+    err.textContent = text;
+    err.style.display = text ? 'block' : 'none';
+  }
+
+  function lock(message) {
+    main.classList.add('hidden');
+    main.style.display = 'none';
+    document.getElementById('auth-panel').classList.remove('hidden');
+    showErr(message || '');
+  }
+
+  document.getElementById('signin-btn').addEventListener('click', async () => {
+    showErr('');
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      showErr((e && e.code === 'auth/popup-blocked')
+        ? '// THE BROWSER BLOCKED THE SIGN-IN WINDOW — ALLOW POP-UPS AND TRY AGAIN'
+        : '// SIGN-IN FAILED OR WAS CANCELLED');
+    }
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { lock(''); return; }
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(CHECK_ENDPOINT, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body:    '{}',
+      });
+      const data = await res.json();
+      if (!data.success) {
+        await signOut(auth);
+        lock('// ACCESS DENIED — SIGN IN AS PFPCARDS@GMAIL.COM');
+        return;
+      }
+    } catch (e) {
+      lock('// COULD NOT REACH THE SERVER — TRY AGAIN');
+      return;
+    }
+    document.getElementById('auth-panel').classList.add('hidden');
+    main.classList.remove('hidden');
+    main.style.display = 'flex';
+    checkAPI();
+  });
 </script>
 </body>
 </html>

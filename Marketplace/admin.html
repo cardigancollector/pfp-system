@@ -503,13 +503,12 @@
 <div class="bg-fixed"></div>
 <div class="bg-grid"></div>
 
-<!-- PASSWORD GATE -->
+<!-- SIGN-IN GATE (Google, pfpcards@gmail.com only) -->
 <div id="gate">
   <div class="gate-box">
     <div class="gate-logo">XP</div>
     <div class="gate-sub">Admin Access</div>
-    <input class="gate-input" type="password" id="gate-input" placeholder="••••••••" autocomplete="current-password">
-    <button class="gate-btn" onclick="checkPassword()">Enter</button>
+    <button class="gate-btn" type="button" id="gate-signin-btn">Sign in with Google</button>
     <div class="gate-err" id="gate-err"></div>
   </div>
 </div>
@@ -520,7 +519,10 @@
     <div class="nav-logo">XP</div>
     <a href="marketplace.html" style="font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#a8a9ad;text-decoration:none;cursor:pointer;transition:color 0.2s;" onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='#a8a9ad'">← Back to Marketplace</a>
   </div>
-  <div class="nav-badge">Admin Panel</div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <a href="#" id="nav-signout" style="display:none;font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#a8a9ad;text-decoration:none;">Sign out</a>
+    <div class="nav-badge">Admin Panel</div>
+  </div>
 </nav>
 
 <!-- MAIN -->
@@ -716,12 +718,7 @@
         Open the card's dashboard as its owner to react. It does not start a thread.
       </p>
 
-      <div id="ev-signin-box">
-        <button class="btn-submit" type="button" id="ev-signin-btn">Sign in with Google</button>
-        <span class="field-hint" style="display:block;margin-top:8px;">Only pfpcards@gmail.com is accepted.</span>
-      </div>
-
-      <div class="field-grid" id="ev-fields" style="display:none;">
+      <div class="field-grid" id="ev-fields">
         <div class="field">
           <label class="field-label">Card ID <span class="field-required">*</span></label>
           <input class="field-input" type="text" id="ev-card-id" placeholder="e.g. EVO-ART-1-108">
@@ -735,12 +732,11 @@
       </div>
     </div>
 
-    <div class="form-actions" id="ev-actions" style="display:none;">
+    <div class="form-actions" id="ev-actions">
       <button class="btn-submit" type="button" id="ev-fire-btn">
         <span class="spinner" id="ev-spinner"></span>
         <span>Fire Event</span>
       </button>
-      <button class="btn-reset" type="button" id="ev-signout-btn">Sign out of Google</button>
     </div>
 
     <div class="form-body" style="padding-top:0;">
@@ -770,7 +766,8 @@
     messagingSenderId: "643360345707",
     appId:             "1:643360345707:web:9e5b9a902b41169ae5eb2e"
   };
-  const EV_ENDPOINT = 'https://us-central1-pfp-system.cloudfunctions.net/adminForceEvent';
+  const EV_ENDPOINT    = 'https://us-central1-pfp-system.cloudfunctions.net/adminForceEvent';
+  const CHECK_ENDPOINT = 'https://us-central1-pfp-system.cloudfunctions.net/adminCheck';
 
   const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   const auth = getAuth(app);
@@ -816,25 +813,59 @@
     }
   }
 
-  el('ev-signin-btn').addEventListener('click', async () => {
-    evMsg('', '');
+  // ── PAGE SIGN-IN ──
+  // The page's tools stay hidden until the cloud accepts the Google account.
+  // Every action is checked again in the cloud anyway.
+  function showGate(message) {
+    window._adminGetToken = null;
+    el('main').classList.remove('visible');
+    el('gate').style.display = '';
+    el('nav-signout').style.display = 'none';
+    el('gate-err').textContent = message || '';
+  }
+
+  el('gate-signin-btn').addEventListener('click', async () => {
+    el('gate-err').textContent = '';
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      await signInWithPopup(auth, provider);
     } catch (e) {
-      evMsg(e && e.code === 'auth/popup-blocked'
+      el('gate-err').textContent = (e && e.code === 'auth/popup-blocked')
         ? 'The browser blocked the sign-in window. Allow pop-ups for this site and try again.'
-        : 'Sign-in failed or was cancelled.', 'error');
+        : 'Sign-in failed or was cancelled.';
     }
   });
 
-  el('ev-signout-btn').addEventListener('click', () => signOut(auth));
+  el('nav-signout').addEventListener('click', (e) => { e.preventDefault(); signOut(auth); });
 
-  onAuthStateChanged(auth, (user) => {
-    const signedIn = !!user;
-    el('ev-signin-box').style.display = signedIn ? 'none' : 'block';
-    el('ev-fields').style.display     = signedIn ? '' : 'none';
-    el('ev-actions').style.display    = signedIn ? '' : 'none';
-    if (signedIn) loadEvents();
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { showGate(''); return; }
+    el('gate-err').textContent = 'Checking…';
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(CHECK_ENDPOINT, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body:    '{}',
+      });
+      const data = await res.json();
+      if (!data.success) {
+        await signOut(auth);
+        showGate('That Google account isn\'t allowed. Sign in as pfpcards@gmail.com.');
+        return;
+      }
+    } catch (e) {
+      showGate('Connection error — please try again.');
+      return;
+    }
+    window._adminGetToken = () => user.getIdToken();
+    el('gate').style.display = 'none';
+    el('gate-err').textContent = '';
+    el('main').classList.add('visible');
+    el('nav-signout').style.display = '';
+    loadListings();
+    loadEvents();
   });
 
   el('ev-fire-btn').addEventListener('click', async () => {
@@ -870,42 +901,21 @@
   const FUNCTIONS_BASE = 'https://us-central1-pfp-system.cloudfunctions.net';
 
   let editingCardId  = null;
-  let adminToken     = null;
 
-  // ── PASSWORD GATE ──
-  async function checkPassword() {
-    const val = document.getElementById('gate-input').value;
-    if (!val) return;
-
-    document.getElementById('gate-err').textContent = 'Checking…';
-
-    try {
-      const result = await apiFetch('/adminLogin', { password: val });
-
-      if (result.success) {
-        adminToken = result.token;
-        document.getElementById('gate').style.display = 'none';
-        document.getElementById('main').classList.add('visible');
-        loadListings();
-      } else {
-        document.getElementById('gate-err').textContent = 'Incorrect password.';
-        document.getElementById('gate-input').value = '';
-        document.getElementById('gate-input').focus();
-      }
-    } catch(err) {
-      document.getElementById('gate-err').textContent = 'Connection error — please try again.';
-    }
+  // The page's sign-in lives in the module script at the bottom. It sets
+  // window._adminGetToken only after the cloud has accepted the Google
+  // account; every admin action sends that token in the header.
+  async function adminHeaders() {
+    if (typeof window._adminGetToken !== 'function') throw new Error('Not signed in.');
+    const token = await window._adminGetToken();
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
   }
 
-  document.getElementById('gate-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') checkPassword();
-  });
-
-  // ── JSONP ──
+  // ── Admin call (Google sign-in token in the header) ──
   async function apiFetch(endpoint, params) {
     const res  = await fetch(FUNCTIONS_BASE + endpoint, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await adminHeaders(),
       body:    JSON.stringify(params),
     });
     return res.json();
@@ -1115,7 +1125,6 @@
 
     try {
       const result = await apiFetch('/upsertMarketplaceItem', {
-        token:       adminToken,
         cardId:      cardId,
         cardName:    cardName,
         format:      format,
@@ -1163,8 +1172,8 @@
     const spinner   = document.getElementById('dbg-spinner-' + action);
     const buttons   = ['btn-force-event', 'btn-force-scan', 'btn-fast-forward'];
 
-    if (!adminToken) {
-      showDbgMsg('Not logged in — please refresh and log in again.', 'error');
+    if (typeof window._adminGetToken !== 'function') {
+      showDbgMsg('Not signed in — please refresh and sign in again.', 'error');
       return;
     }
     if (!cardId) {
@@ -1173,8 +1182,7 @@
     }
 
     let url = FUNCTIONS_BASE + '/debugTrigger'
-      + '?token=' + encodeURIComponent(adminToken)
-      + '&cardId=' + encodeURIComponent(cardId)
+      + '?cardId=' + encodeURIComponent(cardId)
       + '&action=' + encodeURIComponent(action);
 
     if (action === 'forceEvent') {
@@ -1197,7 +1205,9 @@
     output.textContent = '';
 
     try {
-      const res  = await fetch(url);
+      const res  = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + await window._adminGetToken() },
+      });
       const text = await res.text();
 
       // Try to pretty-print if it's JSON, otherwise show raw text.
