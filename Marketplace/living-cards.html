@@ -609,9 +609,9 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
-  // Card images live in the Analyzer API (Google Apps Script), not Firestore —
+  // Card images come from the cloud card lookup (pfpApi) —
   // same source the Dashboard page (index.html) uses for its card art.
-  const ANALYZER_API = 'https://script.google.com/macros/s/AKfycbyq1AQ85ctZyKWXflBEX2r7mxTdyBxJOYXSlNcDgLGotqu28buVV4YHfBmO1MOvGDc/exec';
+  const ANALYZER_API = 'https://us-central1-pfp-system.cloudfunctions.net/pfpApi';
 
   function jsonpFetch(url, timeout) {
     return new Promise((resolve, reject) => {
