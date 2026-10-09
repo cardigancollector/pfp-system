@@ -4,60 +4,88 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>PfP Admin — Entry Form</title>
+<title>PfP Card Database</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --gold: #d4af37; --gold-light: #f0d060; --purple: #6d28d9; --purple-dark: #1e0a3c;
+    --gold: #d4af37; --gold-light: #f0d060; --purple: #6d28d9; --purple-mid: #7c3aed; --purple-dark: #1e0a3c;
     --bg: #0d0618; --surface: #160828; --surface2: #1e1035;
     --border: rgba(212,175,55,0.25); --text: #e8e0f0; --text-dim: #9d8fbf;
     --blue: #0ea5e9; --blue-light: #7dd3fc; --success: #22c55e; --error: #ef4444;
+    --evo: #a855f7; --evo-light: #d8b4fe; --evo-border: rgba(168,85,247,0.35);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Crimson Pro', Georgia, serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 17px; }
   .hidden { display: none !important; }
 
+  /* ── Top bar ── */
   .topbar { background: linear-gradient(90deg, var(--purple-dark), #2d0a5e, var(--purple-dark)); border-bottom: 2px solid var(--gold);
-            padding: 0.8rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+            padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+            box-shadow: 0 4px 20px rgba(109,40,217,0.5); }
   .topbar h1 { font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--gold-light); letter-spacing: 2px; }
+  .modes { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .mode-btn { font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 1px; padding: 0.5rem 1rem; border-radius: 4px;
+              border: 2px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
+  .mode-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold-light); }
+  .mode-btn.active { background: linear-gradient(135deg, var(--purple), var(--purple-mid)); border-color: var(--gold); color: var(--gold-light);
+                     box-shadow: 0 0 15px rgba(109,40,217,0.5); }
+  .mode-btn.active.evo   { background: linear-gradient(135deg, #3b0764, var(--evo)); border-color: var(--evo); color: #f3e8ff; }
+  .mode-btn.active.print { background: linear-gradient(135deg, #0c4a6e, var(--blue)); border-color: var(--blue); color: #e0f2fe; }
+  .mode-btn:disabled { opacity: 0.35; cursor: not-allowed; }
   #whoBox { display: flex; align-items: center; gap: 0.75rem; color: var(--text-dim); font-size: 0.95rem; }
 
-  main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  /* ── Sign-in screens ── */
+  .center-wrap { padding: 1.5rem 1rem; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.25rem; }
   .panel.center { text-align: center; max-width: 440px; margin: 3rem auto; }
-  .panel h2 { font-family: 'Cinzel', serif; font-size: 1rem; letter-spacing: 2px; color: var(--gold); margin-bottom: 1rem;
-              padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
   .panel.center h2 { border-bottom: none; }
   .panel.center p { color: var(--text-dim); margin-bottom: 1.25rem; }
+  .panel h2 { font-family: 'Cinzel', serif; font-size: 0.95rem; letter-spacing: 2px; color: var(--gold); margin-bottom: 1rem;
+              padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); text-transform: uppercase; }
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+  /* ── Two-part layout: picture on the left, form on the right ── */
+  .main { display: flex; min-height: calc(100vh - 64px); }
+  .image-panel { width: 280px; min-width: 280px; background: var(--surface); border-right: 2px solid var(--border);
+                 display: flex; flex-direction: column; align-items: center; padding: 1.5rem 1rem; gap: 0.9rem; }
+  .image-panel-title { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; }
+  .card-frame { width: 220px; height: 308px; border: 2px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface2);
+                position: relative; display: flex; align-items: center; justify-content: center;
+                box-shadow: 0 0 30px rgba(109,40,217,0.3), inset 0 0 30px rgba(0,0,0,0.5); transition: box-shadow 0.4s; }
+  .card-frame.has-image { border-color: var(--gold); cursor: zoom-in; box-shadow: 0 0 30px rgba(212,175,55,0.3); }
+  .card-frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .card-frame .no-image { color: var(--text-dim); font-style: italic; font-size: 0.9rem; text-align: center; padding: 1rem; }
+  .side-name { font-family: 'Cinzel', serif; color: var(--gold-light); text-align: center; font-size: 1.05rem; }
+  .side-meta { color: var(--text-dim); text-align: center; font-size: 0.9rem; }
+  .side-note { color: var(--text-dim); text-align: center; font-size: 0.85rem; font-style: italic; }
+  .side-pending { color: var(--gold-light); text-align: center; font-size: 0.9rem; }
+  .form-panel { flex: 1; overflow-y: auto; padding: 1.5rem 2rem 4rem; }
+
+  /* ── Form parts ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
   .group { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem; }
   .grid .group { margin-bottom: 0; }
-  label { font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); }
+  label, .label { font-family: 'Cinzel', serif; font-size: 0.66rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); }
   input, select, textarea { background: var(--surface2); border: 1px solid rgba(212,175,55,0.2); border-radius: 4px; color: var(--text);
                             font-family: 'Crimson Pro', serif; font-size: 1rem; padding: 0.5rem 0.7rem; width: 100%; }
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(212,175,55,0.15); }
   select option { background: var(--surface2); color: var(--text); }
   textarea { min-height: 80px; resize: vertical; }
-  #cardSelect { margin-top: 0.4rem; }
+  .readonly { background: rgba(109,40,217,0.1); border: 1px solid rgba(109,40,217,0.3); border-radius: 4px; padding: 0.5rem 0.75rem;
+              color: var(--text-dim); font-style: italic; min-height: 2.4rem; }
+  .readonly.strong { background: rgba(212,175,55,0.08); border-color: rgba(212,175,55,0.4); color: var(--gold-light);
+                     font-style: normal; font-weight: 700; font-size: 1.1rem; }
+  #cardSelect, #editSelect { margin-top: 0.4rem; }
 
-  .chosen { margin-top: 0.6rem; padding: 1rem; border: 1px solid rgba(212,175,55,0.4); border-radius: 6px; background: rgba(212,175,55,0.06);
-            display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap; }
-  .chosen .name { font-family: 'Cinzel', serif; color: var(--gold-light); font-size: 1.15rem; }
+  .trait-group { margin-bottom: 1rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+  .chip { font-family: 'Crimson Pro', serif; font-size: 0.95rem; letter-spacing: 0; padding: 0.25rem 0.7rem; border-radius: 999px;
+          border: 1px solid rgba(212,175,55,0.25); background: var(--surface2); color: var(--text-dim); cursor: pointer; }
+  .chip:hover { border-color: var(--gold); color: var(--text); }
+  .chip[aria-pressed="true"] { background: linear-gradient(135deg, var(--purple), var(--purple-mid)); border-color: var(--gold); color: var(--gold-light); }
+
+  .chosen { margin-top: 0.6rem; padding: 0.9rem 1rem; border: 1px solid rgba(212,175,55,0.4); border-radius: 6px; background: rgba(212,175,55,0.06); }
+  .chosen .name { font-family: 'Cinzel', serif; color: var(--gold-light); font-size: 1.1rem; }
   .chosen .meta { color: var(--text-dim); font-size: 0.9rem; }
-  .chosen .zoom-hint { color: var(--text-dim); font-size: 0.85rem; font-style: italic; margin-top: 0.4rem; }
-
-  .card-frame { width: 180px; height: 252px; flex-shrink: 0; border: 2px solid var(--border); border-radius: 8px; overflow: hidden;
-                background: var(--surface2); position: relative; display: flex; align-items: center; justify-content: center;
-                box-shadow: 0 0 30px rgba(109,40,217,0.3), inset 0 0 30px rgba(0,0,0,0.5); transition: box-shadow 0.4s; }
-  .card-frame.has-image { border-color: var(--gold); cursor: zoom-in; box-shadow: 0 0 30px rgba(212,175,55,0.3); }
-  .card-frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .card-frame .no-image { color: var(--text-dim); font-style: italic; font-size: 0.9rem; text-align: center; padding: 1rem; }
-
-  #imageOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center;
-                  justify-content: center; cursor: zoom-out; padding: 16px; }
-  #imageOverlay img { max-width: 100%; max-height: 92vh; border-radius: 8px; border: 2px solid var(--gold);
-                      box-shadow: 0 0 60px rgba(212,175,55,0.4); object-fit: contain; }
 
   .preview { background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.35); border-radius: 8px; padding: 1rem 1.25rem; margin: 0.5rem 0 1rem; }
   .preview-label { font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 2px; text-transform: uppercase; color: var(--blue-light); }
@@ -65,7 +93,7 @@
   .preview-formula { color: var(--text-dim); font-style: italic; font-size: 0.92rem; }
   .preview-bonus { margin-top: 0.5rem; color: var(--gold-light); font-size: 0.95rem; }
 
-  .row-end { display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap; }
+  .row-end { display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
   button { font-family: 'Cinzel', serif; font-size: 0.78rem; letter-spacing: 1.2px; border-radius: 4px; cursor: pointer; padding: 0.7rem 1.5rem; border: 2px solid; }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-gold { background: linear-gradient(135deg, #854d0e, var(--gold)); border-color: var(--gold); color: var(--bg); font-weight: 700; }
@@ -73,6 +101,11 @@
   .btn-ghost:hover { border-color: var(--gold); color: var(--gold-light); }
   .btn-danger { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.6); color: #fca5a5; padding: 0.45rem 1rem; }
   .btn-danger:hover { background: rgba(239,68,68,0.3); color: #fff; }
+  .btn-evo { background: linear-gradient(135deg, #3b0764, var(--purple-mid)); border-color: var(--evo); color: #f3e8ff; font-weight: 700; }
+  .btn-small { padding: 0.45rem 1rem; font-size: 0.72rem; }
+  .file-btn { display: inline-block; font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 1.2px; padding: 0.5rem 1rem;
+              border-radius: 4px; border: 1px solid var(--gold); color: var(--gold); cursor: pointer; text-transform: none; }
+  .file-btn:hover { background: rgba(212,175,55,0.15); }
 
   .error { color: var(--error); margin-top: 0.75rem; min-height: 1.2rem; }
   .hint { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 1rem; }
@@ -83,7 +116,7 @@
   .codes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
   .code-box { background: var(--surface2); border: 2px solid var(--gold); border-radius: 8px; padding: 1rem; text-align: center; }
   .code-label { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.4rem; }
-  .code { font-family: 'Courier New', monospace; font-size: 2.6rem; font-weight: 700; letter-spacing: 0.35em; color: var(--gold-light); }
+  .code { font-family: 'Courier New', monospace; font-size: 2.4rem; font-weight: 700; letter-spacing: 0.25em; color: var(--gold-light); word-break: break-all; }
   .facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin-bottom: 1.25rem; }
   .facts dt { color: var(--text-dim); }
   .facts dd { font-weight: 600; word-break: break-word; }
@@ -93,29 +126,66 @@
   .coll-name { font-family: 'Cinzel', serif; color: var(--gold-light); }
   .coll-meta { color: var(--text-dim); font-size: 0.9rem; }
 
+  /* ── Evolution ── */
+  .panel.evo { border-color: var(--evo-border); background: linear-gradient(135deg, rgba(59,7,100,0.25), var(--surface)); }
+  .panel.evo h2 { color: var(--evo-light); border-bottom-color: var(--evo-border); }
+  .evo-id { font-family: 'Courier New', monospace; font-size: 1.3rem; color: var(--evo-light); font-weight: 700; letter-spacing: 1px; word-break: break-all; }
+  .evo-none { color: rgba(196,181,253,0.6); font-style: italic; }
+  .code-list { list-style: none; margin: 0.5rem 0 1rem; }
+  .code-list li { font-family: 'Courier New', monospace; font-size: 1.1rem; padding: 0.3rem 0; color: var(--text); }
+  .code-list li span { font-family: 'Crimson Pro', serif; color: var(--text-dim); font-size: 0.95rem; margin-left: 0.75rem; }
+  a.link-btn { font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 1px; padding: 0.5rem 1rem; border-radius: 4px;
+               border: 1px solid var(--evo-border); color: #c4b5fd; text-decoration: none; display: inline-block; }
+  a.link-btn:hover { background: rgba(168,85,247,0.15); border-color: var(--evo); }
+
   .spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%;
              animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.9rem 1.3rem; border-radius: 6px; font-family: 'Cinzel', serif;
-           font-size: 0.8rem; letter-spacing: 1px; opacity: 0; transform: translateY(80px); transition: all 0.35s; pointer-events: none; }
+  #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.9rem 1.3rem; border-radius: 6px; font-family: 'Cinzel', serif; z-index: 3000;
+           font-size: 0.8rem; letter-spacing: 1px; opacity: 0; transform: translateY(80px); transition: all 0.35s; pointer-events: none; max-width: 90vw; }
   #toast.show { opacity: 1; transform: translateY(0); }
   #toast.ok  { background: rgba(34,197,94,0.15); border: 1px solid var(--success); color: var(--success); }
   #toast.bad { background: rgba(239,68,68,0.15); border: 1px solid var(--error); color: var(--error); }
+
+  #imageOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: flex; align-items: center;
+                  justify-content: center; cursor: zoom-out; padding: 16px; }
+  #imageOverlay img { max-width: 100%; max-height: 92vh; border-radius: 8px; border: 2px solid var(--gold);
+                      box-shadow: 0 0 60px rgba(212,175,55,0.4); object-fit: contain; }
+
+  .modal-back { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1500; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .modal { background: linear-gradient(135deg, #160828, #0d0618); border: 2px solid var(--gold); border-radius: 10px; width: 100%; max-width: 700px;
+           max-height: 88vh; display: flex; flex-direction: column; }
+  .modal header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-family: 'Cinzel', serif; color: var(--gold-light); letter-spacing: 2px; }
+  .modal .body { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; }
+  .modal textarea { min-height: 300px; line-height: 1.6; }
+  .modal footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+  @media (max-width: 800px) {
+    .main { flex-direction: column; }
+    .image-panel { width: 100%; min-width: 0; border-right: none; border-bottom: 2px solid var(--border); }
+    .form-panel { padding: 1.25rem 1rem 4rem; }
+  }
 </style>
 </head>
 <body>
 
 <header class="topbar">
-  <h1>⚜ PfP Entry Form</h1>
+  <h1>⚜ PfP Card Database</h1>
+  <nav class="modes hidden" id="modeButtons">
+    <button class="mode-btn" id="btnNew"   type="button">＋ New Card</button>
+    <button class="mode-btn" id="btnEdit"  type="button">✎ Edit Card</button>
+    <button class="mode-btn" id="btnEvo"   type="button" disabled title="Choose a card in Edit Card first">∞ Evolution</button>
+    <button class="mode-btn" id="btnPrint" type="button">🖨 Add Print</button>
+    <button class="mode-btn" id="btnStory" type="button">📜 PfP Card Story</button>
+  </nav>
   <div id="whoBox" class="hidden">
     <span id="whoEmail"></span>
     <button id="signOutBtn" class="btn-ghost" type="button">Sign out</button>
   </div>
 </header>
 
-<main>
-
+<div class="center-wrap" id="gate">
   <!-- Waiting for Firebase to say who is signed in -->
   <section id="loadingScreen" class="panel center">
     <div class="spinner"></div>
@@ -136,135 +206,282 @@
     <p>You are signed in as <strong id="refusedEmail"></strong>. This page only works for the PfP Cards account.</p>
     <button id="refusedSignOutBtn" class="btn-gold" type="button">Sign out and switch account</button>
   </section>
+</div>
 
-  <div id="app" class="hidden">
+<div id="app" class="main hidden">
+
+  <!-- ══ Picture panel ══ -->
+  <aside class="image-panel">
+    <div class="image-panel-title">Card Preview</div>
+    <div class="card-frame" id="cardFrame" title="Click to see full size">
+      <span class="no-image" id="cardNoImage">No picture</span>
+    </div>
+    <div class="side-name" id="sideName">—</div>
+    <div class="side-meta" id="sideMeta"></div>
+    <div class="side-note hidden" id="zoomHint">Click the picture to see it full size.</div>
+
+    <div id="pictureTools" class="hidden" style="text-align:center;">
+      <label class="file-btn" for="pictureInput">Choose picture…</label>
+      <input id="pictureInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden">
+      <div class="side-note" style="margin-top:0.4rem;">JPEG, PNG or WebP, up to 5 MB.</div>
+      <div class="side-pending hidden" id="pendingNote"></div>
+      <button class="btn-ghost btn-small hidden" id="dropPictureBtn" type="button" style="margin-top:0.4rem;">Don't use this picture</button>
+    </div>
+  </aside>
+
+  <div class="form-panel">
+
+    <!-- ══ New / Edit card ══ -->
+    <div id="cardMode">
+
+      <section class="panel hidden" id="editPicker">
+        <h2>Choose a card to edit</h2>
+        <input id="editSearch" type="text" placeholder="Type to search by card name or PFP id…" autocomplete="off">
+        <select id="editSelect" size="8"></select>
+      </section>
+
+      <div id="cardForm">
+        <section class="panel">
+          <h2 id="cardFormTitle">New Card</h2>
+          <div class="grid">
+            <div class="group">
+              <label for="f_card">Card name</label>
+              <input id="f_card" type="text" maxlength="100" autocomplete="off">
+            </div>
+            <div class="group">
+              <span class="label">PFP id</span>
+              <div class="readonly" id="f_id">Given when saved</div>
+            </div>
+            <div class="group">
+              <span class="label">Value</span>
+              <div class="readonly strong" id="f_value">—</div>
+            </div>
+            <div class="group">
+              <span class="label">Rank</span>
+              <div class="readonly" id="f_rank">Worked out when saved</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Card details</h2>
+          <div class="grid" id="detailFields"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Traits</h2>
+          <div id="traitFields"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Notes</h2>
+          <div class="group">
+            <label for="f_description">Description / notes</label>
+            <textarea id="f_description" maxlength="2000"></textarea>
+          </div>
+        </section>
+
+        <div class="row-end">
+          <button id="clearCardBtn" class="btn-ghost" type="button">Clear</button>
+          <button id="saveCardBtn" class="btn-gold" type="button">⚜ Save Card</button>
+        </div>
+        <p id="cardError" class="error"></p>
+
+        <section class="panel hidden" id="storyPanel" style="margin-top:1rem;">
+          <h2>This card's story</h2>
+          <textarea id="f_story" maxlength="20000" style="min-height:140px;"></textarea>
+          <div class="row-end" style="margin-top:0.75rem;">
+            <button id="saveStoryBtn" class="btn-gold btn-small" type="button">📖 Save Card Story</button>
+          </div>
+          <p id="storyError" class="error"></p>
+        </section>
+      </div>
+    </div>
+
+    <!-- ══ Evolution ══ -->
+    <div id="evoMode" class="hidden">
+      <section class="panel evo">
+        <h2>∞ Living Card</h2>
+        <div class="chosen" style="margin:0 0 1rem;">
+          <div class="name" id="evoName"></div>
+          <div class="meta" id="evoMeta"></div>
+        </div>
+
+        <div id="evoNotLiving" class="hidden">
+          <p class="hint">This card isn't a living card yet. Making it one creates its living card, its game record and a claim code, all together.</p>
+          <div class="row-end">
+            <button id="evolveBtn" class="btn-evo" type="button">∞ Make it a Living Card</button>
+          </div>
+        </div>
+
+        <div id="evoLiving" class="hidden">
+          <div class="label">Living card ID</div>
+          <div class="evo-id" id="evoId"></div>
+          <p class="hint" id="evoStatus" style="margin-top:0.4rem;"></p>
+          <div class="label">Claim code</div>
+          <ul class="code-list" id="evoCodes"></ul>
+          <div class="row-end" style="justify-content:flex-start;">
+            <a id="evoDashLink" class="link-btn" href="#" target="_blank" rel="noopener">View Living Card →</a>
+            <button id="resetBtn" class="btn-danger" type="button">⟲ Reset Living Card</button>
+          </div>
+        </div>
+        <p id="evoError" class="error"></p>
+      </section>
+
+      <section class="panel result hidden" id="evoResult">
+        <h2>✓ Living card made</h2>
+        <p class="warn">Put this claim code on the card. It is also kept with the card, so it shows here whenever you open this card.</p>
+        <div class="codes">
+          <div class="code-box">
+            <div class="code-label">Claim code</div>
+            <div class="code" id="evoNewCode"></div>
+          </div>
+        </div>
+        <dl class="facts">
+          <dt>Living card ID</dt> <dd id="evoNewId"></dd>
+          <dt>Value</dt>          <dd id="evoNewValue"></dd>
+        </dl>
+      </section>
+    </div>
 
     <!-- ══ Add a print ══ -->
-    <section class="panel" id="printPanel">
-      <h2>🖨 Add Print</h2>
+    <div id="printMode" class="hidden">
+      <section class="panel" id="printPanel">
+        <h2>🖨 Add Print</h2>
 
-      <div class="group">
-        <label for="cardSearch">Card</label>
-        <input id="cardSearch" type="text" placeholder="Type to search by card name or PFP id…" autocomplete="off">
-        <select id="cardSelect" size="8"></select>
-        <div id="cardChosen" class="chosen hidden">
-          <div class="card-frame" id="cardFrame" title="Click to see full size">
-            <span class="no-image" id="cardNoImage">No image</span>
-          </div>
-          <div>
+        <div class="group">
+          <label for="cardSearch">Card</label>
+          <input id="cardSearch" type="text" placeholder="Type to search by card name or PFP id…" autocomplete="off">
+          <select id="cardSelect" size="8"></select>
+          <div id="cardChosen" class="chosen hidden">
             <div class="name" id="chosenName"></div>
             <div class="meta" id="chosenMeta"></div>
-            <div class="zoom-hint hidden" id="zoomHint">Click the picture to see it full size.</div>
           </div>
         </div>
-      </div>
 
-      <div class="grid">
-        <div class="group">
-          <label for="artistName">Artist name</label>
-          <input id="artistName" type="text" maxlength="100">
+        <div class="grid" style="margin-bottom:1rem;">
+          <div class="group">
+            <label for="artistName">Artist name</label>
+            <input id="artistName" type="text" maxlength="100">
+          </div>
+          <div class="group">
+            <label for="artistType">Artist type</label>
+            <select id="artistType"></select>
+          </div>
+          <div class="group">
+            <label for="editionSize">Edition size (copies of this image)</label>
+            <input id="editionSize" type="number" min="1" step="1">
+          </div>
+          <div class="group">
+            <label for="editionNumber">Edition number</label>
+            <input id="editionNumber" type="text" maxlength="50">
+          </div>
+          <div class="group">
+            <label for="titled">Titled</label>
+            <select id="titled">
+              <option value="">Select…</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="group">
+            <label for="printCondition">Print condition</label>
+            <select id="printCondition">
+              <option value="">Select…</option>
+              <option>Mint</option><option>Near Mint</option><option>Excellent</option>
+              <option>Good</option><option>Fair</option><option>Poor</option>
+            </select>
+          </div>
+          <div class="group">
+            <label for="differentPrints">Number of different prints</label>
+            <select id="differentPrints">
+              <option value="0">Not a collection</option>
+              <option value="2">2 different prints</option>
+              <option value="3">3 different prints</option>
+              <option value="4">4 different prints</option>
+              <option value="5">5 different prints</option>
+              <option value="6">6 different prints</option>
+              <option value="7">7 different prints</option>
+              <option value="8">8 different prints</option>
+            </select>
+          </div>
         </div>
-        <div class="group">
-          <label for="artistType">Artist type</label>
-          <select id="artistType"></select>
-        </div>
-        <div class="group">
-          <label for="editionSize">Edition size (copies of this image)</label>
-          <input id="editionSize" type="number" min="1" step="1">
-        </div>
-        <div class="group">
-          <label for="editionNumber">Edition number</label>
-          <input id="editionNumber" type="text" maxlength="50">
-        </div>
-        <div class="group">
-          <label for="titled">Titled</label>
-          <select id="titled">
-            <option value="">Select…</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
-        </div>
-        <div class="group">
-          <label for="printCondition">Print condition</label>
-          <select id="printCondition">
-            <option value="">Select…</option>
-            <option>Mint</option><option>Near Mint</option><option>Excellent</option>
-            <option>Good</option><option>Fair</option><option>Poor</option>
-          </select>
-        </div>
-        <div class="group">
-          <label for="differentPrints">Number of different prints</label>
-          <select id="differentPrints">
-            <option value="0">Not a collection</option>
-            <option value="2">2 different prints</option>
-            <option value="3">3 different prints</option>
-            <option value="4">4 different prints</option>
-            <option value="5">5 different prints</option>
-            <option value="6">6 different prints</option>
-            <option value="7">7 different prints</option>
-            <option value="8">8 different prints</option>
-          </select>
-        </div>
-      </div>
 
-      <div class="group">
-        <label for="notes">Notes</label>
-        <textarea id="notes" maxlength="2000"></textarea>
-      </div>
-
-      <div class="preview">
-        <div class="preview-label">Print value at issue</div>
-        <div class="preview-value" id="previewValue">—</div>
-        <div class="preview-formula" id="previewFormula">Choose a card, artist type, edition size and titled to see the value.</div>
-        <div class="preview-bonus hidden" id="previewBonus"></div>
-      </div>
-
-      <div class="row-end">
-        <button id="clearBtn" class="btn-ghost" type="button">Clear</button>
-        <button id="saveBtn" class="btn-gold" type="button">Save print, certificate &amp; pairing</button>
-      </div>
-      <p id="printError" class="error"></p>
-    </section>
-
-    <!-- ══ After a save ══ -->
-    <section class="panel result hidden" id="resultPanel">
-      <h2>✓ Print saved</h2>
-      <p class="warn">Copy these codes onto the print and the certificate before leaving this screen.</p>
-      <div class="codes">
-        <div class="code-box">
-          <div class="code-label">On the print — part one</div>
-          <div class="code" id="rPart1"></div>
+        <div class="group">
+          <label for="notes">Notes</label>
+          <textarea id="notes" maxlength="2000"></textarea>
         </div>
-        <div class="code-box">
-          <div class="code-label">On the certificate — part two</div>
-          <div class="code" id="rPart2"></div>
-        </div>
-      </div>
-      <dl class="facts">
-        <dt>Full code</dt>        <dd id="rFull"></dd>
-        <dt>Card</dt>             <dd id="rCard"></dd>
-        <dt>Value at issue</dt>   <dd id="rValue"></dd>
-        <dt>Collection bonus</dt> <dd id="rBonus"></dd>
-        <dt>Date issued</dt>      <dd id="rDate"></dd>
-        <dt>Print ID</dt>         <dd id="rPrintId"></dd>
-        <dt>Certificate ID</dt>   <dd id="rCertId"></dd>
-        <dt>Pairing ID</dt>       <dd id="rPairId"></dd>
-      </dl>
-      <div class="row-end">
-        <button id="anotherBtn" class="btn-gold" type="button">Done — add another print</button>
-      </div>
-    </section>
 
-    <!-- ══ Complete collections ══ -->
-    <section class="panel" id="collectionsPanel">
-      <h2>🗂 Complete Collections</h2>
-      <p class="hint">Mark a collection Broken only when its set has been split up. Its bonus stops counting; its issued value does not change.</p>
-      <div id="collectionsList"></div>
-      <p id="collectionsError" class="error"></p>
-    </section>
+        <div class="preview">
+          <div class="preview-label">Print value at issue</div>
+          <div class="preview-value" id="previewValue">—</div>
+          <div class="preview-formula" id="previewFormula">Choose a card, artist type, edition size and titled to see the value.</div>
+          <div class="preview-bonus hidden" id="previewBonus"></div>
+        </div>
+
+        <div class="row-end">
+          <button id="clearBtn" class="btn-ghost" type="button">Clear</button>
+          <button id="saveBtn" class="btn-gold" type="button">Save print, certificate &amp; pairing</button>
+        </div>
+        <p id="printError" class="error"></p>
+      </section>
+
+      <!-- After a print is saved -->
+      <section class="panel result hidden" id="resultPanel">
+        <h2>✓ Print saved</h2>
+        <p class="warn">Copy these codes onto the print and the certificate before leaving this screen.</p>
+        <div class="codes">
+          <div class="code-box">
+            <div class="code-label">On the print — part one</div>
+            <div class="code" id="rPart1"></div>
+          </div>
+          <div class="code-box">
+            <div class="code-label">On the certificate — part two</div>
+            <div class="code" id="rPart2"></div>
+          </div>
+        </div>
+        <dl class="facts">
+          <dt>Full code</dt>        <dd id="rFull"></dd>
+          <dt>Card</dt>             <dd id="rCard"></dd>
+          <dt>Value at issue</dt>   <dd id="rValue"></dd>
+          <dt>Collection bonus</dt> <dd id="rBonus"></dd>
+          <dt>Date issued</dt>      <dd id="rDate"></dd>
+          <dt>Print ID</dt>         <dd id="rPrintId"></dd>
+          <dt>Certificate ID</dt>   <dd id="rCertId"></dd>
+          <dt>Pairing ID</dt>       <dd id="rPairId"></dd>
+        </dl>
+        <div class="row-end">
+          <button id="anotherBtn" class="btn-gold" type="button">Done — add another print</button>
+        </div>
+      </section>
+
+      <!-- Complete collections -->
+      <section class="panel" id="collectionsPanel">
+        <h2>🗂 Complete Collections</h2>
+        <p class="hint">Mark a collection Broken only when its set has been split up. Its bonus stops counting; its issued value does not change.</p>
+        <div id="collectionsList"></div>
+        <p id="collectionsError" class="error"></p>
+      </section>
+    </div>
 
   </div>
-</main>
+</div>
+
+<!-- The PfP Card Story -->
+<div class="modal-back hidden" id="pfpStoryModal">
+  <div class="modal" role="dialog" aria-label="The PfP Card Story">
+    <header>📜 THE PfP CARD STORY</header>
+    <div class="body">
+      <textarea id="pfpStoryText" maxlength="100000" placeholder="The story of the whole PfP Card set…"></textarea>
+      <p class="side-note" style="text-align:right;margin-top:0.4rem;"><span id="pfpStoryCount">0</span> characters</p>
+      <p id="pfpStoryError" class="error"></p>
+    </div>
+    <footer>
+      <button id="pfpStoryCancel" class="btn-ghost" type="button">Cancel</button>
+      <button id="pfpStorySave" class="btn-gold" type="button">⚜ Save Story</button>
+    </footer>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -294,6 +511,7 @@
 
   const ENDPOINT    = "https://us-central1-pfp-system.cloudfunctions.net/adminEntry";
   const ADMIN_EMAIL = "pfpcards@gmail.com";
+  const MAX_PICTURE = 5 * 1024 * 1024;
 
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
@@ -302,17 +520,41 @@
   try { await setPersistence(auth, browserSessionPersistence); } catch (e) { /* falls back to default */ }
 
   // ── Page state ─────────────────────────────────────────────
-  let cards        = [];
-  let chosenCard   = null;
+  let cards        = [];      // the card list (id, name, value, rarity, picture)
+  let options      = null;    // the card form's choices, from the cloud
+  let mode         = "new";
+  let current      = null;    // the card loaded in Edit, carried to Evolution and Add Print
+  let currentLiving = null;   // its living card details, if any
+  let lastEvolve   = null;    // the claim code just made, shown until another card is chosen
+  let pendingPicture = null;  // { name, data, url } — a picture chosen but not saved yet
+  let traitPicks   = {};      // field → set of chosen labels
+  let chosenCard   = null;    // the card chosen for a print
   let lastPreview  = null;
-  let previewTimer = null;
-  let previewSeq   = 0;
+  let previewTimer = null, previewSeq = 0;
+  let valueTimer   = null, valueSeq = 0;
   let toastTimer   = null;
+
+  const SINGLE_NAMES = {
+    quantityIssued: "Quantity issued", set: "Set", rarity: "Rarity", foil: "Foil", type: "Type",
+    condition: "Condition", signed: "Signed", numbered: "Numbered", stackContribution: "Stack contribution"
+  };
+  const TRAIT_NAMES = {
+    traitPicked: "Collector traits", traitsBody: "Traits body", traitsBackground: "Traits background",
+    traitsElements: "Traits elements", traitsItems: "Traits items"
+  };
 
   const $ = (id) => document.getElementById(id);
 
-  function showOnly(id) {
-    ["loadingScreen", "signInScreen", "refusedScreen", "app"].forEach((x) => $(x).classList.toggle("hidden", x !== id));
+  function showGate(id) {
+    $("gate").classList.remove("hidden");
+    $("app").classList.add("hidden");
+    $("modeButtons").classList.add("hidden");
+    ["loadingScreen", "signInScreen", "refusedScreen"].forEach((x) => $(x).classList.toggle("hidden", x !== id));
+  }
+  function showApp() {
+    $("gate").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    $("modeButtons").classList.remove("hidden");
   }
 
   function money(n) {
@@ -324,7 +566,7 @@
     if (toastTimer) clearTimeout(toastTimer);
     t.textContent = message;
     t.className = (ok ? "ok" : "bad") + " show";
-    toastTimer = setTimeout(() => { t.className = ""; }, 4000);
+    toastTimer = setTimeout(() => { t.className = ""; }, 5000);
   }
 
   // ── Talking to the cloud ───────────────────────────────────
@@ -374,7 +616,7 @@
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       $("whoBox").classList.add("hidden");
-      showOnly("signInScreen");
+      showGate("signInScreen");
       return;
     }
 
@@ -385,17 +627,17 @@
     // A friendly early warning only — the cloud makes the real decision.
     if (email !== ADMIN_EMAIL || !user.emailVerified) {
       $("refusedEmail").textContent = user.email || "an unknown account";
-      showOnly("refusedScreen");
+      showGate("refusedScreen");
       return;
     }
 
     $("loadingText").textContent = "Loading cards…";
-    showOnly("loadingScreen");
+    showGate("loadingScreen");
     const ok = await loadForm();
-    if (ok) showOnly("app");
+    if (ok) { showApp(); setMode("new"); }
   });
 
-  // ── Loading the card list, artist types and collections ────
+  // ── Loading the card list, choices, artist types and collections ──
   async function loadForm() {
     const data = await call("loadForm");
     if (!data.success) {
@@ -404,7 +646,9 @@
     }
 
     cards = data.cards || [];
+    if (!options && data.cardOptions) { options = data.cardOptions; buildCardFields(); }
     renderCardOptions();
+    renderEditOptions();
 
     const sel = $("artistType");
     const keep = sel.value;
@@ -417,44 +661,85 @@
     return true;
   }
 
-  // ── Card picker ────────────────────────────────────────────
-  function renderCardOptions() {
-    const filter = $("cardSearch").value.trim().toLowerCase();
-    const sel = $("cardSelect");
-    sel.textContent = "";
-    cards
-      .filter((c) => filter === "" || c.card.toLowerCase().includes(filter) || c.id.toLowerCase().includes(filter))
-      .forEach((c) => {
-        const opt = new Option(c.card + "  —  " + c.id + "  —  " + money(c.value), c.id);
-        if (chosenCard && chosenCard.id === c.id) opt.selected = true;
-        sel.appendChild(opt);
-      });
+  // ══════════════════════════════════════════════════════════
+  // Modes
+  // ══════════════════════════════════════════════════════════
+  function setMode(next) {
+    mode = next;
+    $("btnNew").classList.toggle("active", mode === "new");
+    $("btnEdit").classList.toggle("active", mode === "edit");
+    $("btnEvo").classList.toggle("active", mode === "evolution");
+    $("btnEvo").classList.toggle("evo", mode === "evolution");
+    $("btnPrint").classList.toggle("active", mode === "print");
+    $("btnPrint").classList.toggle("print", mode === "print");
+
+    $("cardMode").classList.toggle("hidden", mode !== "new" && mode !== "edit");
+    $("evoMode").classList.toggle("hidden", mode !== "evolution");
+    $("printMode").classList.toggle("hidden", mode !== "print");
+    $("editPicker").classList.toggle("hidden", mode !== "edit");
+
+    if (mode === "new") {
+      current = null; currentLiving = null; lastEvolve = null;
+      $("editSearch").value = "";
+      renderEditOptions();
+      clearCardForm();
+    } else if (mode === "edit") {
+      $("cardForm").classList.toggle("hidden", !current);
+      if (current) fillCardForm(current); else showSide(null);
+    } else if (mode === "evolution") {
+      renderEvo();
+    } else if (mode === "print") {
+      if (current && (!chosenCard || chosenCard.id !== current.id)) {
+        chosenCard = cards.find((c) => c.id === current.id) || null;
+        renderCardOptions();
+        showChosenCard();
+        schedulePreview();
+      }
+      showSide(chosenCard ? { card: chosenCard.card, id: chosenCard.id, rarity: chosenCard.rarity, value: chosenCard.value, imageUrl: chosenCard.imageUrl } : null);
+    }
+    $("btnEvo").disabled = !current;
+    updatePictureTools();
+    window.scrollTo({ top: 0 });
   }
 
-  function showChosenCard() {
-    if (!chosenCard) { $("cardChosen").classList.add("hidden"); showCardImage(""); return; }
-    $("chosenName").textContent = chosenCard.card;
-    $("chosenMeta").textContent = chosenCard.id + "  ·  " + (chosenCard.rarity || "no rarity") + "  ·  card value " + money(chosenCard.value);
-    showCardImage(chosenCard.imageUrl);
-    $("cardChosen").classList.remove("hidden");
+  $("btnNew").addEventListener("click", () => setMode("new"));
+  $("btnEdit").addEventListener("click", () => setMode("edit"));
+  $("btnEvo").addEventListener("click", () => { if (current) setMode("evolution"); });
+  $("btnPrint").addEventListener("click", () => setMode("print"));
+  $("btnStory").addEventListener("click", openPfPStory);
+
+  // ── The picture panel on the left ──────────────────────────
+  // Shows a card's name, details and picture. Only web links and
+  // pictures picked from this computer are shown.
+  function showSide(card) {
+    $("sideName").textContent = card && card.card ? card.card : "—";
+    const bits = [];
+    if (card && card.id) bits.push(card.id);
+    if (card && card.rarity && card.rarity !== "Select") bits.push(card.rarity);
+    if (card && card.value) bits.push(money(card.value));
+    $("sideMeta").textContent = bits.join("  ·  ");
+    const usePending = pendingPicture && (mode === "new" || mode === "edit");
+    showCardImage(usePending ? pendingPicture.url : (card ? card.imageUrl : ""), card ? card.card : "");
   }
 
-  // ── Card picture ───────────────────────────────────────────
-  // Only web links are shown. If the picture is missing or fails
-  // to load, the frame says "No image" instead.
-  function showCardImage(url) {
+  // The picture chooser shows only while a card is being made or edited.
+  function updatePictureTools() {
+    $("pictureTools").classList.toggle("hidden", !(mode === "new" || (mode === "edit" && current)));
+  }
+
+  function showCardImage(url, alt) {
     const frame = $("cardFrame");
     frame.querySelectorAll("img").forEach((old) => old.remove());
     frame.classList.remove("has-image");
-    $("cardNoImage").textContent = "No image";
+    $("cardNoImage").textContent = "No picture";
     $("cardNoImage").classList.remove("hidden");
     $("zoomHint").classList.add("hidden");
 
-    if (!/^https?:\/\//i.test(url || "")) return;
+    if (!/^(https?:|blob:)/i.test(url || "")) return;
 
     $("cardNoImage").textContent = "Loading…";
     const img = document.createElement("img");
-    img.alt = chosenCard ? chosenCard.card : "Card";
+    img.alt = alt || "Card";
     img.referrerPolicy = "no-referrer";
     img.onload = () => {
       $("cardNoImage").classList.add("hidden");
@@ -463,7 +748,7 @@
     };
     img.onerror = () => {
       img.remove();
-      $("cardNoImage").textContent = "No image";
+      $("cardNoImage").textContent = "No picture";
     };
     img.src = url;
     frame.appendChild(img);
@@ -481,7 +766,436 @@
     $("overlayImage").removeAttribute("src");
   }
   $("imageOverlay").addEventListener("click", closeOverlay);
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeOverlay(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    closeOverlay();
+    closePfPStory();
+  });
+
+  // ── Choosing a picture ─────────────────────────────────────
+  $("pictureInput").addEventListener("change", () => {
+    const file = $("pictureInput").files && $("pictureInput").files[0];
+    $("pictureInput").value = "";
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { toast("The picture must be a JPEG, PNG or WebP file.", false); return; }
+    if (file.size > MAX_PICTURE) { toast("That picture is too big (5 MB at most).", false); return; }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      dropPicture();
+      pendingPicture = { name: file.name, data: String(reader.result), url: URL.createObjectURL(file) };
+      $("pendingNote").textContent = "New picture: " + file.name + " — saved with the card.";
+      $("pendingNote").classList.remove("hidden");
+      $("dropPictureBtn").classList.remove("hidden");
+      showCardImage(pendingPicture.url, file.name);
+    };
+    reader.onerror = () => toast("That picture could not be read.", false);
+    reader.readAsDataURL(file);
+  });
+
+  function dropPicture() {
+    if (pendingPicture && pendingPicture.url) URL.revokeObjectURL(pendingPicture.url);
+    pendingPicture = null;
+    $("pendingNote").classList.add("hidden");
+    $("dropPictureBtn").classList.add("hidden");
+  }
+
+  $("dropPictureBtn").addEventListener("click", () => {
+    dropPicture();
+    showCardImage(current ? current.imageUrl : "", current ? current.card : "");
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // The card form (New and Edit)
+  // ══════════════════════════════════════════════════════════
+  function buildCardFields() {
+    const box = $("detailFields");
+    box.textContent = "";
+    Object.keys(SINGLE_NAMES).forEach((f) => {
+      const group = document.createElement("div");
+      group.className = "group";
+      const label = document.createElement("label");
+      label.htmlFor = "f_" + f;
+      label.textContent = SINGLE_NAMES[f];
+      const sel = document.createElement("select");
+      sel.id = "f_" + f;
+      sel.appendChild(new Option("Select", "Select"));
+      (options.single[f] || []).forEach((o) => sel.appendChild(new Option(o, o)));
+      sel.addEventListener("change", scheduleValue);
+      group.appendChild(label);
+      group.appendChild(sel);
+      box.appendChild(group);
+    });
+
+    const tbox = $("traitFields");
+    tbox.textContent = "";
+    Object.keys(TRAIT_NAMES).forEach((f) => {
+      traitPicks[f] = new Set();
+      const group = document.createElement("div");
+      group.className = "trait-group";
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = TRAIT_NAMES[f];
+      const chips = document.createElement("div");
+      chips.className = "chips";
+      chips.id = "chips_" + f;
+      (options.traits[f] || []).forEach((o) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "chip";
+        chip.textContent = o;
+        chip.dataset.value = o;
+        chip.setAttribute("aria-pressed", "false");
+        chip.addEventListener("click", () => {
+          if (traitPicks[f].has(o)) traitPicks[f].delete(o); else traitPicks[f].add(o);
+          chip.setAttribute("aria-pressed", traitPicks[f].has(o) ? "true" : "false");
+          scheduleValue();
+        });
+        chips.appendChild(chip);
+      });
+      group.appendChild(label);
+      group.appendChild(chips);
+      tbox.appendChild(group);
+    });
+  }
+
+  // Sets a dropdown. A value the list doesn't offer (an older
+  // choice like Type "Standard") is added so it isn't lost.
+  function setSelect(field, value) {
+    const sel = $("f_" + field);
+    const v = String(value || "").trim() || "Select";
+    const found = Array.from(sel.options).find((o) => o.value.toLowerCase() === v.toLowerCase());
+    if (found) { sel.value = found.value; return; }
+    sel.appendChild(new Option(v, v));
+    sel.value = v;
+  }
+
+  function setTraits(field, text) {
+    traitPicks[field] = new Set();
+    const wanted = String(text || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+    document.querySelectorAll("#chips_" + field + " .chip").forEach((chip) => {
+      const on = wanted.includes(chip.dataset.value.toLowerCase());
+      if (on) traitPicks[field].add(chip.dataset.value);
+      chip.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
+  function readCardForm() {
+    const card = { card: $("f_card").value.trim(), description: $("f_description").value.trim() };
+    Object.keys(SINGLE_NAMES).forEach((f) => { card[f] = $("f_" + f).value; });
+    Object.keys(TRAIT_NAMES).forEach((f) => { card[f] = Array.from(traitPicks[f] || []); });
+    return card;
+  }
+
+  function clearCardForm() {
+    dropPicture();
+    $("cardFormTitle").textContent = "New Card";
+    $("cardForm").classList.remove("hidden");
+    $("f_card").value = "";
+    $("f_description").value = "";
+    $("f_id").textContent = "Given when saved";
+    $("f_rank").textContent = "Worked out when saved";
+    Object.keys(SINGLE_NAMES).forEach((f) => setSelect(f, "Select"));
+    Object.keys(TRAIT_NAMES).forEach((f) => setTraits(f, ""));
+    $("storyPanel").classList.add("hidden");
+    $("cardError").textContent = "";
+    $("f_value").textContent = "—";
+    showSide(null);
+    scheduleValue();
+  }
+
+  function fillCardForm(c) {
+    dropPicture();
+    $("cardFormTitle").textContent = "Edit Card";
+    $("cardForm").classList.remove("hidden");
+    $("f_card").value = c.card;
+    $("f_description").value = c.description || "";
+    $("f_id").textContent = c.id + (c.livingCardId ? "  ·  living card " + c.livingCardId : "");
+    $("f_rank").textContent = c.rank ? "#" + c.rank : "—";
+    Object.keys(SINGLE_NAMES).forEach((f) => setSelect(f, c[f]));
+    Object.keys(TRAIT_NAMES).forEach((f) => setTraits(f, c[f]));
+    $("f_story").value = c.story || "";
+    $("storyError").textContent = "";
+    $("storyPanel").classList.remove("hidden");
+    $("cardError").textContent = "";
+    $("f_value").textContent = money(c.value);
+    showSide(c);
+  }
+
+  $("f_card").addEventListener("input", () => {
+    $("sideName").textContent = $("f_card").value.trim() || "—";
+    scheduleValue();
+  });
+
+  // ── Live value (worked out by the cloud) ───────────────────
+  function scheduleValue() {
+    if (valueTimer) clearTimeout(valueTimer);
+    $("f_value").textContent = "Working it out…";
+    valueTimer = setTimeout(runValue, 400);
+  }
+
+  async function runValue() {
+    const seq = ++valueSeq;
+    const card = readCardForm();
+    // A blank form has nothing to value yet.
+    const anything = card.card ||
+      Object.keys(SINGLE_NAMES).some((f) => card[f] !== "Select") ||
+      Object.keys(TRAIT_NAMES).some((f) => card[f].length);
+    if (!anything) { $("f_value").textContent = "—"; return; }
+    // The name doesn't affect the value; a stand-in is sent if it
+    // hasn't been typed yet so the value can still show.
+    if (!card.card) card.card = "preview";
+    const data = await call("previewCard", { card: card });
+    if (seq !== valueSeq) return;
+    $("f_value").textContent = data.success ? money(data.valueShown) : data.error;
+  }
+
+  // ── Edit: choosing a card ──────────────────────────────────
+  function renderEditOptions() {
+    const filter = $("editSearch").value.trim().toLowerCase();
+    const sel = $("editSelect");
+    sel.textContent = "";
+    cards
+      .filter((c) => filter === "" || c.card.toLowerCase().includes(filter) || c.id.toLowerCase().includes(filter))
+      .forEach((c) => {
+        const opt = new Option(c.card + "  —  " + c.id + "  —  " + money(c.value) + (c.livingCardId ? "  —  ∞" : ""), c.id);
+        if (current && current.id === c.id) opt.selected = true;
+        sel.appendChild(opt);
+      });
+  }
+
+  $("editSearch").addEventListener("input", renderEditOptions);
+  $("editSelect").addEventListener("change", () => loadCardForEdit($("editSelect").value));
+
+  async function loadCardForEdit(id) {
+    if (!id) return;
+    $("cardError").textContent = "";
+    $("f_value").textContent = "Loading…";
+    const data = await call("loadCard", { cardId: id });
+    if (!data.success) { toast(data.error, false); return; }
+    if (!current || current.id !== data.card.id) lastEvolve = null;
+    current = data.card;
+    currentLiving = data.livingCard;
+    $("btnEvo").disabled = false;
+    updatePictureTools();
+    if (mode === "edit") fillCardForm(current);
+    else if (mode === "evolution") renderEvo();
+  }
+
+  $("clearCardBtn").addEventListener("click", () => {
+    if (mode === "edit" && current) fillCardForm(current); else clearCardForm();
+  });
+
+  // ── Saving a card ──────────────────────────────────────────
+  $("saveCardBtn").addEventListener("click", async () => {
+    $("cardError").textContent = "";
+    const card = readCardForm();
+    if (!card.card) { $("cardError").textContent = "Enter the card name."; return; }
+
+    const editing = mode === "edit" && current;
+    const valueLine = $("f_value").textContent;
+    const ok = confirm(
+      (editing ? "Save changes to this card?\n\n" : "Save this new card?\n\n") +
+      "Card: " + card.card + (editing ? " (" + current.id + ")" : "") + "\n" +
+      "Value: " + valueLine + "\n" +
+      (pendingPicture ? "New picture: " + pendingPicture.name + "\n" : "") +
+      (editing && current.livingCardId ? "\nIts living card " + current.livingCardId + " gets the new value too.\n" : "") +
+      "\nEvery card's rank is updated in the same save."
+    );
+    if (!ok) return;
+
+    const btn = $("saveCardBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const body = { card: card };
+    if (editing) body.cardId = current.id;
+    if (pendingPicture) body.image = { name: pendingPicture.name, data: pendingPicture.data };
+    const data = await call("saveCard", body);
+    btn.disabled = false;
+    btn.textContent = "⚜ Save Card";
+
+    if (!data.success) { $("cardError").textContent = data.error; return; }
+
+    dropPicture();
+    toast((data.isNew ? "Saved as " + data.cardId : "Card saved") + " — " + money(data.valueShown) + ", rank #" + data.rank + ".", true);
+    if (data.warning) $("cardError").textContent = data.warning;
+
+    await loadForm();
+    // Carry the saved card straight on, ready for Evolution or a print.
+    setMode("edit");
+    $("editSearch").value = "";
+    await loadCardForEdit(data.cardId);
+    renderEditOptions();
+    if (data.warning) $("cardError").textContent = data.warning;
+  });
+
+  // ── Card story ─────────────────────────────────────────────
+  $("saveStoryBtn").addEventListener("click", async () => {
+    if (!current) return;
+    $("storyError").textContent = "";
+    const btn = $("saveStoryBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const data = await call("saveCardStory", { cardId: current.id, story: $("f_story").value });
+    btn.disabled = false;
+    btn.textContent = "📖 Save Card Story";
+    if (!data.success) { $("storyError").textContent = data.error; return; }
+    current.story = $("f_story").value.trim();
+    toast("Card story saved.", true);
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // Evolution
+  // ══════════════════════════════════════════════════════════
+  function renderEvo() {
+    $("evoError").textContent = "";
+    if (!current) return;
+    showSide(current);
+    $("evoName").textContent = current.card;
+    $("evoMeta").textContent = current.id + "  ·  " + (current.rarity && current.rarity !== "Select" ? current.rarity : "no rarity") +
+                               "  ·  value " + money(current.value);
+
+    const isLiving = !!current.livingCardId;
+    $("evoNotLiving").classList.toggle("hidden", isLiving);
+    $("evoLiving").classList.toggle("hidden", !isLiving);
+    $("evoResult").classList.toggle("hidden", !(lastEvolve && lastEvolve.cardId === current.id));
+
+    if (!isLiving) return;
+
+    $("evoId").textContent = current.livingCardId;
+    const l = currentLiving;
+    if (!l || !l.exists) {
+      $("evoStatus").textContent = "Warning: this card is linked to a living card that doesn't exist.";
+    } else {
+      $("evoStatus").textContent = "Stage: " + (l.stage || "—") + "  ·  " + (l.claimed ? "claimed by an owner" : "not claimed yet");
+    }
+    $("evoDashLink").href = l ? l.dashboardUrl : "#";
+
+    const list = $("evoCodes");
+    list.textContent = "";
+    const codes = l ? l.claimCodes : [];
+    if (!codes.length) {
+      const li = document.createElement("li");
+      li.textContent = "None found";
+      list.appendChild(li);
+    }
+    codes.forEach((c) => {
+      const li = document.createElement("li");
+      li.textContent = c.code;
+      const s = document.createElement("span");
+      s.textContent = c.status === "unused" ? "not used yet" : c.status;
+      li.appendChild(s);
+      list.appendChild(li);
+    });
+  }
+
+  $("evolveBtn").addEventListener("click", async () => {
+    if (!current) return;
+    const ok = confirm(
+      "Make " + current.card + " (" + current.id + ") a living card?\n\n" +
+      "This creates its living card at a value of " + money(current.value) + ", its game record and a claim code.\n" +
+      "It can be started over later with Reset, but not undone."
+    );
+    if (!ok) return;
+
+    const btn = $("evolveBtn");
+    btn.disabled = true;
+    btn.textContent = "Working…";
+    const data = await call("evolveCard", { cardId: current.id, confirm: true });
+    btn.disabled = false;
+    btn.textContent = "∞ Make it a Living Card";
+    if (!data.success) { $("evoError").textContent = data.error; return; }
+
+    lastEvolve = data;
+    $("evoNewCode").textContent = data.claimCode;
+    $("evoNewId").textContent = data.evolutionId;
+    $("evoNewValue").textContent = money(data.baseValue);
+    toast("Living card made: " + data.evolutionId, true);
+    await loadCardForEdit(current.id);
+    loadForm();
+  });
+
+  $("resetBtn").addEventListener("click", async () => {
+    if (!current || !current.livingCardId) return;
+    const ok = confirm(
+      "Reset the living card " + current.livingCardId + "?\n\n" +
+      "This permanently clears its owner, claim status, XP, level, evolution stage, streak, life value, " +
+      "game progress and full history, and sets its claim code back to unused. This cannot be undone."
+    );
+    if (!ok) return;
+
+    const btn = $("resetBtn");
+    btn.disabled = true;
+    btn.textContent = "Resetting…";
+    const data = await call("resetLivingCard", { cardId: current.id, confirm: true });
+    btn.disabled = false;
+    btn.textContent = "⟲ Reset Living Card";
+    if (!data.success) { $("evoError").textContent = data.error; return; }
+
+    toast("Living card reset: " + data.evolutionId, true);
+    await loadCardForEdit(current.id);
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // The PfP Card Story
+  // ══════════════════════════════════════════════════════════
+  async function openPfPStory() {
+    $("pfpStoryError").textContent = "";
+    $("pfpStoryText").value = "Loading…";
+    $("pfpStoryText").disabled = true;
+    $("pfpStoryModal").classList.remove("hidden");
+    const data = await call("loadPfPStory");
+    $("pfpStoryText").disabled = false;
+    if (!data.success) { $("pfpStoryText").value = ""; $("pfpStoryError").textContent = data.error; $("pfpStorySave").disabled = true; return; }
+    $("pfpStorySave").disabled = false;
+    $("pfpStoryText").value = data.story || "";
+    $("pfpStoryCount").textContent = $("pfpStoryText").value.length;
+  }
+
+  function closePfPStory() { $("pfpStoryModal").classList.add("hidden"); }
+
+  $("pfpStoryText").addEventListener("input", () => { $("pfpStoryCount").textContent = $("pfpStoryText").value.length; });
+  $("pfpStoryCancel").addEventListener("click", closePfPStory);
+  $("pfpStorySave").addEventListener("click", async () => {
+    $("pfpStoryError").textContent = "";
+    const btn = $("pfpStorySave");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const data = await call("savePfPStory", { story: $("pfpStoryText").value });
+    btn.disabled = false;
+    btn.textContent = "⚜ Save Story";
+    if (!data.success) { $("pfpStoryError").textContent = data.error; return; }
+    closePfPStory();
+    toast("PfP Card Story saved.", true);
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // Add Print
+  // ══════════════════════════════════════════════════════════
+  function renderCardOptions() {
+    const filter = $("cardSearch").value.trim().toLowerCase();
+    const sel = $("cardSelect");
+    sel.textContent = "";
+    cards
+      .filter((c) => filter === "" || c.card.toLowerCase().includes(filter) || c.id.toLowerCase().includes(filter))
+      .forEach((c) => {
+        const opt = new Option(c.card + "  —  " + c.id + "  —  " + money(c.value), c.id);
+        if (chosenCard && chosenCard.id === c.id) opt.selected = true;
+        sel.appendChild(opt);
+      });
+  }
+
+  function showChosenCard() {
+    if (!chosenCard) {
+      $("cardChosen").classList.add("hidden");
+      if (mode === "print") showSide(null);
+      return;
+    }
+    $("chosenName").textContent = chosenCard.card;
+    $("chosenMeta").textContent = chosenCard.id + "  ·  " + (chosenCard.rarity || "no rarity") + "  ·  card value " + money(chosenCard.value);
+    $("cardChosen").classList.remove("hidden");
+    if (mode === "print") showSide({ card: chosenCard.card, id: chosenCard.id, rarity: chosenCard.rarity, value: chosenCard.value, imageUrl: chosenCard.imageUrl });
+  }
 
   $("cardSearch").addEventListener("input", renderCardOptions);
   $("cardSelect").addEventListener("change", () => {
@@ -490,7 +1204,6 @@
     schedulePreview();
   });
 
-  // ── Reading the form ───────────────────────────────────────
   function readForm() {
     return {
       cardId:          chosenCard ? chosenCard.id : "",
@@ -505,7 +1218,6 @@
     };
   }
 
-  // ── Live value preview (worked out by the cloud) ───────────
   function resetPreview(message) {
     lastPreview = null;
     $("previewValue").textContent = "—";
@@ -559,7 +1271,6 @@
     $(id).addEventListener("change", schedulePreview);
   });
 
-  // ── Save ───────────────────────────────────────────────────
   $("saveBtn").addEventListener("click", async () => {
     $("printError").textContent = "";
     const p = readForm();
