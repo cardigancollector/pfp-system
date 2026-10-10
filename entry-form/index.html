@@ -189,7 +189,7 @@
     <button class="mode-btn" id="btnEvo"   type="button" disabled title="Choose a card in Edit Card first">∞ Evolution</button>
     <button class="mode-btn" id="btnPrint" type="button">🖨 Add Print</button>
     <button class="mode-btn" id="btnOrig"  type="button" disabled title="Choose a card in Edit Card first">🎨 Add Original</button>
-    <button class="mode-btn" id="btnJersey" type="button" disabled title="Choose a card in Edit Card first">👕 Add Jersey</button>
+    <button class="mode-btn" id="btnPlushie" type="button" disabled title="Choose a card in Edit Card first">🧸 Add Plushie</button>
     <button class="mode-btn" id="btnBacks" type="button">🃏 Card Backs</button>
     <button class="mode-btn" id="btnStory" type="button">📜 PfP Card Story</button>
   </nav>
@@ -400,11 +400,7 @@
           </div>
           <div class="group">
             <label for="printCondition">Print condition</label>
-            <select id="printCondition">
-              <option value="">Select…</option>
-              <option>Mint</option><option>Near Mint</option><option>Excellent</option>
-              <option>Good</option><option>Fair</option><option>Poor</option>
-            </select>
+            <select id="printCondition"><option value="">Select…</option></select>
           </div>
           <div class="group">
             <label for="differentPrints">Number of different prints</label>
@@ -429,7 +425,7 @@
         <div class="preview">
           <div class="preview-label">Print value at issue</div>
           <div class="preview-value" id="previewValue">—</div>
-          <div class="preview-formula" id="previewFormula">Choose a card, artist type, edition size and titled to see the value.</div>
+          <div class="preview-formula" id="previewFormula">Choose a card, artist type, edition size, titled and condition to see the value.</div>
           <div class="preview-bonus hidden" id="previewBonus"></div>
         </div>
 
@@ -478,7 +474,7 @@
       </section>
     </div>
 
-    <!-- ══ Originals and jerseys (one screen, two kinds) ══ -->
+    <!-- ══ Originals and plushies (one screen, two kinds) ══ -->
     <div id="extraMode" class="hidden">
       <section class="panel">
         <h2 id="xTitle"></h2>
@@ -493,24 +489,7 @@
 
       <section class="panel">
         <h2 id="xFormTitle"></h2>
-        <div class="grid" style="margin-bottom:1rem;">
-          <div class="group">
-            <label for="xName" id="xNameLabel"></label>
-            <input id="xName" type="text" maxlength="100" autocomplete="off">
-          </div>
-          <div class="group">
-            <label for="xPlace" id="xPlaceLabel"></label>
-            <input id="xPlace" type="text" maxlength="100" autocomplete="off">
-          </div>
-          <div class="group">
-            <label for="xType" id="xTypeLabel"></label>
-            <select id="xType"></select>
-          </div>
-          <div class="group">
-            <label for="xCondition">Condition</label>
-            <select id="xCondition"></select>
-          </div>
-        </div>
+        <div class="grid" style="margin-bottom:1rem;" id="xFields"></div>
         <div class="group">
           <label for="xNotes">Notes</label>
           <textarea id="xNotes" maxlength="2000"></textarea>
@@ -757,6 +736,15 @@
     (data.artistTypes || []).forEach((a) => sel.appendChild(new Option(a.artistType, a.artistType)));
     sel.value = keep;
 
+    // Print condition choices, with what each does to the value.
+    const pc = $("printCondition");
+    const keepPc = pc.value;
+    pc.textContent = "";
+    pc.appendChild(new Option("Select…", ""));
+    Object.keys(data.printConditions || {}).forEach((c) =>
+      pc.appendChild(new Option(c + " (×" + Number(data.printConditions[c]).toFixed(2) + ")", c)));
+    pc.value = keepPc;
+
     renderCollections(data.collections || []);
     return true;
   }
@@ -774,13 +762,13 @@
     $("btnPrint").classList.toggle("print", mode === "print");
     $("btnBacks").classList.toggle("active", mode === "backs");
     $("btnOrig").classList.toggle("active", mode === "original");
-    $("btnJersey").classList.toggle("active", mode === "jersey");
+    $("btnPlushie").classList.toggle("active", mode === "plushie");
 
     $("cardMode").classList.toggle("hidden", mode !== "new" && mode !== "edit");
     $("evoMode").classList.toggle("hidden", mode !== "evolution");
     $("printMode").classList.toggle("hidden", mode !== "print");
     $("backsMode").classList.toggle("hidden", mode !== "backs");
-    $("extraMode").classList.toggle("hidden", mode !== "original" && mode !== "jersey");
+    $("extraMode").classList.toggle("hidden", mode !== "original" && mode !== "plushie");
     $("editPicker").classList.toggle("hidden", mode !== "edit");
 
     if (mode === "new") {
@@ -804,12 +792,12 @@
     } else if (mode === "backs") {
       showBackSide();
       loadBacks();
-    } else if (mode === "original" || mode === "jersey") {
+    } else if (mode === "original" || mode === "plushie") {
       openExtra(mode);
     }
     $("btnEvo").disabled = !current;
     $("btnOrig").disabled = !current;
-    $("btnJersey").disabled = !current;
+    $("btnPlushie").disabled = !current;
     updatePictureTools();
     window.scrollTo({ top: 0 });
   }
@@ -820,7 +808,7 @@
   $("btnPrint").addEventListener("click", () => setMode("print"));
   $("btnBacks").addEventListener("click", () => setMode("backs"));
   $("btnOrig").addEventListener("click", () => { if (current) setMode("original"); });
-  $("btnJersey").addEventListener("click", () => { if (current) setMode("jersey"); });
+  $("btnPlushie").addEventListener("click", () => { if (current) setMode("plushie"); });
   $("btnStory").addEventListener("click", openPfPStory);
 
   // ── The picture panel on the left ──────────────────────────
@@ -1093,7 +1081,7 @@
     currentLiving = data.livingCard;
     $("btnEvo").disabled = false;
     $("btnOrig").disabled = false;
-    $("btnJersey").disabled = false;
+    $("btnPlushie").disabled = false;
     updatePictureTools();
     if (mode === "edit") fillCardForm(current);
     else if (mode === "evolution") renderEvo();
@@ -1338,14 +1326,14 @@
   function resetPreview(message) {
     lastPreview = null;
     $("previewValue").textContent = "—";
-    $("previewFormula").textContent = message || "Choose a card, artist type, edition size and titled to see the value.";
+    $("previewFormula").textContent = message || "Choose a card, artist type, edition size, titled and condition to see the value.";
     $("previewBonus").classList.add("hidden");
   }
 
   function schedulePreview() {
     if (previewTimer) clearTimeout(previewTimer);
     const p = readForm();
-    if (!p.cardId || !p.artistType || !p.editionSize || !p.titled) {
+    if (!p.cardId || !p.artistType || !p.editionSize || !p.titled || !p.printCondition) {
       previewSeq++;          // ignore any preview still on its way
       resetPreview();
       return;
@@ -1371,7 +1359,8 @@
     $("previewValue").textContent = money(v.issuedValueShown);
     $("previewFormula").textContent =
       money(v.cardValue) + " card × " + v.artistMultiplier.toFixed(2) + " (" + v.artistType + ")" +
-      " × " + v.editionMultiplier.toFixed(2) + " (edition) × " + v.titledMultiplier.toFixed(2) + " (titled)";
+      " × " + v.editionMultiplier.toFixed(2) + " (edition) × " + v.titledMultiplier.toFixed(2) + " (titled)" +
+      " × " + v.conditionMultiplier.toFixed(2) + " (" + v.printCondition + ")";
 
     if (v.isCollection) {
       $("previewBonus").textContent =
@@ -1383,7 +1372,7 @@
     }
   }
 
-  ["artistType", "editionSize", "titled", "differentPrints"].forEach((id) => {
+  ["artistType", "editionSize", "titled", "printCondition", "differentPrints"].forEach((id) => {
     $(id).addEventListener("input", schedulePreview);
     $(id).addEventListener("change", schedulePreview);
   });
@@ -1534,49 +1523,81 @@
   }
 
   // ══════════════════════════════════════════════════════════
-  // Originals and jerseys — one screen, set up for each kind.
-  // The cloud works out and stores the value; the page only
+  // Originals and plushies — one screen, set up for each kind.
+  // The fields, choices and multipliers all come from the cloud,
+  // which also works out and stores the value; the page only
   // shows what the cloud says.
   // ══════════════════════════════════════════════════════════
   const EXTRA = {
     original: {
       title: "🎨 Original Artwork", listLabel: "Originals recorded for this card",
       formTitle: "Record a new original", saveText: "🎨 Save Original",
-      nameLabel: "Artist name", placeLabel: "Artist location", typeLabel: "Media type",
-      nameKey: "artistName", placeKey: "artistLocation", typeKey: "mediaType",
       previewLabel: "Original value at issue", noun: "original", none: "No originals recorded for this card yet.",
       load: "loadOriginals", preview: "previewOriginal", save: "saveOriginal", del: "deleteOriginal"
     },
-    jersey: {
-      title: "👕 Jerseys", listLabel: "Jerseys recorded for this card",
-      formTitle: "Record a new jersey", saveText: "👕 Save Jersey",
-      nameLabel: "Player name", placeLabel: "Team", typeLabel: "Jersey type",
-      nameKey: "playerName", placeKey: "team", typeKey: "jerseyType",
-      previewLabel: "Jersey value at issue", noun: "jersey", none: "No jerseys recorded for this card yet.",
-      load: "loadJerseys", preview: "previewJersey", save: "saveJersey", del: "deleteJersey"
+    plushie: {
+      title: "🧸 Plushies", listLabel: "Plushies recorded for this card",
+      formTitle: "Record a new plushie", saveText: "🧸 Save Plushie",
+      previewLabel: "Plushie value at issue", noun: "plushie", none: "No plushies recorded for this card yet.",
+      load: "loadPlushies", preview: "previewPlushie", save: "savePlushie", del: "deletePlushie"
     }
   };
   let extraKind = null;
+  let extraFields = [];      // the form's fields, as the cloud describes them
   let extraTimer = null, extraSeq = 0;
   let extraPreview = null;
 
   function openExtra(kind) {
     extraKind = kind;
+    extraFields = [];
     const k = EXTRA[kind];
     $("xTitle").textContent = k.title;
     $("xListLabel").textContent = k.listLabel;
     $("xFormTitle").textContent = k.formTitle;
     $("xSaveBtn").textContent = k.saveText;
-    $("xNameLabel").textContent = k.nameLabel;
-    $("xPlaceLabel").textContent = k.placeLabel;
-    $("xTypeLabel").textContent = k.typeLabel;
     $("xPreviewLabel").textContent = k.previewLabel;
+    $("xFields").textContent = "";
     clearExtraForm();
     if (!current) return;
     showSide(current);
     $("xCardName").textContent = current.card;
     $("xCardMeta").textContent = current.id + "  ·  card value " + money(current.value);
     loadExtras();
+  }
+
+  // Builds the form from the cloud's field list. Kept as it is if
+  // the same kind is already built, so typed values aren't lost.
+  function buildExtraFields(fields) {
+    const same = extraFields.length && JSON.stringify(fields) === JSON.stringify(extraFields);
+    if (same) return;
+    extraFields = fields;
+    const box = $("xFields");
+    box.textContent = "";
+    fields.forEach((f) => {
+      const group = document.createElement("div");
+      group.className = "group";
+      const label = document.createElement("label");
+      label.htmlFor = "x_" + f.key;
+      label.textContent = f.label + (f.required ? "" : " (optional)");
+      let input;
+      if (f.kind === "choice") {
+        input = document.createElement("select");
+        input.appendChild(new Option(f.none ? f.none + " (×1.00)" : "Select…", ""));
+        Object.keys(f.options || {}).forEach((o) => {
+          input.appendChild(new Option(o + " (×" + Number(f.options[o]).toFixed(2) + ")", o));
+        });
+        input.addEventListener("change", scheduleExtraPreview);
+      } else {
+        input = document.createElement("input");
+        input.type = "text";
+        input.autocomplete = "off";
+        if (f.max) input.maxLength = f.max;
+      }
+      input.id = "x_" + f.key;
+      group.appendChild(label);
+      group.appendChild(input);
+      box.appendChild(group);
+    });
   }
 
   async function loadExtras() {
@@ -1594,9 +1615,7 @@
     box.textContent = "";
     if (!data.success) { $("xListError").textContent = data.error; return; }
 
-    // The choices come from the cloud, so they always match its multipliers.
-    fillChoices($("xType"), Object.keys(data.types || {}), (t) => t + " (×" + Number(data.types[t]).toFixed(2) + ")");
-    fillChoices($("xCondition"), data.conditions || [], (c) => c);
+    buildExtraFields(data.fields || []);
 
     const items = data.items || [];
     if (!items.length) {
@@ -1612,13 +1631,16 @@
       const info = document.createElement("div");
       const name = document.createElement("div");
       name.className = "coll-name";
-      name.textContent = it.name + (it.place ? "  ·  " + it.place : "");
+      name.textContent = it.title || "(no name)";
       const meta = document.createElement("div");
       meta.className = "coll-meta";
-      meta.textContent = it.type + (it.condition ? "  ·  " + it.condition : "") + "  ·  " + money(it.issuedValueShown) +
-                         " (" + money(it.cardValue) + " × " + it.multiplier.toFixed(2) + ")  ·  " + it.id;
+      meta.textContent = it.details.join("  ·  ") + "  ·  " + money(it.issuedValueShown) + "  ·  " + it.id;
+      const how = document.createElement("div");
+      how.className = "coll-meta";
+      how.textContent = stepsText(it.cardValue, it.steps);
       info.appendChild(name);
       info.appendChild(meta);
+      info.appendChild(how);
       if (it.notes) {
         const n = document.createElement("div");
         n.className = "coll-meta";
@@ -1637,45 +1659,46 @@
     });
   }
 
-  function fillChoices(sel, list, label) {
-    const keep = sel.value;
-    sel.textContent = "";
-    sel.appendChild(new Option("Select…", ""));
-    list.forEach((v) => sel.appendChild(new Option(label(v), v)));
-    if (list.includes(keep)) sel.value = keep;
+  // "$1,563.25 card × 1.05 (Survival of the Cutest) × 0.98 (Near Mint)"
+  function stepsText(cardValue, steps) {
+    return money(cardValue) + " card" + (steps || []).map((st) =>
+      " × " + Number(st.multiplier).toFixed(2) + " (" + st.choice + ")").join("");
   }
 
   function readExtra() {
-    const k = EXTRA[extraKind];
-    const item = {
-      cardId:    current ? current.id : "",
-      condition: $("xCondition").value,
-      notes:     $("xNotes").value.trim()
-    };
-    item[k.nameKey]  = $("xName").value.trim();
-    item[k.placeKey] = $("xPlace").value.trim();
-    item[k.typeKey]  = $("xType").value;
+    const item = { cardId: current ? current.id : "", notes: $("xNotes").value.trim() };
+    extraFields.forEach((f) => {
+      const el = $("x_" + f.key);
+      item[f.key] = el ? el.value.trim() : "";
+    });
     return item;
+  }
+
+  function missingExtra(item) {
+    return extraFields.filter((f) => f.required && !item[f.key]).map((f) => f.label.toLowerCase());
   }
 
   function resetExtraPreview(message) {
     extraPreview = null;
     $("xPreviewValue").textContent = "—";
-    $("xPreviewFormula").textContent = message || "Choose the " + $("xTypeLabel").textContent.toLowerCase() + " to see the value.";
+    $("xPreviewFormula").textContent = message || "Make the choices above to see the value.";
   }
 
   function clearExtraForm() {
-    ["xName", "xPlace", "xNotes"].forEach((id) => { $(id).value = ""; });
-    $("xType").value = "";
-    $("xCondition").value = "";
+    extraFields.forEach((f) => { const el = $("x_" + f.key); if (el) el.value = ""; });
+    $("xNotes").value = "";
     $("xError").textContent = "";
     extraSeq++;
     resetExtraPreview();
   }
 
+  // The value needs every required choice; typed names don't
+  // change it, so they aren't waited for.
   function scheduleExtraPreview() {
     if (extraTimer) clearTimeout(extraTimer);
-    if (!$("xType").value || !current) { extraSeq++; resetExtraPreview(); return; }
+    const item = readExtra();
+    const choicesMissing = extraFields.some((f) => f.kind === "choice" && f.required && !item[f.key]);
+    if (!current || !extraFields.length || choicesMissing) { extraSeq++; resetExtraPreview(); return; }
     $("xPreviewFormula").textContent = "Working it out…";
     extraTimer = setTimeout(runExtraPreview, 300);
   }
@@ -1684,35 +1707,31 @@
     const seq = ++extraSeq;
     const k = EXTRA[extraKind];
     const item = readExtra();
-    // The name doesn't affect the value; a stand-in is sent if it
-    // hasn't been typed yet so the preview can still run.
-    if (!item[k.nameKey]) item[k.nameKey] = "preview";
+    // A required typed name doesn't affect the value; a stand-in is
+    // sent if it hasn't been typed yet so the preview can still run.
+    extraFields.forEach((f) => { if (f.kind === "text" && f.required && !item[f.key]) item[f.key] = "preview"; });
     const data = await call(k.preview, { item: item });
     if (seq !== extraSeq) return;
     if (!data.success) { resetExtraPreview(data.error); return; }
     extraPreview = data;
     $("xPreviewValue").textContent = money(data.issuedValueShown);
-    $("xPreviewFormula").textContent = money(data.cardValue) + " card × " + data.multiplier.toFixed(2) + " (" + data.type + "). Fixed when saved.";
+    $("xPreviewFormula").textContent = stepsText(data.cardValue, data.steps) + ". Fixed when saved.";
   }
 
-  $("xType").addEventListener("change", scheduleExtraPreview);
   $("xClearBtn").addEventListener("click", clearExtraForm);
 
   $("xSaveBtn").addEventListener("click", async () => {
-    if (!current || !extraKind) return;
+    if (!current || !extraKind || !extraFields.length) return;
     const k = EXTRA[extraKind];
     $("xError").textContent = "";
     const item = readExtra();
-    const missing = [];
-    if (!item[k.nameKey]) missing.push(k.nameLabel.toLowerCase());
-    if (!item[k.typeKey]) missing.push(k.typeLabel.toLowerCase());
+    const missing = missingExtra(item);
     if (missing.length) { $("xError").textContent = "Still needed: " + missing.join(", ") + "."; return; }
 
+    const lines = extraFields.map((f) => f.label + ": " + (item[f.key] || f.none || "—")).join("\n");
     const ok = confirm(
       "Save this " + k.noun + "?\n\n" +
-      "Card: " + current.card + " (" + current.id + ")\n" +
-      k.nameLabel + ": " + item[k.nameKey] + "\n" +
-      k.typeLabel + ": " + item[k.typeKey] + "\n" +
+      "Card: " + current.card + " (" + current.id + ")\n" + lines + "\n" +
       "Value at issue: " + (extraPreview ? money(extraPreview.issuedValueShown) : "(worked out on save)") + "\n\n" +
       "The value is fixed when saved and won't change with the card's value."
     );
@@ -1735,7 +1754,7 @@
     const k = EXTRA[extraKind];
     const ok = confirm(
       "Delete this " + k.noun + "?\n\n" +
-      it.name + "  ·  " + it.type + "  ·  " + money(it.issuedValueShown) + "\n" + it.id + "\n\n" +
+      (it.title || "(no name)") + "  ·  " + it.details.join("  ·  ") + "  ·  " + money(it.issuedValueShown) + "\n" + it.id + "\n\n" +
       "This cannot be undone."
     );
     if (!ok) return;
