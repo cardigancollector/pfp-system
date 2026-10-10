@@ -188,6 +188,8 @@
     <button class="mode-btn" id="btnEdit"  type="button">✎ Edit Card</button>
     <button class="mode-btn" id="btnEvo"   type="button" disabled title="Choose a card in Edit Card first">∞ Evolution</button>
     <button class="mode-btn" id="btnPrint" type="button">🖨 Add Print</button>
+    <button class="mode-btn" id="btnOrig"  type="button" disabled title="Choose a card in Edit Card first">🎨 Add Original</button>
+    <button class="mode-btn" id="btnJersey" type="button" disabled title="Choose a card in Edit Card first">👕 Add Jersey</button>
     <button class="mode-btn" id="btnBacks" type="button">🃏 Card Backs</button>
     <button class="mode-btn" id="btnStory" type="button">📜 PfP Card Story</button>
   </nav>
@@ -476,6 +478,58 @@
       </section>
     </div>
 
+    <!-- ══ Originals and jerseys (one screen, two kinds) ══ -->
+    <div id="extraMode" class="hidden">
+      <section class="panel">
+        <h2 id="xTitle"></h2>
+        <div class="chosen" style="margin:0 0 1rem;">
+          <div class="name" id="xCardName"></div>
+          <div class="meta" id="xCardMeta"></div>
+        </div>
+        <div class="label" id="xListLabel" style="margin-bottom:0.4rem;"></div>
+        <div id="xList"></div>
+        <p id="xListError" class="error"></p>
+      </section>
+
+      <section class="panel">
+        <h2 id="xFormTitle"></h2>
+        <div class="grid" style="margin-bottom:1rem;">
+          <div class="group">
+            <label for="xName" id="xNameLabel"></label>
+            <input id="xName" type="text" maxlength="100" autocomplete="off">
+          </div>
+          <div class="group">
+            <label for="xPlace" id="xPlaceLabel"></label>
+            <input id="xPlace" type="text" maxlength="100" autocomplete="off">
+          </div>
+          <div class="group">
+            <label for="xType" id="xTypeLabel"></label>
+            <select id="xType"></select>
+          </div>
+          <div class="group">
+            <label for="xCondition">Condition</label>
+            <select id="xCondition"></select>
+          </div>
+        </div>
+        <div class="group">
+          <label for="xNotes">Notes</label>
+          <textarea id="xNotes" maxlength="2000"></textarea>
+        </div>
+
+        <div class="preview">
+          <div class="preview-label" id="xPreviewLabel">Value at issue</div>
+          <div class="preview-value" id="xPreviewValue">—</div>
+          <div class="preview-formula" id="xPreviewFormula"></div>
+        </div>
+
+        <div class="row-end">
+          <button id="xClearBtn" class="btn-ghost" type="button">Clear</button>
+          <button id="xSaveBtn" class="btn-gold" type="button"></button>
+        </div>
+        <p id="xError" class="error"></p>
+      </section>
+    </div>
+
     <!-- ══ Card backs ══ -->
     <div id="backsMode" class="hidden">
       <section class="panel">
@@ -719,11 +773,14 @@
     $("btnPrint").classList.toggle("active", mode === "print");
     $("btnPrint").classList.toggle("print", mode === "print");
     $("btnBacks").classList.toggle("active", mode === "backs");
+    $("btnOrig").classList.toggle("active", mode === "original");
+    $("btnJersey").classList.toggle("active", mode === "jersey");
 
     $("cardMode").classList.toggle("hidden", mode !== "new" && mode !== "edit");
     $("evoMode").classList.toggle("hidden", mode !== "evolution");
     $("printMode").classList.toggle("hidden", mode !== "print");
     $("backsMode").classList.toggle("hidden", mode !== "backs");
+    $("extraMode").classList.toggle("hidden", mode !== "original" && mode !== "jersey");
     $("editPicker").classList.toggle("hidden", mode !== "edit");
 
     if (mode === "new") {
@@ -747,8 +804,12 @@
     } else if (mode === "backs") {
       showBackSide();
       loadBacks();
+    } else if (mode === "original" || mode === "jersey") {
+      openExtra(mode);
     }
     $("btnEvo").disabled = !current;
+    $("btnOrig").disabled = !current;
+    $("btnJersey").disabled = !current;
     updatePictureTools();
     window.scrollTo({ top: 0 });
   }
@@ -758,6 +819,8 @@
   $("btnEvo").addEventListener("click", () => { if (current) setMode("evolution"); });
   $("btnPrint").addEventListener("click", () => setMode("print"));
   $("btnBacks").addEventListener("click", () => setMode("backs"));
+  $("btnOrig").addEventListener("click", () => { if (current) setMode("original"); });
+  $("btnJersey").addEventListener("click", () => { if (current) setMode("jersey"); });
   $("btnStory").addEventListener("click", openPfPStory);
 
   // ── The picture panel on the left ──────────────────────────
@@ -1029,6 +1092,8 @@
     current = data.card;
     currentLiving = data.livingCard;
     $("btnEvo").disabled = false;
+    $("btnOrig").disabled = false;
+    $("btnJersey").disabled = false;
     updatePictureTools();
     if (mode === "edit") fillCardForm(current);
     else if (mode === "evolution") renderEvo();
@@ -1466,6 +1531,225 @@
 
     toast(c.cardName + " marked Broken.", true);
     loadForm();
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Originals and jerseys — one screen, set up for each kind.
+  // The cloud works out and stores the value; the page only
+  // shows what the cloud says.
+  // ══════════════════════════════════════════════════════════
+  const EXTRA = {
+    original: {
+      title: "🎨 Original Artwork", listLabel: "Originals recorded for this card",
+      formTitle: "Record a new original", saveText: "🎨 Save Original",
+      nameLabel: "Artist name", placeLabel: "Artist location", typeLabel: "Media type",
+      nameKey: "artistName", placeKey: "artistLocation", typeKey: "mediaType",
+      previewLabel: "Original value at issue", noun: "original", none: "No originals recorded for this card yet.",
+      load: "loadOriginals", preview: "previewOriginal", save: "saveOriginal", del: "deleteOriginal"
+    },
+    jersey: {
+      title: "👕 Jerseys", listLabel: "Jerseys recorded for this card",
+      formTitle: "Record a new jersey", saveText: "👕 Save Jersey",
+      nameLabel: "Player name", placeLabel: "Team", typeLabel: "Jersey type",
+      nameKey: "playerName", placeKey: "team", typeKey: "jerseyType",
+      previewLabel: "Jersey value at issue", noun: "jersey", none: "No jerseys recorded for this card yet.",
+      load: "loadJerseys", preview: "previewJersey", save: "saveJersey", del: "deleteJersey"
+    }
+  };
+  let extraKind = null;
+  let extraTimer = null, extraSeq = 0;
+  let extraPreview = null;
+
+  function openExtra(kind) {
+    extraKind = kind;
+    const k = EXTRA[kind];
+    $("xTitle").textContent = k.title;
+    $("xListLabel").textContent = k.listLabel;
+    $("xFormTitle").textContent = k.formTitle;
+    $("xSaveBtn").textContent = k.saveText;
+    $("xNameLabel").textContent = k.nameLabel;
+    $("xPlaceLabel").textContent = k.placeLabel;
+    $("xTypeLabel").textContent = k.typeLabel;
+    $("xPreviewLabel").textContent = k.previewLabel;
+    clearExtraForm();
+    if (!current) return;
+    showSide(current);
+    $("xCardName").textContent = current.card;
+    $("xCardMeta").textContent = current.id + "  ·  card value " + money(current.value);
+    loadExtras();
+  }
+
+  async function loadExtras() {
+    const kind = extraKind, k = EXTRA[kind];
+    $("xListError").textContent = "";
+    const box = $("xList");
+    box.textContent = "";
+    const wait = document.createElement("p");
+    wait.className = "hint";
+    wait.textContent = "Loading…";
+    box.appendChild(wait);
+
+    const data = await call(k.load, { cardId: current.id });
+    if (kind !== extraKind) return;            // switched screens meanwhile
+    box.textContent = "";
+    if (!data.success) { $("xListError").textContent = data.error; return; }
+
+    // The choices come from the cloud, so they always match its multipliers.
+    fillChoices($("xType"), Object.keys(data.types || {}), (t) => t + " (×" + Number(data.types[t]).toFixed(2) + ")");
+    fillChoices($("xCondition"), data.conditions || [], (c) => c);
+
+    const items = data.items || [];
+    if (!items.length) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = k.none;
+      box.appendChild(p);
+      return;
+    }
+    items.forEach((it) => {
+      const row = document.createElement("div");
+      row.className = "coll-row";
+      const info = document.createElement("div");
+      const name = document.createElement("div");
+      name.className = "coll-name";
+      name.textContent = it.name + (it.place ? "  ·  " + it.place : "");
+      const meta = document.createElement("div");
+      meta.className = "coll-meta";
+      meta.textContent = it.type + (it.condition ? "  ·  " + it.condition : "") + "  ·  " + money(it.issuedValueShown) +
+                         " (" + money(it.cardValue) + " × " + it.multiplier.toFixed(2) + ")  ·  " + it.id;
+      info.appendChild(name);
+      info.appendChild(meta);
+      if (it.notes) {
+        const n = document.createElement("div");
+        n.className = "coll-meta";
+        n.style.fontStyle = "italic";
+        n.textContent = it.notes;
+        info.appendChild(n);
+      }
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn-danger";
+      del.textContent = "✕ Delete";
+      del.addEventListener("click", () => deleteExtra(it, del));
+      row.appendChild(info);
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+
+  function fillChoices(sel, list, label) {
+    const keep = sel.value;
+    sel.textContent = "";
+    sel.appendChild(new Option("Select…", ""));
+    list.forEach((v) => sel.appendChild(new Option(label(v), v)));
+    if (list.includes(keep)) sel.value = keep;
+  }
+
+  function readExtra() {
+    const k = EXTRA[extraKind];
+    const item = {
+      cardId:    current ? current.id : "",
+      condition: $("xCondition").value,
+      notes:     $("xNotes").value.trim()
+    };
+    item[k.nameKey]  = $("xName").value.trim();
+    item[k.placeKey] = $("xPlace").value.trim();
+    item[k.typeKey]  = $("xType").value;
+    return item;
+  }
+
+  function resetExtraPreview(message) {
+    extraPreview = null;
+    $("xPreviewValue").textContent = "—";
+    $("xPreviewFormula").textContent = message || "Choose the " + $("xTypeLabel").textContent.toLowerCase() + " to see the value.";
+  }
+
+  function clearExtraForm() {
+    ["xName", "xPlace", "xNotes"].forEach((id) => { $(id).value = ""; });
+    $("xType").value = "";
+    $("xCondition").value = "";
+    $("xError").textContent = "";
+    extraSeq++;
+    resetExtraPreview();
+  }
+
+  function scheduleExtraPreview() {
+    if (extraTimer) clearTimeout(extraTimer);
+    if (!$("xType").value || !current) { extraSeq++; resetExtraPreview(); return; }
+    $("xPreviewFormula").textContent = "Working it out…";
+    extraTimer = setTimeout(runExtraPreview, 300);
+  }
+
+  async function runExtraPreview() {
+    const seq = ++extraSeq;
+    const k = EXTRA[extraKind];
+    const item = readExtra();
+    // The name doesn't affect the value; a stand-in is sent if it
+    // hasn't been typed yet so the preview can still run.
+    if (!item[k.nameKey]) item[k.nameKey] = "preview";
+    const data = await call(k.preview, { item: item });
+    if (seq !== extraSeq) return;
+    if (!data.success) { resetExtraPreview(data.error); return; }
+    extraPreview = data;
+    $("xPreviewValue").textContent = money(data.issuedValueShown);
+    $("xPreviewFormula").textContent = money(data.cardValue) + " card × " + data.multiplier.toFixed(2) + " (" + data.type + "). Fixed when saved.";
+  }
+
+  $("xType").addEventListener("change", scheduleExtraPreview);
+  $("xClearBtn").addEventListener("click", clearExtraForm);
+
+  $("xSaveBtn").addEventListener("click", async () => {
+    if (!current || !extraKind) return;
+    const k = EXTRA[extraKind];
+    $("xError").textContent = "";
+    const item = readExtra();
+    const missing = [];
+    if (!item[k.nameKey]) missing.push(k.nameLabel.toLowerCase());
+    if (!item[k.typeKey]) missing.push(k.typeLabel.toLowerCase());
+    if (missing.length) { $("xError").textContent = "Still needed: " + missing.join(", ") + "."; return; }
+
+    const ok = confirm(
+      "Save this " + k.noun + "?\n\n" +
+      "Card: " + current.card + " (" + current.id + ")\n" +
+      k.nameLabel + ": " + item[k.nameKey] + "\n" +
+      k.typeLabel + ": " + item[k.typeKey] + "\n" +
+      "Value at issue: " + (extraPreview ? money(extraPreview.issuedValueShown) : "(worked out on save)") + "\n\n" +
+      "The value is fixed when saved and won't change with the card's value."
+    );
+    if (!ok) return;
+
+    const btn = $("xSaveBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const kind = extraKind;
+    const data = await call(k.save, { item: item });
+    btn.disabled = false;
+    btn.textContent = k.saveText;
+    if (!data.success) { $("xError").textContent = data.error; return; }
+
+    toast("Saved " + data.item.id + " — " + money(data.item.issuedValueShown) + ".", true);
+    if (kind === extraKind) { clearExtraForm(); loadExtras(); }
+  });
+
+  async function deleteExtra(it, btn) {
+    const k = EXTRA[extraKind];
+    const ok = confirm(
+      "Delete this " + k.noun + "?\n\n" +
+      it.name + "  ·  " + it.type + "  ·  " + money(it.issuedValueShown) + "\n" + it.id + "\n\n" +
+      "This cannot be undone."
+    );
+    if (!ok) return;
+    btn.disabled = true;
+    btn.textContent = "Deleting…";
+    const data = await call(k.del, { id: it.id, confirm: true });
+    if (!data.success) {
+      btn.disabled = false;
+      btn.textContent = "✕ Delete";
+      $("xListError").textContent = data.error;
+      return;
+    }
+    toast("Deleted " + it.id + ".", true);
+    loadExtras();
   }
 
   // ══════════════════════════════════════════════════════════
