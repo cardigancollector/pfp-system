@@ -151,6 +151,13 @@
   .back-dates { color: var(--text); text-align: center; font-size: 0.85rem; line-height: 1.35; }
   .back-dates.none { color: var(--text-dim); font-style: italic; }
   .back-buttons { display: flex; flex-direction: column; gap: 0.4rem; }
+
+  /* ── Settings ── */
+  .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .setting-state { font-family: 'Cinzel', serif; font-size: 1.1rem; letter-spacing: 1px; }
+  .setting-state.on  { color: var(--success); }
+  .setting-state.off { color: var(--error); }
+  .setting-meta { color: var(--text-dim); font-size: 0.95rem; margin-top: 0.6rem; line-height: 1.5; }
   input[type="date"] { color-scheme: dark; }
 
   .spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%;
@@ -196,6 +203,7 @@
     <button class="mode-btn" id="btnPlushie" type="button" disabled title="Choose a card in Edit Card first">🧸 Add Plushie</button>
     <button class="mode-btn" id="btnBacks" type="button">🃏 Card Backs</button>
     <button class="mode-btn" id="btnStory" type="button">📜 PfP Card Story</button>
+    <button class="mode-btn" id="btnSettings" type="button">⚙ Settings</button>
   </nav>
   <div id="whoBox" class="hidden">
     <span id="whoEmail"></span>
@@ -562,6 +570,20 @@
       </section>
     </div>
 
+    <!-- ══ Settings ══ -->
+    <div id="settingsMode" class="hidden">
+      <section class="panel">
+        <h2>⚙ Silver Price Update</h2>
+        <p class="hint">Every 30 minutes the cloud fetches the silver price for the analyzer. While this is Off, nothing is fetched and the analyzer keeps the last saved price. A change takes effect from the next run.</p>
+        <div class="setting-row">
+          <div>Silver price update: <span id="silverState" class="setting-state">…</span></div>
+          <button id="silverToggleBtn" class="btn-gold" type="button" disabled>…</button>
+        </div>
+        <div class="setting-meta" id="silverMeta"></div>
+        <p id="settingsError" class="error"></p>
+      </section>
+    </div>
+
   </div>
 </div>
 
@@ -811,11 +833,13 @@
     $("btnBacks").classList.toggle("active", mode === "backs");
     $("btnOrig").classList.toggle("active", mode === "original");
     $("btnPlushie").classList.toggle("active", mode === "plushie");
+    $("btnSettings").classList.toggle("active", mode === "settings");
 
     $("cardMode").classList.toggle("hidden", mode !== "new" && mode !== "edit");
     $("evoMode").classList.toggle("hidden", mode !== "evolution");
     $("printMode").classList.toggle("hidden", mode !== "print");
     $("backsMode").classList.toggle("hidden", mode !== "backs");
+    $("settingsMode").classList.toggle("hidden", mode !== "settings");
     $("extraMode").classList.toggle("hidden", mode !== "original" && mode !== "plushie");
     $("editPicker").classList.toggle("hidden", mode !== "edit");
 
@@ -842,6 +866,10 @@
       loadBacks();
     } else if (mode === "original" || mode === "plushie") {
       openExtra(mode);
+    } else if (mode === "settings") {
+      showSide({ card: "Settings", imageUrl: "" });
+      $("sideMeta").textContent = "";
+      loadSettings();
     }
     $("btnEvo").disabled = !current;
     $("btnOrig").disabled = !current;
@@ -858,6 +886,7 @@
   $("btnOrig").addEventListener("click", () => { if (current) setMode("original"); });
   $("btnPlushie").addEventListener("click", () => { if (current) setMode("plushie"); });
   $("btnStory").addEventListener("click", openPfPStory);
+  $("btnSettings").addEventListener("click", () => setMode("settings"));
 
   // ── The picture panel on the left ──────────────────────────
   // Shows a card's name, details and picture. Only web links and
@@ -2108,6 +2137,72 @@
     closeBackEdit();
     toast("Timeline saved: " + (data.setName || "card back"), true);
     loadBacks();
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // Settings: silver price update on/off
+  // ══════════════════════════════════════════════════════════
+  let silverOn = null;   // true / false once loaded
+
+  // "2026-10-11T13:05:00.000Z" → local date and time, or "".
+  function whenText(iso) {
+    const d = new Date(iso || "");
+    return isNaN(d.getTime()) ? "" : d.toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" });
+  }
+
+  function showSettings(data) {
+    silverOn = !!data.silverOn;
+    const state = $("silverState");
+    state.textContent = silverOn ? "On" : "Off";
+    state.className = "setting-state " + (silverOn ? "on" : "off");
+
+    const btn = $("silverToggleBtn");
+    btn.disabled = false;
+    btn.className = silverOn ? "btn-danger" : "btn-gold";
+    btn.textContent = silverOn ? "Turn off" : "Turn on";
+
+    const lines = [];
+    lines.push(data.silverPrice
+      ? "Last saved price: " + money(data.silverPrice) + (whenText(data.fetchedAt) ? " (fetched " + whenText(data.fetchedAt) + ")" : "")
+      : "No silver price has been saved yet.");
+    if (whenText(data.changedAt)) lines.push("Switched " + (silverOn ? "on" : "off") + " " + whenText(data.changedAt) + (data.changedBy ? " by " + data.changedBy : ""));
+    $("silverMeta").textContent = lines.join("\n");
+    $("silverMeta").style.whiteSpace = "pre-line";
+  }
+
+  async function loadSettings() {
+    $("settingsError").textContent = "";
+    $("silverState").textContent = "…";
+    $("silverState").className = "setting-state";
+    $("silverToggleBtn").disabled = true;
+    $("silverToggleBtn").textContent = "…";
+    $("silverMeta").textContent = "Loading…";
+    const data = await call("loadSettings");
+    if (!data.success) { $("silverMeta").textContent = ""; $("settingsError").textContent = data.error; return; }
+    showSettings(data);
+  }
+
+  $("silverToggleBtn").addEventListener("click", async () => {
+    if (silverOn === null) return;
+    const turnOn = !silverOn;
+    const ok = confirm(turnOn
+      ? "Turn the silver price update ON?\n\nThe price will be fetched every 30 minutes again, starting with the next run."
+      : "Turn the silver price update OFF?\n\nNothing will be fetched until you turn it back on. The analyzer keeps the last saved price.");
+    if (!ok) return;
+
+    $("settingsError").textContent = "";
+    const btn = $("silverToggleBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const data = await call("setSilverUpdate", { on: turnOn });
+    if (!data.success) {
+      $("settingsError").textContent = data.error;
+      btn.disabled = false;
+      btn.textContent = silverOn ? "Turn off" : "Turn on";
+      return;
+    }
+    showSettings(data);
+    toast("Silver price update turned " + (data.silverOn ? "on" : "off") + ".", true);
   });
 </script>
 </body>
