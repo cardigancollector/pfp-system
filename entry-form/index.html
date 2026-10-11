@@ -23,7 +23,8 @@
             padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
             box-shadow: 0 4px 20px rgba(109,40,217,0.5); }
   .topbar h1 { font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--gold-light); letter-spacing: 2px; }
-  .modes { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .modes { display: flex; flex-direction: column; gap: 0.5rem; }
+  .mode-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
   .mode-btn { font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 1px; padding: 0.5rem 1rem; border-radius: 4px;
               border: 2px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
   .mode-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold-light); }
@@ -195,15 +196,20 @@
 <header class="topbar">
   <h1>⚜ PfP Card Database</h1>
   <nav class="modes hidden" id="modeButtons">
-    <button class="mode-btn" id="btnNew"   type="button">＋ New Card</button>
-    <button class="mode-btn" id="btnEdit"  type="button">✎ Edit Card</button>
-    <button class="mode-btn" id="btnEvo"   type="button" disabled title="Choose a card in Edit Card first">∞ Evolution</button>
-    <button class="mode-btn" id="btnPrint" type="button">🖨 Add Print</button>
-    <button class="mode-btn" id="btnOrig"  type="button" disabled title="Choose a card in Edit Card first">🎨 Add Original</button>
-    <button class="mode-btn" id="btnPlushie" type="button" disabled title="Choose a card in Edit Card first">🧸 Add Plushie</button>
-    <button class="mode-btn" id="btnBacks" type="button">🃏 Card Backs</button>
-    <button class="mode-btn" id="btnStory" type="button">📜 PfP Card Story</button>
-    <button class="mode-btn" id="btnSettings" type="button">⚙ Settings</button>
+    <div class="mode-row">
+      <button class="mode-btn" id="btnNew"   type="button">＋ New Card</button>
+      <button class="mode-btn" id="btnEdit"  type="button">✎ Edit Card</button>
+      <button class="mode-btn" id="btnEvo"   type="button" disabled title="Choose a card in Edit Card first">∞ Evolution</button>
+      <button class="mode-btn" id="btnPrint" type="button">🖨 Add Print</button>
+      <button class="mode-btn" id="btnOrig"  type="button" disabled title="Choose a card in Edit Card first">🎨 Add Original</button>
+      <button class="mode-btn" id="btnPlushie" type="button" disabled title="Choose a card in Edit Card first">🧸 Add Plushie</button>
+      <button class="mode-btn" id="btnBook"  type="button" disabled title="Choose a card in Edit Card first">📖 Add Book</button>
+    </div>
+    <div class="mode-row">
+      <button class="mode-btn" id="btnBacks" type="button">🃏 Card Backs</button>
+      <button class="mode-btn" id="btnStory" type="button">📜 PfP Card Story</button>
+      <button class="mode-btn" id="btnSettings" type="button">⚙ Settings</button>
+    </div>
   </nav>
   <div id="whoBox" class="hidden">
     <span id="whoEmail"></span>
@@ -486,7 +492,7 @@
       </section>
     </div>
 
-    <!-- ══ Originals and plushies (one screen, two kinds) ══ -->
+    <!-- ══ Originals, plushies and books (one screen, three kinds) ══ -->
     <div id="extraMode" class="hidden">
       <section class="panel">
         <h2 id="xTitle"></h2>
@@ -496,10 +502,11 @@
         </div>
         <div class="label" id="xListLabel" style="margin-bottom:0.4rem;"></div>
         <div id="xList"></div>
+        <p id="xFull" class="hint hidden"></p>
         <p id="xListError" class="error"></p>
       </section>
 
-      <section class="panel">
+      <section class="panel" id="xFormPanel">
         <h2 id="xFormTitle"></h2>
         <div class="grid" style="margin-bottom:1rem;" id="xFields"></div>
         <div class="group">
@@ -833,6 +840,7 @@
     $("btnBacks").classList.toggle("active", mode === "backs");
     $("btnOrig").classList.toggle("active", mode === "original");
     $("btnPlushie").classList.toggle("active", mode === "plushie");
+    $("btnBook").classList.toggle("active", mode === "book");
     $("btnSettings").classList.toggle("active", mode === "settings");
 
     $("cardMode").classList.toggle("hidden", mode !== "new" && mode !== "edit");
@@ -840,7 +848,7 @@
     $("printMode").classList.toggle("hidden", mode !== "print");
     $("backsMode").classList.toggle("hidden", mode !== "backs");
     $("settingsMode").classList.toggle("hidden", mode !== "settings");
-    $("extraMode").classList.toggle("hidden", mode !== "original" && mode !== "plushie");
+    $("extraMode").classList.toggle("hidden", mode !== "original" && mode !== "plushie" && mode !== "book");
     $("editPicker").classList.toggle("hidden", mode !== "edit");
 
     if (mode === "new") {
@@ -864,7 +872,7 @@
     } else if (mode === "backs") {
       showBackSide();
       loadBacks();
-    } else if (mode === "original" || mode === "plushie") {
+    } else if (mode === "original" || mode === "plushie" || mode === "book") {
       openExtra(mode);
     } else if (mode === "settings") {
       showSide({ card: "Settings", imageUrl: "" });
@@ -874,6 +882,7 @@
     $("btnEvo").disabled = !current;
     $("btnOrig").disabled = !current;
     $("btnPlushie").disabled = !current;
+    $("btnBook").disabled = !current;
     updatePictureTools();
     window.scrollTo({ top: 0 });
   }
@@ -885,6 +894,7 @@
   $("btnBacks").addEventListener("click", () => setMode("backs"));
   $("btnOrig").addEventListener("click", () => { if (current) setMode("original"); });
   $("btnPlushie").addEventListener("click", () => { if (current) setMode("plushie"); });
+  $("btnBook").addEventListener("click", () => { if (current) setMode("book"); });
   $("btnStory").addEventListener("click", openPfPStory);
   $("btnSettings").addEventListener("click", () => setMode("settings"));
 
@@ -1160,6 +1170,7 @@
     $("btnEvo").disabled = false;
     $("btnOrig").disabled = false;
     $("btnPlushie").disabled = false;
+    $("btnBook").disabled = false;
     updatePictureTools();
     if (mode === "edit") fillCardForm(current);
     else if (mode === "evolution") renderEvo();
@@ -1601,7 +1612,7 @@
   }
 
   // ══════════════════════════════════════════════════════════
-  // Originals and plushies — one screen, set up for each kind.
+  // Originals, plushies and books — one screen, set up for each kind.
   // The fields, choices and multipliers all come from the cloud,
   // which also works out and stores the value; the page only
   // shows what the cloud says.
@@ -1618,6 +1629,13 @@
       formTitle: "Record a new plushie", saveText: "🧸 Save Plushie",
       previewLabel: "Plushie value at issue", noun: "plushie", none: "No plushies recorded for this card yet.",
       load: "loadPlushies", preview: "previewPlushie", save: "savePlushie", del: "deletePlushie"
+    },
+    book: {
+      title: "📖 Book", listLabel: "Book recorded for this card",
+      formTitle: "Record the book", saveText: "📖 Save Book",
+      previewLabel: "Book value at issue", noun: "book", none: "No book recorded for this card yet.",
+      full: "Each card can have only one book. Delete this one to record a different book.",
+      load: "loadBooks", preview: "previewBook", save: "saveBook", del: "deleteBook"
     }
   };
   let extraKind = null;
@@ -1635,6 +1653,8 @@
     $("xSaveBtn").textContent = k.saveText;
     $("xPreviewLabel").textContent = k.previewLabel;
     $("xFields").textContent = "";
+    $("xFull").classList.add("hidden");
+    $("xFormPanel").classList.remove("hidden");
     clearExtraForm();
     if (!current) return;
     showSide(current);
@@ -1696,6 +1716,13 @@
     buildExtraFields(data.fields || []);
 
     const items = data.items || [];
+    // A kind with one per card (books): once the card has one, the
+    // form is put away. The cloud refuses a second one anyway.
+    const full = !!data.onePerCard && items.length > 0;
+    $("xFormPanel").classList.toggle("hidden", full);
+    $("xFull").classList.toggle("hidden", !full);
+    $("xFull").textContent = full ? (k.full || "") : "";
+
     if (!items.length) {
       const p = document.createElement("p");
       p.className = "hint";
