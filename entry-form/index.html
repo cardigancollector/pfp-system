@@ -148,6 +148,10 @@
   .back-pic span { color: var(--text-dim); font-style: italic; font-size: 0.85rem; padding: 0.5rem; text-align: center; font-family: 'Crimson Pro', serif; letter-spacing: 0; text-transform: none; }
   .back-name { font-family: 'Cinzel', serif; color: var(--gold-light); text-align: center; font-size: 0.85rem; word-break: break-word; }
   .back-note { color: var(--text-dim); text-align: center; font-size: 0.8rem; }
+  .back-dates { color: var(--text); text-align: center; font-size: 0.85rem; line-height: 1.35; }
+  .back-dates.none { color: var(--text-dim); font-style: italic; }
+  .back-buttons { display: flex; flex-direction: column; gap: 0.4rem; }
+  input[type="date"] { color-scheme: dark; }
 
   .spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%;
              animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
@@ -528,6 +532,21 @@
             <div class="side-note" style="text-align:left;" id="backPictureNote">JPEG, PNG or WebP, up to 5 MB.</div>
           </div>
         </div>
+        <p class="hint">Issue timeline (optional). A set shows on the timeline once it has a design date or a release date.</p>
+        <div class="grid" style="margin-bottom:1rem;">
+          <div class="group">
+            <label for="backDesignDate">Design date</label>
+            <input id="backDesignDate" type="date" min="2000-01-01" max="2100-12-31">
+          </div>
+          <div class="group">
+            <label for="backReleaseDate">Release date</label>
+            <input id="backReleaseDate" type="date" min="2000-01-01" max="2100-12-31">
+          </div>
+        </div>
+        <div class="group">
+          <label for="backNotes">Timeline note</label>
+          <textarea id="backNotes" maxlength="1000" placeholder="Shown on the issue timeline…"></textarea>
+        </div>
         <div class="row-end">
           <button id="clearBackBtn" class="btn-ghost" type="button">Clear</button>
           <button id="addBackBtn" class="btn-gold" type="button">🃏 Add Card Back</button>
@@ -543,6 +562,35 @@
       </section>
     </div>
 
+  </div>
+</div>
+
+<!-- Card back: timeline dates and note -->
+<div class="modal-back hidden" id="backEditModal">
+  <div class="modal" role="dialog" aria-label="Timeline dates and note">
+    <header>🃏 TIMELINE · <span id="backEditName"></span></header>
+    <div class="body">
+      <p class="hint">Only the dates and note change here. Leave a date blank if it hasn't happened yet. A set with no dates is hidden from the timeline.</p>
+      <div class="grid" style="margin-bottom:1rem;">
+        <div class="group">
+          <label for="backEditDesign">Design date</label>
+          <input id="backEditDesign" type="date" min="2000-01-01" max="2100-12-31">
+        </div>
+        <div class="group">
+          <label for="backEditRelease">Release date</label>
+          <input id="backEditRelease" type="date" min="2000-01-01" max="2100-12-31">
+        </div>
+      </div>
+      <div class="group">
+        <label for="backEditNotes">Timeline note</label>
+        <textarea id="backEditNotes" maxlength="1000" style="min-height:120px;"></textarea>
+      </div>
+      <p id="backEditError" class="error"></p>
+    </div>
+    <footer>
+      <button id="backEditCancel" class="btn-ghost" type="button">Cancel</button>
+      <button id="backEditSave" class="btn-gold" type="button">🃏 Save</button>
+    </footer>
   </div>
 </div>
 
@@ -873,6 +921,7 @@
     if (e.key !== "Escape") return;
     closeOverlay();
     closePfPStory();
+    closeBackEdit();
   });
 
   // ── Choosing a picture ─────────────────────────────────────
@@ -1777,6 +1826,25 @@
   let backs       = [];     // the card back list from the cloud
   let pendingBack = null;   // { name, data, url } — a picture chosen but not added yet
   let shownBack   = null;   // the card back shown on the left
+  let editingBack = null;   // the card back whose timeline box is open
+
+  // "2024-02-08" → "February 8, 2024". Worked out in UTC so the
+  // day never slips by a time zone.
+  function longDate(v) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || "");
+    if (!m) return "";
+    const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    return d.toLocaleDateString("en-US", { timeZone: "UTC", year: "numeric", month: "long", day: "numeric" });
+  }
+
+  // The lines shown under a card back's name.
+  function backDatesText(b) {
+    if (!b.designDate && !b.releaseDate) return "";
+    const lines = [];
+    if (b.designDate) lines.push("Designed " + longDate(b.designDate));
+    lines.push(b.releaseDate ? "Released " + longDate(b.releaseDate) : "Not yet released");
+    return lines.join("\n");
+  }
 
   // The picture panel on the left shows the new picture waiting to
   // be added, or the card back last clicked.
@@ -1856,16 +1924,34 @@
       note.className = "back-note";
       note.textContent = b.uploaded ? "Uploaded here" : "Drive picture";
 
+      const dates = document.createElement("div");
+      const datesText = backDatesText(b);
+      dates.className = "back-dates" + (datesText ? "" : " none");
+      dates.style.whiteSpace = "pre-line";
+      dates.textContent = datesText || "No dates — not on the timeline";
+
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "btn-ghost btn-small";
+      edit.textContent = "✎ Dates & note";
+      edit.addEventListener("click", () => openBackEdit(b));
+
       const del = document.createElement("button");
       del.type = "button";
       del.className = "btn-danger btn-small";
       del.textContent = "✕ Delete";
       del.addEventListener("click", () => deleteBack(b, del));
 
+      const buttons = document.createElement("div");
+      buttons.className = "back-buttons";
+      buttons.appendChild(edit);
+      buttons.appendChild(del);
+
       box.appendChild(pic);
       box.appendChild(name);
       box.appendChild(note);
-      box.appendChild(del);
+      box.appendChild(dates);
+      box.appendChild(buttons);
       grid.appendChild(box);
     });
   }
@@ -1919,9 +2005,16 @@
 
   $("backSetName").addEventListener("input", () => { if (pendingBack) showBackSide(); });
 
+  function clearBackTimeline() {
+    $("backDesignDate").value = "";
+    $("backReleaseDate").value = "";
+    $("backNotes").value = "";
+  }
+
   $("clearBackBtn").addEventListener("click", () => {
     dropBackPicture();
     $("backSetName").value = "";
+    clearBackTimeline();
     $("backError").textContent = "";
     showBackSide();
   });
@@ -1934,22 +2027,86 @@
     if (!pendingBack) missing.push("picture");
     if (missing.length) { $("backError").textContent = "Still needed: " + missing.join(", ") + "."; return; }
 
-    const ok = confirm("Add this card back?\n\nSet: " + setName + "\nPicture: " + pendingBack.name);
+    const designDate  = $("backDesignDate").value;
+    const releaseDate = $("backReleaseDate").value;
+    if (designDate && releaseDate && releaseDate < designDate) {
+      $("backError").textContent = "The release date can't be earlier than the design date.";
+      return;
+    }
+
+    const ok = confirm(
+      "Add this card back?\n\nSet: " + setName + "\nPicture: " + pendingBack.name +
+      "\nDesign date: " + (longDate(designDate) || "none") +
+      "\nRelease date: " + (longDate(releaseDate) || "none")
+    );
     if (!ok) return;
 
     const btn = $("addBackBtn");
     btn.disabled = true;
     btn.textContent = "Adding…";
-    const data = await call("addCardBack", { setName: setName, image: { name: pendingBack.name, data: pendingBack.data } });
+    const data = await call("addCardBack", {
+      setName: setName,
+      image: { name: pendingBack.name, data: pendingBack.data },
+      designDate: designDate,
+      releaseDate: releaseDate,
+      notes: $("backNotes").value
+    });
     btn.disabled = false;
     btn.textContent = "🃏 Add Card Back";
     if (!data.success) { $("backError").textContent = data.error; return; }
 
     dropBackPicture();
     $("backSetName").value = "";
+    clearBackTimeline();
     shownBack = { id: data.id, setName: data.setName, imageUrl: data.imageUrl };
     showBackSide();
     toast("Card back added: " + data.setName, true);
+    loadBacks();
+  });
+
+  // ── Timeline dates and note for one card back ──────────────
+  function openBackEdit(b) {
+    editingBack = b;
+    $("backEditName").textContent = b.setName || "(no set name)";
+    $("backEditDesign").value  = b.designDate || "";
+    $("backEditRelease").value = b.releaseDate || "";
+    $("backEditNotes").value   = b.notes || "";
+    $("backEditError").textContent = "";
+    $("backEditSave").disabled = false;
+    $("backEditModal").classList.remove("hidden");
+  }
+
+  function closeBackEdit() {
+    $("backEditModal").classList.add("hidden");
+    editingBack = null;
+  }
+
+  $("backEditCancel").addEventListener("click", closeBackEdit);
+  $("backEditSave").addEventListener("click", async () => {
+    if (!editingBack) return;
+    $("backEditError").textContent = "";
+    const designDate  = $("backEditDesign").value;
+    const releaseDate = $("backEditRelease").value;
+    if (designDate && releaseDate && releaseDate < designDate) {
+      $("backEditError").textContent = "The release date can't be earlier than the design date.";
+      return;
+    }
+
+    const btn = $("backEditSave");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const data = await call("updateCardBack", {
+      id: editingBack.id,
+      designDate: designDate,
+      releaseDate: releaseDate,
+      notes: $("backEditNotes").value
+    });
+    btn.disabled = false;
+    btn.textContent = "🃏 Save";
+    if (!data.success) { $("backEditError").textContent = data.error; return; }
+
+    closeBackEdit();
+    toast("Timeline saved: " + (data.setName || "card back"), true);
     loadBacks();
   });
 </script>
