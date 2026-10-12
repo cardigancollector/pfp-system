@@ -623,6 +623,17 @@
       </section>
 
       <section class="panel">
+        <h2>🏪 Shop Open / Closed</h2>
+        <p class="hint">While the shop is closed, only you can check out (that's how Test Checkout works). Once it's open, anyone can buy what you've marked "Show in the shop".</p>
+        <div class="setting-row">
+          <div>The shop is: <span id="openState" class="setting-state">…</span></div>
+          <button id="openToggleBtn" class="btn-gold" type="button" disabled>…</button>
+        </div>
+        <div class="setting-meta" id="openMeta"></div>
+        <p id="openError" class="error"></p>
+      </section>
+
+      <section class="panel">
         <h2>🚚 Shop Shipping Rates</h2>
         <p class="hint">A flat rate per item, in Canadian dollars. Leave a box blank if you don't ship that kind of item there. Type 0 for free shipping.</p>
         <div class="ship-wrap"><table class="ship-table" id="shipTable"></table></div>
@@ -2873,6 +2884,7 @@
 
   function showShopSettings(data) {
 
+    showShopOpen(data);
     renderShipping(data);
     $("shipSaveBtn").disabled = false;
 
@@ -2900,6 +2912,10 @@
     $("taxSaveNumberBtn").disabled = true;
     $("taxState").textContent = "…";
     $("taxState").className = "setting-state";
+    $("openError").textContent = "";
+    $("openToggleBtn").disabled = true;
+    $("openState").textContent = "…";
+    $("openState").className = "setting-state";
     const data = await call("loadShopSettings");
     if (!data.success) { $("shipError").textContent = data.error; return; }
     showShopSettings(data);
@@ -2943,6 +2959,45 @@
       ? "Turn sales tax OFF?\n\nThe shop will not add HST to sales."
       : "Turn sales tax ON?\n\nOnly do this once you are registered for GST/HST. The HST number below will be saved with it.");
   });
+  // ── Shop open / closed ─────────────────────────────────────
+  let shopOpen = null;
+
+  function showShopOpen(data) {
+    shopOpen = !!data.checkoutOpen;
+    const state = $("openState");
+    state.textContent = shopOpen ? "Open" : "Closed";
+    state.className = "setting-state " + (shopOpen ? "on" : "off");
+    const btn = $("openToggleBtn");
+    btn.disabled = false;
+    btn.className = shopOpen ? "btn-danger" : "btn-gold";
+    btn.textContent = shopOpen ? "Close the shop" : "Open the shop";
+    $("openMeta").textContent = whenText(data.openChangedAt)
+      ? (shopOpen ? "Opened " : "Closed ") + whenText(data.openChangedAt) + (data.openChangedBy ? " by " + data.openChangedBy : "")
+      : "Never opened.";
+  }
+
+  $("openToggleBtn").addEventListener("click", async () => {
+    if (shopOpen === null) return;
+    const opening = !shopOpen;
+    const question = opening
+      ? "OPEN the shop?\n\nAnyone will be able to pay for the items you've marked \"Show in the shop\"."
+      : "CLOSE the shop?\n\nBuyers won't be able to start a checkout. You can still use Test Checkout.";
+    if (!confirm(question)) return;
+    $("openError").textContent = "";
+    const btn = $("openToggleBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const data = await call("saveShopOpen", { open: opening, confirm: true });
+    if (!data.success) {
+      $("openError").textContent = data.error;
+      btn.disabled = false;
+      btn.textContent = shopOpen ? "Close the shop" : "Open the shop";
+      return;
+    }
+    showShopSettings(data);
+    toast("The shop is now " + (data.checkoutOpen ? "OPEN" : "closed") + ".", true);
+  });
+
   $("taxSaveNumberBtn").addEventListener("click", () => {
     if (taxOn === null) return;
     saveTax(taxOn, "Save this HST number?\n\n" + ($("hstNumber").value.trim() || "(blank)"));
