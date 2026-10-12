@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Keeps search engines away until launch. Remove this line on launch day. -->
+<meta name="robots" content="noindex, nofollow">
+<title>PfP Cards — Shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #d4af37; --gold-light: #f0d060; --purple: #6d28d9; --purple-mid: #7c3aed; --purple-dark: #1e0a3c;
+    --bg: #0d0618; --surface: #160828; --surface2: #1e1035;
+    --border: rgba(212,175,55,0.25); --text: #e8e0f0; --text-dim: #9d8fbf;
+    --success: #22c55e; --error: #ef4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Crimson Pro', Georgia, serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 17px; }
+  .hidden { display: none !important; }
+
+  header { background: linear-gradient(90deg, var(--purple-dark), #2d0a5e, var(--purple-dark)); border-bottom: 2px solid var(--gold);
+           padding: 1.25rem 1rem; text-align: center; box-shadow: 0 4px 20px rgba(109,40,217,0.5); }
+  header h1 { font-family: 'Cinzel', serif; font-size: 1.7rem; color: var(--gold-light); letter-spacing: 3px; }
+  header p { color: var(--text-dim); letter-spacing: 2px; font-family: 'Cinzel', serif; font-size: 0.8rem; margin-top: 0.25rem; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+  .notice { border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; font-size: 1.05rem; }
+  .notice.ok  { background: rgba(34,197,94,0.1); border: 1px solid var(--success); color: #bbf7d0; }
+  .notice.bad { background: rgba(239,68,68,0.1); border: 1px solid var(--error); color: #fecaca; }
+  .notice strong { font-family: 'Courier New', monospace; letter-spacing: 1px; }
+
+  .center-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 2.5rem 1.5rem;
+                text-align: center; max-width: 520px; margin: 3rem auto; }
+  .center-box h2 { font-family: 'Cinzel', serif; color: var(--gold); letter-spacing: 2px; font-size: 1.2rem; margin-bottom: 0.75rem; }
+  .center-box p { color: var(--text-dim); }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .toolbar .note { color: var(--text-dim); font-size: 0.95rem; }
+  label { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); margin-right: 0.5rem; }
+  select { background: var(--surface2); border: 1px solid rgba(212,175,55,0.35); border-radius: 4px; color: var(--text);
+           font-family: 'Crimson Pro', serif; font-size: 1rem; padding: 0.45rem 0.7rem; }
+  select:focus { outline: none; border-color: var(--gold); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; }
+  .item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  .pic { aspect-ratio: 5 / 7; background: var(--surface2); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); }
+  .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pic span { font-family: 'Cinzel', serif; color: var(--text-dim); letter-spacing: 3px; }
+  .body { padding: 0.9rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
+  .kind { font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  .name { font-family: 'Cinzel', serif; color: var(--gold-light); font-size: 1.05rem; }
+  .details { color: var(--text-dim); font-size: 0.92rem; }
+  .bottom { margin-top: auto; padding-top: 0.75rem; }
+  .price { font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--text); font-weight: 700; }
+  .ship { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 0.6rem; }
+  button { width: 100%; font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 1.5px; border-radius: 4px; cursor: pointer;
+           padding: 0.7rem 1rem; border: 2px solid var(--gold); background: linear-gradient(135deg, #854d0e, var(--gold)); color: var(--bg); font-weight: 700; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; background: transparent; color: var(--text-dim); border-color: var(--text-dim); }
+  .item.sold .pic { opacity: 0.5; }
+  .err { color: #fca5a5; font-size: 0.9rem; margin-top: 0.5rem; min-height: 1rem; }
+
+  footer { text-align: center; color: var(--text-dim); font-size: 0.85rem; padding: 2rem 1rem; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PfP Cards</h1>
+  <p>THE SHOP</p>
+</header>
+
+<main>
+  <div id="notice" class="notice hidden" role="status"></div>
+
+  <div id="loading" class="center-box"><p>Loading the shop…</p></div>
+
+  <div id="closed" class="center-box hidden">
+    <h2>Opening soon</h2>
+    <p>The shop isn't open yet. Please check back soon.</p>
+  </div>
+
+  <div id="failed" class="center-box hidden">
+    <h2>Something went wrong</h2>
+    <p>The shop couldn't be loaded. Please try again in a moment.</p>
+  </div>
+
+  <div id="open" class="hidden">
+    <div class="toolbar">
+      <div>
+        <label for="zone">Shipping to</label>
+        <select id="zone"></select>
+      </div>
+      <div class="note">Prices in Canadian dollars. One item per checkout.</div>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="center-box hidden">
+      <h2>Nothing for sale right now</h2>
+      <p>Please check back soon.</p>
+    </div>
+  </div>
+</main>
+
+<footer>Payments are handled securely by Stripe. Your card details never reach PfP Cards.</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  // Public shop information (only what a buyer should see) and the
+  // checkout address. Neither needs a password or key.
+  const SHOP_URL     = "https://us-central1-pfp-system.cloudfunctions.net/pfpApi?action=getShop";
+  const CHECKOUT_URL = "https://us-central1-pfp-system.cloudfunctions.net/shopCheckout";
+
+  const $ = (id) => document.getElementById(id);
+  let shop = null;
+  let busy = false;
+
+  function cad(cents) {
+    return (Number(cents || 0) / 100).toLocaleString("en-CA", { style: "currency", currency: "CAD" });
+  }
+
+  function show(id) {
+    ["loading", "closed", "failed", "open"].forEach((x) => $(x).classList.toggle("hidden", x !== id));
+  }
+
+  function notice(text, ok, ref) {
+    const n = $("notice");
+    n.textContent = text;
+    if (ref) {
+      const b = document.createElement("strong");
+      b.textContent = ref;
+      n.append(" Your order reference is ", b, ".");
+    }
+    n.className = "notice " + (ok ? "ok" : "bad");
+  }
+
+  // ── Coming back from Stripe ────────────────────────────────
+  (function readReturn() {
+    const q = new URLSearchParams(location.search);
+    const paid = (q.get("paid") || "").toUpperCase();
+    if (/^[A-Z0-9]{1,12}$/.test(paid)) {
+      notice("Thank you, your payment went through! Stripe will email you a receipt, and your item will be on its way soon.", true, paid);
+    } else if (q.get("cancelled")) {
+      notice("Checkout cancelled. Nothing was charged.", false);
+    }
+    if (location.search) history.replaceState(null, "", location.pathname);
+  })();
+
+  // ── Building the page ──────────────────────────────────────
+  function kindLabel(key) {
+    const k = (shop.kinds || []).find((x) => x.key === key);
+    return k ? k.label : key;
+  }
+
+  function shippingFor(item, zone) {
+    const row = shop.shipping && shop.shipping[item.kind];
+    const v = row ? row[zone] : null;
+    return (typeof v === "number" && v >= 0) ? v : null;
+  }
+
+  function renderZones() {
+    const sel = $("zone");
+    sel.textContent = "";
+    Object.keys(shop.zones || {}).forEach((z) => sel.appendChild(new Option(shop.zones[z], z)));
+    sel.value = "CA";
+  }
+
+  function renderItems() {
+    const grid = $("grid");
+    grid.textContent = "";
+    const zone = $("zone").value;
+    const items = shop.items || [];
+    $("empty").classList.toggle("hidden", items.length > 0);
+
+    items.forEach((item) => {
+      const box = document.createElement("div");
+      box.className = "item" + (item.soldOut ? " sold" : "");
+
+      const pic = document.createElement("div");
+      pic.className = "pic";
+      if (typeof item.imageUrl === "string" && item.imageUrl.startsWith("https://")) {
+        const img = document.createElement("img");
+        img.src = item.imageUrl;
+        img.alt = item.title || "";
+        img.loading = "lazy";
+        img.referrerPolicy = "no-referrer";
+        img.addEventListener("error", () => { pic.textContent = ""; const s = document.createElement("span"); s.textContent = "PfP"; pic.appendChild(s); });
+        pic.appendChild(img);
+      } else {
+        const s = document.createElement("span");
+        s.textContent = "PfP";
+        pic.appendChild(s);
+      }
+
+      const body = document.createElement("div");
+      body.className = "body";
+
+      const kind = document.createElement("div");
+      kind.className = "kind";
+      kind.textContent = kindLabel(item.kind);
+
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = item.kind === "card" || !item.cardName ? item.title : item.title + " — " + item.cardName;
+
+      const details = document.createElement("div");
+      details.className = "details";
+      details.textContent = item.details || "";
+
+      const bottom = document.createElement("div");
+      bottom.className = "bottom";
+      const price = document.createElement("div");
+      price.className = "price";
+      price.textContent = cad(item.priceCents);
+
+      const shipCents = shippingFor(item, zone);
+      const ship = document.createElement("div");
+      ship.className = "ship";
+      ship.textContent = shipCents === null ? "Doesn't ship to " + (shop.zones[zone] || "there")
+                       : shipCents === 0 ? "Free shipping" : "+ " + cad(shipCents) + " shipping";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      const err = document.createElement("div");
+      err.className = "err";
+      if (item.soldOut) {
+        btn.textContent = "Sold out";
+        btn.disabled = true;
+      } else if (shipCents === null) {
+        btn.textContent = "Not available here";
+        btn.disabled = true;
+      } else {
+        btn.textContent = "Buy now";
+        btn.addEventListener("click", () => buy(item, zone, btn, err));
+      }
+
+      bottom.append(price, ship, btn, err);
+      body.append(kind, name, details, bottom);
+      box.append(pic, body);
+      grid.appendChild(box);
+    });
+  }
+
+  // ── Buying: ask the cloud for Stripe's payment page ────────
+  // The cloud works out the price and shipping itself; this page
+  // only says which item and where it ships.
+  async function buy(item, zone, btn, err) {
+    if (busy) return;
+    busy = true;
+    err.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Opening checkout…";
+    let data;
+    try {
+      const res = await fetch(CHECKOUT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: item.listingId, zone: zone })
+      });
+      try { data = await res.json(); }
+      catch (e) { data = { success: false, error: "Unexpected reply from the shop. Please try again." }; }
+    } catch (e) {
+      data = { success: false, error: "Couldn't reach the shop. Check your connection and try again." };
+    }
+
+    // Only ever go to Stripe's own payment page.
+    if (data.success && typeof data.url === "string" && data.url.startsWith("https://checkout.stripe.com/")) {
+      window.location.href = data.url;
+      return;
+    }
+    busy = false;
+    btn.disabled = false;
+    btn.textContent = "Buy now";
+    err.textContent = data.error || "Something went wrong. Nothing was charged.";
+  }
+
+  // ── Loading ────────────────────────────────────────────────
+  async function load() {
+    try {
+      const res = await fetch(SHOP_URL);
+      const data = await res.json();
+      if (!data || !data.success) throw new Error("bad reply");
+      shop = data;
+    } catch (e) {
+      show("failed");
+      return;
+    }
+    // While the shop is closed, nothing about what's for sale is shown.
+    if (shop.checkoutOpen !== true) { show("closed"); return; }
+    renderZones();
+    renderItems();
+    show("open");
+  }
+
+  $("zone").addEventListener("change", renderItems);
+  load();
+})();
+</script>
+</body>
+</html>
