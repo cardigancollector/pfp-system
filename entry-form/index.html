@@ -239,6 +239,7 @@
     <div class="mode-row">
       <button class="mode-btn" id="btnBacks" type="button">🃏 Card Backs</button>
       <button class="mode-btn" id="btnStory" type="button">📜 PfP Card Story</button>
+      <button class="mode-btn" id="btnProducts" type="button">🎁 Products</button>
       <button class="mode-btn" id="btnShop" type="button">🛒 Shop</button>
       <button class="mode-btn" id="btnSettings" type="button">⚙ Settings</button>
     </div>
@@ -634,6 +635,20 @@
       </section>
 
       <section class="panel">
+        <h2>🎁 Product Types</h2>
+        <p class="hint">The kinds of products you sell. Each type gets its own row in Shop Shipping Rates below. A type can only be removed while no product uses it.</p>
+        <div id="typeList"></div>
+        <div class="setting-row" style="margin-top:1rem;">
+          <div class="group" style="flex:1;min-width:200px;margin-bottom:0;">
+            <label for="newTypeName">New type</label>
+            <input id="newTypeName" type="text" maxlength="40" autocomplete="off" placeholder="e.g. Product type A">
+          </div>
+          <button id="addTypeBtn" class="btn-gold" type="button" disabled>＋ Add Type</button>
+        </div>
+        <p id="typeError" class="error"></p>
+      </section>
+
+      <section class="panel">
         <h2>🚚 Shop Shipping Rates</h2>
         <p class="hint">A flat rate per item, in Canadian dollars. Leave a box blank if you don't ship that kind of item there. Type 0 for free shipping.</p>
         <div class="ship-wrap"><table class="ship-table" id="shipTable"></table></div>
@@ -659,6 +674,48 @@
         </div>
         <div class="setting-meta" id="shopSettingsMeta"></div>
         <p id="taxError" class="error"></p>
+      </section>
+    </div>
+
+    <!-- ══ Products ══ -->
+    <div id="productsMode" class="hidden">
+      <section class="panel">
+        <h2 id="productFormTitle">🎁 New Product</h2>
+        <p class="hint">Things you sell as they are. They have no value in the analyzer. Set the price and how many you have on the Shop screen.</p>
+        <div class="grid" style="margin-bottom:1rem;">
+          <div class="group">
+            <label for="productName">Name</label>
+            <input id="productName" type="text" maxlength="100" autocomplete="off" placeholder="e.g. Product name">
+          </div>
+          <div class="group">
+            <label for="productType">Type</label>
+            <select id="productType"></select>
+          </div>
+        </div>
+        <div class="group">
+          <label for="productDescription">Description (buyers read this)</label>
+          <textarea id="productDescription" maxlength="1000" placeholder="Anything a buyer should know…"></textarea>
+        </div>
+        <div class="group">
+          <span class="label">Picture</span>
+          <div>
+            <label class="file-btn" for="productPictureInput">Choose picture…</label>
+            <input id="productPictureInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden">
+          </div>
+          <div class="side-note" style="text-align:left;" id="productPictureNote">JPEG, PNG or WebP, up to 5 MB.</div>
+        </div>
+        <div class="row-end">
+          <button id="productClearBtn" class="btn-ghost" type="button">＋ New product</button>
+          <button id="productSaveBtn" class="btn-gold" type="button">🎁 Save Product</button>
+        </div>
+        <p id="productError" class="error"></p>
+      </section>
+
+      <section class="panel">
+        <h2>Your Products</h2>
+        <p class="hint">Click a product to change it.</p>
+        <div id="productList"></div>
+        <p id="productListError" class="error"></p>
       </section>
     </div>
 
@@ -1012,6 +1069,7 @@
     $("btnBook").classList.toggle("active", mode === "book");
     $("btnSettings").classList.toggle("active", mode === "settings");
     $("btnShop").classList.toggle("active", mode === "shop");
+    $("btnProducts").classList.toggle("active", mode === "products");
 
     $("cardMode").classList.toggle("hidden", mode !== "new" && mode !== "edit");
     $("evoMode").classList.toggle("hidden", mode !== "evolution");
@@ -1019,6 +1077,7 @@
     $("backsMode").classList.toggle("hidden", mode !== "backs");
     $("settingsMode").classList.toggle("hidden", mode !== "settings");
     $("shopMode").classList.toggle("hidden", mode !== "shop");
+    $("productsMode").classList.toggle("hidden", mode !== "products");
     $("extraMode").classList.toggle("hidden", mode !== "original" && mode !== "plushie" && mode !== "book");
     $("editPicker").classList.toggle("hidden", mode !== "edit");
 
@@ -1055,6 +1114,9 @@
       $("shopSearch").value = "";
       loadShop();
       loadOrders();
+    } else if (mode === "products") {
+      clearProductForm();
+      loadProducts();
     }
     $("btnEvo").disabled = !current;
     $("btnOrig").disabled = !current;
@@ -1075,6 +1137,7 @@
   $("btnStory").addEventListener("click", openPfPStory);
   $("btnSettings").addEventListener("click", () => setMode("settings"));
   $("btnShop").addEventListener("click", () => setMode("shop"));
+  $("btnProducts").addEventListener("click", () => setMode("products"));
 
   // ── The picture panel on the left ──────────────────────────
   // Shows a card's name, details and picture. Only web links and
@@ -2445,10 +2508,18 @@
     return ((shopData && shopData.items) || []).filter((i) => i.kind === kind);
   }
 
+  // A listing's or item's name as shown here. Cards and products
+  // stand alone; add-ons are named with their card.
+  function shopName(x) {
+    return (x.kind === "card" || x.kind === "product") ? x.title : x.title + " — " + (x.cardName || "");
+  }
+
   function shopItemLabel(i) {
     const bits = i.kind === "card"
       ? [i.title, i.itemId]
-      : [i.cardName || "(card not found)", i.title, i.details, i.itemId];
+      : i.kind === "product"
+        ? [i.title, i.typeLabel, i.itemId]
+        : [i.cardName || "(card not found)", i.title, i.details, i.itemId];
     const l = listingFor(i.kind, i.itemId);
     if (l) bits.push(l.listed ? "IN SHOP " + cad(l.priceCents) : "listed, hidden");
     return bits.filter(Boolean).join("  ·  ");
@@ -2515,8 +2586,9 @@
     shopChoice = item;
     const k = shopKinds[kind] || { label: kind, oneOfAKind: kind !== "card" };
 
-    $("shopChosenName").textContent = kind === "card" ? item.title : item.title + " — " + (item.cardName || "");
-    $("shopChosenMeta").textContent = [k.label, item.itemId, kind === "card" ? "" : item.details].filter(Boolean).join("  ·  ");
+    $("shopChosenName").textContent = shopName(item);
+    $("shopChosenMeta").textContent = [k.label, kind === "product" ? item.typeLabel : "", item.itemId,
+      (kind === "card" || kind === "product") ? "" : item.details].filter(Boolean).join("  ·  ");
 
     const l = listingFor(kind, itemId);
     $("shopPrice").value = l && l.priceCents ? centsText(l.priceCents) : "";
@@ -2553,10 +2625,11 @@
       const left = document.createElement("div");
       const name = document.createElement("div");
       name.className = "coll-name";
-      name.textContent = l.kind === "card" ? l.title : l.title + " — " + l.cardName;
+      name.textContent = shopName(l);
       const meta = document.createElement("div");
       meta.className = "coll-meta";
-      meta.textContent = [label, l.itemId, l.kind === "card" ? "" : l.details].filter(Boolean).join("  ·  ");
+      meta.textContent = [label, l.kind === "product" ? l.typeLabel : "", l.itemId,
+        (l.kind === "card" || l.kind === "product") ? "" : l.details].filter(Boolean).join("  ·  ");
       left.append(name, meta);
 
       const right = document.createElement("div");
@@ -2640,7 +2713,7 @@
     const list = (shopData && shopData.listings) || [];
     if (!list.length) { sel.appendChild(new Option("No listings yet", "")); return; }
     list.forEach((l) => {
-      const name = l.kind === "card" ? l.title : l.title + " — " + l.cardName;
+      const name = shopName(l);
       sel.appendChild(new Option(name + "  ·  " + cad(l.priceCents) + "  ·  " + (l.listed ? "In shop" : "Hidden"), l.listingId));
     });
     if (keep && list.some((l) => l.listingId === keep)) sel.value = keep;
@@ -2840,6 +2913,173 @@
   $("ordersRefreshBtn").addEventListener("click", loadOrders);
 
   // ══════════════════════════════════════════════════════════
+  // Products: things sold as they are.
+  // No value. Price, stock and "show in the shop" are set on the
+  // Shop screen like any other item.
+  // ══════════════════════════════════════════════════════════
+  let productList     = [];
+  let productTypeOpts = [];
+  let editingProduct  = null;   // the product being changed, or null for a new one
+  let pendingProduct  = null;   // { name, data, url } — a picture chosen but not saved yet
+
+  function renderProductTypes() {
+    const sel = $("productType");
+    const keep = sel.value;
+    sel.textContent = "";
+    if (!productTypeOpts.length) {
+      const o = new Option("Add a product type in Settings first", "");
+      o.disabled = true;
+      sel.appendChild(o);
+      sel.value = "";
+      return;
+    }
+    sel.appendChild(new Option("Select…", ""));
+    productTypeOpts.forEach((t) => sel.appendChild(new Option(t.label, t.key)));
+    sel.value = productTypeOpts.some((t) => t.key === keep) ? keep : "";
+  }
+
+  function renderProductList() {
+    const box = $("productList");
+    box.textContent = "";
+    if (!productList.length) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "No products yet.";
+      box.appendChild(p);
+      return;
+    }
+    productList.forEach((p) => {
+      const row = document.createElement("div");
+      row.className = "shop-row";
+      row.tabIndex = 0;
+      row.setAttribute("role", "button");
+      const left = document.createElement("div");
+      const name = document.createElement("div");
+      name.className = "coll-name";
+      name.textContent = p.name;
+      const meta = document.createElement("div");
+      meta.className = "coll-meta";
+      meta.textContent = [p.typeLabel, p.productId, p.imageUrl ? "" : "no picture"].filter(Boolean).join("  ·  ");
+      left.append(name, meta);
+      row.appendChild(left);
+      const open = () => { chooseProduct(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
+      row.addEventListener("click", open);
+      row.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+      box.appendChild(row);
+    });
+  }
+
+  async function loadProducts() {
+    $("productListError").textContent = "";
+    $("productList").textContent = "Loading…";
+    const data = await call("loadProducts");
+    if (!data.success) {
+      $("productList").textContent = "";
+      $("productListError").textContent = data.error;
+      return;
+    }
+    productList = data.products || [];
+    productTypeOpts = data.types || [];
+    renderProductTypes();
+    renderProductList();
+    if (editingProduct) {
+      const fresh = productList.find((p) => p.productId === editingProduct.productId);
+      if (fresh) chooseProduct(fresh);
+    }
+  }
+
+  function showProductSide() {
+    const name = $("productName").value.trim() || (editingProduct ? editingProduct.name : "New product");
+    const url = pendingProduct ? pendingProduct.url : (editingProduct ? editingProduct.imageUrl : "");
+    showSide({ card: name, imageUrl: url });
+    $("sideMeta").textContent = pendingProduct ? "New picture, not saved yet"
+      : editingProduct ? [editingProduct.typeLabel, editingProduct.productId].filter(Boolean).join("  ·  ") : "Product";
+  }
+
+  function dropProductPicture() {
+    if (pendingProduct && pendingProduct.url) URL.revokeObjectURL(pendingProduct.url);
+    pendingProduct = null;
+    $("productPictureNote").textContent = editingProduct && editingProduct.imageUrl
+      ? "Has a picture. Choose another to replace it." : "JPEG, PNG or WebP, up to 5 MB.";
+  }
+
+  function clearProductForm() {
+    editingProduct = null;
+    dropProductPicture();
+    $("productFormTitle").textContent = "🎁 New Product";
+    $("productName").value = "";
+    $("productDescription").value = "";
+    $("productType").value = "";
+    $("productError").textContent = "";
+    showProductSide();
+  }
+
+  function chooseProduct(p) {
+    editingProduct = p;
+    dropProductPicture();
+    $("productFormTitle").textContent = "🎁 Change Product · " + p.productId;
+    $("productName").value = p.name;
+    $("productDescription").value = p.description;
+    $("productType").value = productTypeOpts.some((t) => t.key === p.typeKey) ? p.typeKey : "";
+    $("productError").textContent = "";
+    showProductSide();
+  }
+
+  $("productPictureInput").addEventListener("change", () => {
+    const file = $("productPictureInput").files && $("productPictureInput").files[0];
+    $("productPictureInput").value = "";
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { toast("The picture must be a JPEG, PNG or WebP file.", false); return; }
+    if (file.size > MAX_PICTURE) { toast("That picture is too big (5 MB at most).", false); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      dropProductPicture();
+      pendingProduct = { name: file.name, data: String(reader.result), url: URL.createObjectURL(file) };
+      $("productPictureNote").textContent = "Chosen: " + file.name + " — saved with the product.";
+      showProductSide();
+    };
+    reader.onerror = () => toast("That picture could not be read.", false);
+    reader.readAsDataURL(file);
+  });
+
+  $("productName").addEventListener("input", () => { if (mode === "products") showProductSide(); });
+  $("productClearBtn").addEventListener("click", clearProductForm);
+
+  $("productSaveBtn").addEventListener("click", async () => {
+    $("productError").textContent = "";
+    const name = $("productName").value.trim();
+    const typeKey = $("productType").value;
+    const missing = [];
+    if (!name)    missing.push("name");
+    if (!typeKey) missing.push("type");
+    if (missing.length) { $("productError").textContent = "Still needed: " + missing.join(", ") + "."; return; }
+
+    const body = {
+      product: {
+        productId:   editingProduct ? editingProduct.productId : "",
+        name:        name,
+        typeKey:     typeKey,
+        description: $("productDescription").value.trim()
+      }
+    };
+    if (pendingProduct) body.image = { name: pendingProduct.name, data: pendingProduct.data };
+
+    const btn = $("productSaveBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const data = await call("saveProduct", body);
+    btn.disabled = false;
+    btn.textContent = "🎁 Save Product";
+    if (!data.success) { $("productError").textContent = data.error; return; }
+
+    dropProductPicture();
+    editingProduct = data.product;
+    toast((data.isNew ? "Product added: " : "Product saved: ") + data.product.name +
+      (data.listingUpdated ? " (its shop listing was updated too)" : ""), true);
+    await loadProducts();
+  });
+
+  // ══════════════════════════════════════════════════════════
   // Settings: shop shipping rates and sales tax
   // ══════════════════════════════════════════════════════════
   let taxOn = null;
@@ -2885,6 +3125,7 @@
   function showShopSettings(data) {
 
     showShopOpen(data);
+    renderTypeList(data);
     renderShipping(data);
     $("shipSaveBtn").disabled = false;
 
@@ -2916,6 +3157,8 @@
     $("openToggleBtn").disabled = true;
     $("openState").textContent = "…";
     $("openState").className = "setting-state";
+    $("typeError").textContent = "";
+    $("addTypeBtn").disabled = true;
     const data = await call("loadShopSettings");
     if (!data.success) { $("shipError").textContent = data.error; return; }
     showShopSettings(data);
@@ -2959,6 +3202,65 @@
       ? "Turn sales tax OFF?\n\nThe shop will not add HST to sales."
       : "Turn sales tax ON?\n\nOnly do this once you are registered for GST/HST. The HST number below will be saved with it.");
   });
+  // ── Product types ──────────────────────────────────────────
+  function renderTypeList(data) {
+    const box = $("typeList");
+    box.textContent = "";
+    const types = data.productTypes || [];
+    if (!types.length) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.style.marginBottom = "0";
+      p.textContent = "No product types yet.";
+      box.appendChild(p);
+    }
+    types.forEach((t) => {
+      const row = document.createElement("div");
+      row.className = "coll-row";
+      const name = document.createElement("div");
+      name.className = "coll-name";
+      name.textContent = t.label;
+      const btn = document.createElement("button");
+      btn.className = "btn-ghost btn-small";
+      btn.type = "button";
+      btn.textContent = "Remove";
+      btn.addEventListener("click", () => removeType(t, btn));
+      row.append(name, btn);
+      box.appendChild(row);
+    });
+    $("addTypeBtn").disabled = false;
+  }
+
+  $("addTypeBtn").addEventListener("click", async () => {
+    $("typeError").textContent = "";
+    const label = $("newTypeName").value.trim();
+    if (!label) { $("typeError").textContent = "Type a name for the new product type."; return; }
+    const btn = $("addTypeBtn");
+    btn.disabled = true;
+    btn.textContent = "Adding…";
+    const data = await call("addProductType", { label: label });
+    btn.textContent = "＋ Add Type";
+    btn.disabled = false;
+    if (!data.success) { $("typeError").textContent = data.error; return; }
+    $("newTypeName").value = "";
+    showShopSettings(data);
+    toast("Product type added: " + label + ". Set its shipping rates below.", true);
+  });
+
+  $("newTypeName").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); $("addTypeBtn").click(); }
+  });
+
+  async function removeType(t, btn) {
+    if (!confirm("Remove the product type \"" + t.label + "\"?\n\nIts shipping row goes too. This only works if no product uses it.")) return;
+    $("typeError").textContent = "";
+    btn.disabled = true;
+    const data = await call("deleteProductType", { typeKey: t.key, confirm: true });
+    if (!data.success) { btn.disabled = false; $("typeError").textContent = data.error; return; }
+    showShopSettings(data);
+    toast("Product type removed: " + t.label + ".", true);
+  }
+
   // ── Shop open / closed ─────────────────────────────────────
   let shopOpen = null;
 
