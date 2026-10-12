@@ -686,6 +686,29 @@
         <div id="shopListings"></div>
         <p id="shopListError" class="error"></p>
       </section>
+
+      <section class="panel">
+        <h2>🧪 Test Checkout</h2>
+        <p class="hint">Opens Stripe's payment page for one listing, the way a buyer would see it. While the shop is closed, only you can do this.</p>
+        <div class="grid">
+          <div class="group">
+            <label for="testListing">Listing</label>
+            <select id="testListing"></select>
+          </div>
+          <div class="group">
+            <label for="testZone">Ship to</label>
+            <select id="testZone">
+              <option value="CA">Canada</option>
+              <option value="US">United States</option>
+              <option value="INTL">Everywhere else</option>
+            </select>
+          </div>
+        </div>
+        <div class="row-end">
+          <button id="testCheckoutBtn" class="btn-gold" type="button">🧪 Start Test Checkout</button>
+        </div>
+        <p id="testCheckoutError" class="error"></p>
+      </section>
     </div>
 
   </div>
@@ -866,6 +889,10 @@
   $("signOutBtn").addEventListener("click", () => signOut(auth));
   $("refusedSignOutBtn").addEventListener("click", () => signOut(auth));
 
+  // Coming back from Stripe's payment page (?shop=paid or ?shop=cancelled).
+  let checkoutReturn = new URLSearchParams(location.search).get("shop");
+  if (checkoutReturn) history.replaceState(null, "", location.pathname);
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       $("whoBox").classList.add("hidden");
@@ -887,7 +914,16 @@
     $("loadingText").textContent = "Loading cards…";
     showGate("loadingScreen");
     const ok = await loadForm();
-    if (ok) { showApp(); setMode("new"); }
+    if (ok) {
+      showApp();
+      setMode(checkoutReturn ? "shop" : "new");
+      if (checkoutReturn === "paid") {
+        toast("Test payment went through. Stripe is telling your cloud now; the stock goes down in a moment.", true);
+      } else if (checkoutReturn === "cancelled") {
+        toast("Test checkout cancelled. The item goes back on the shelf within about half an hour.", false);
+      }
+      checkoutReturn = null;
+    }
   });
 
   // ── Loading the card list, choices, artist types and collections ──
@@ -2403,6 +2439,7 @@
 
     renderShopItems();
     renderListings();
+    renderTestListings();
     if (shopChoice) chooseShopItem(shopChoice.kind, shopChoice.itemId);
   }
 
@@ -2550,6 +2587,61 @@
 
     toast("Listing saved: " + data.listing.title + (data.listing.listed ? " (in shop)" : " (hidden)"), true);
     await loadShop();
+  });
+
+  // ── Test checkout (Stripe) ─────────────────────────────────
+  // Asks the cloud for a Stripe payment page for one listing and goes
+  // there. The cloud works out the price and shipping itself and only
+  // lets the shop owner through while the shop is closed. Stripe sends
+  // the buyer back here afterwards (?shop=paid or ?shop=cancelled).
+  const CHECKOUT_ENDPOINT = "https://us-central1-pfp-system.cloudfunctions.net/shopCheckout";
+
+  function renderTestListings() {
+    const sel = $("testListing");
+    const keep = sel.value;
+    sel.textContent = "";
+    const list = (shopData && shopData.listings) || [];
+    if (!list.length) { sel.appendChild(new Option("No listings yet", "")); return; }
+    list.forEach((l) => {
+      const name = l.kind === "card" ? l.title : l.title + " — " + l.cardName;
+      sel.appendChild(new Option(name + "  ·  " + cad(l.priceCents) + "  ·  " + (l.listed ? "In shop" : "Hidden"), l.listingId));
+    });
+    if (keep && list.some((l) => l.listingId === keep)) sel.value = keep;
+  }
+
+  $("testCheckoutBtn").addEventListener("click", async () => {
+    $("testCheckoutError").textContent = "";
+    const listingId = $("testListing").value;
+    if (!listingId) { $("testCheckoutError").textContent = "Choose a listing first."; return; }
+    const user = auth.currentUser;
+    if (!user) { $("testCheckoutError").textContent = "Not signed in."; return; }
+
+    const btn = $("testCheckoutBtn");
+    btn.disabled = true;
+    btn.textContent = "Opening Stripe…";
+    let data;
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(CHECKOUT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ listingId: listingId, zone: $("testZone").value })
+      });
+      try { data = await res.json(); }
+      catch (e) { data = { success: false, error: "Unexpected reply from the server (" + res.status + ")." }; }
+    } catch (e) {
+      data = { success: false, error: "Could not reach the server. Check your connection and try again." };
+    }
+
+    // Only ever go to Stripe's own payment page.
+    if (data.success && typeof data.url === "string" && data.url.startsWith("https://checkout.stripe.com/")) {
+      window.location.href = data.url;
+      return;
+    }
+    btn.disabled = false;
+    btn.textContent = "🧪 Start Test Checkout";
+    $("testCheckoutError").textContent = (data.error || "Something went wrong.") +
+      (data.stripeMessage ? " (Stripe said: " + data.stripeMessage + ")" : "");
   });
 
   // ══════════════════════════════════════════════════════════
