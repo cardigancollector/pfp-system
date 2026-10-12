@@ -161,6 +161,22 @@
   .setting-meta { color: var(--text-dim); font-size: 0.95rem; margin-top: 0.6rem; line-height: 1.5; }
   input[type="date"] { color-scheme: dark; }
 
+  /* ── Shop ── */
+  .shop-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem;
+              border-bottom: 1px solid rgba(212,175,55,0.1); cursor: pointer; border-radius: 4px; }
+  .shop-row:last-child { border-bottom: none; }
+  .shop-row:hover, .shop-row:focus { background: rgba(212,175,55,0.06); outline: none; }
+  .shop-right { text-align: right; white-space: nowrap; }
+  .shop-state { font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 1px; }
+  .shop-state.on  { color: var(--success); }
+  .shop-state.off { color: var(--text-dim); }
+  .check-row { display: flex; align-items: center; gap: 0.6rem; margin: 1rem 0; color: var(--text); }
+  .check-row input { width: auto; transform: scale(1.3); }
+  .ship-wrap { overflow-x: auto; }
+  .ship-table { width: 100%; border-collapse: collapse; min-width: 420px; }
+  .ship-table th, .ship-table td { padding: 0.35rem 0.4rem; text-align: left; }
+  .ship-table th { font-family: 'Cinzel', serif; font-size: 0.66rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); font-weight: 400; }
+
   .spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%;
              animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -208,6 +224,7 @@
     <div class="mode-row">
       <button class="mode-btn" id="btnBacks" type="button">🃏 Card Backs</button>
       <button class="mode-btn" id="btnStory" type="button">📜 PfP Card Story</button>
+      <button class="mode-btn" id="btnShop" type="button">🛒 Shop</button>
       <button class="mode-btn" id="btnSettings" type="button">⚙ Settings</button>
     </div>
   </nav>
@@ -589,6 +606,86 @@
         <div class="setting-meta" id="silverMeta"></div>
         <p id="settingsError" class="error"></p>
       </section>
+
+      <section class="panel">
+        <h2>🚚 Shop Shipping Rates</h2>
+        <p class="hint">A flat rate per item, in Canadian dollars. Leave a box blank if you don't ship that kind of item there. Type 0 for free shipping.</p>
+        <div class="ship-wrap"><table class="ship-table" id="shipTable"></table></div>
+        <div class="row-end" style="margin-top:1rem;">
+          <button id="shipSaveBtn" class="btn-gold" type="button" disabled>🚚 Save Shipping</button>
+        </div>
+        <p id="shipError" class="error"></p>
+      </section>
+
+      <section class="panel">
+        <h2>🧾 Shop Sales Tax (HST)</h2>
+        <p class="hint">Leave this Off until you are registered for GST/HST. Checkout isn't built yet, so nothing is charged either way for now.</p>
+        <div class="setting-row">
+          <div>Charging sales tax: <span id="taxState" class="setting-state">…</span></div>
+          <button id="taxToggleBtn" class="btn-gold" type="button" disabled>…</button>
+        </div>
+        <div class="group" style="margin-top:1rem;max-width:340px;">
+          <label for="hstNumber">HST number</label>
+          <input id="hstNumber" type="text" placeholder="123456789 RT0001" maxlength="20" autocomplete="off">
+        </div>
+        <div class="row-end">
+          <button id="taxSaveNumberBtn" class="btn-ghost" type="button" disabled>Save number</button>
+        </div>
+        <div class="setting-meta" id="shopSettingsMeta"></div>
+        <p id="taxError" class="error"></p>
+      </section>
+    </div>
+
+    <!-- ══ Shop ══ -->
+    <div id="shopMode" class="hidden">
+      <section class="panel">
+        <h2>🛒 Put an Item in the Shop</h2>
+        <p class="hint">Choose the kind of item, then the item. You set the price; it is not the analyzer value.</p>
+        <div class="grid">
+          <div class="group">
+            <label for="shopKind">Kind</label>
+            <select id="shopKind"></select>
+          </div>
+          <div class="group">
+            <label for="shopSearch">Search</label>
+            <input id="shopSearch" type="text" placeholder="Card name, artist or id…" autocomplete="off">
+          </div>
+        </div>
+        <select id="shopItem" size="8" style="margin-top:0.75rem;"></select>
+
+        <div id="shopEditor" class="hidden">
+          <div class="chosen">
+            <div class="name" id="shopChosenName"></div>
+            <div class="meta" id="shopChosenMeta"></div>
+          </div>
+          <div class="grid" style="margin-top:1rem;">
+            <div class="group">
+              <label for="shopPrice">Price (CAD)</label>
+              <input id="shopPrice" type="text" inputmode="decimal" placeholder="25.00" maxlength="12" autocomplete="off">
+            </div>
+            <div class="group">
+              <label for="shopQty">How many for sale</label>
+              <input id="shopQty" type="number" min="0" step="1" value="1">
+            </div>
+          </div>
+          <div class="check-row">
+            <input id="shopListed" type="checkbox">
+            <label for="shopListed" style="font-family:'Crimson Pro',serif;font-size:1rem;letter-spacing:0;text-transform:none;color:var(--text);">Show in the shop</label>
+          </div>
+          <div class="row-end">
+            <button id="shopCancelBtn" class="btn-ghost" type="button">Cancel</button>
+            <button id="shopSaveBtn" class="btn-gold" type="button">🛒 Save Listing</button>
+          </div>
+        </div>
+        <p id="shopError" class="error"></p>
+      </section>
+
+      <section class="panel">
+        <h2>Listings</h2>
+        <p class="hint">Click a listing to change it.</p>
+        <div id="shopListings"></div>
+        <p id="shopListError" class="error"></p>
+      </section>
     </div>
 
   </div>
@@ -842,12 +939,14 @@
     $("btnPlushie").classList.toggle("active", mode === "plushie");
     $("btnBook").classList.toggle("active", mode === "book");
     $("btnSettings").classList.toggle("active", mode === "settings");
+    $("btnShop").classList.toggle("active", mode === "shop");
 
     $("cardMode").classList.toggle("hidden", mode !== "new" && mode !== "edit");
     $("evoMode").classList.toggle("hidden", mode !== "evolution");
     $("printMode").classList.toggle("hidden", mode !== "print");
     $("backsMode").classList.toggle("hidden", mode !== "backs");
     $("settingsMode").classList.toggle("hidden", mode !== "settings");
+    $("shopMode").classList.toggle("hidden", mode !== "shop");
     $("extraMode").classList.toggle("hidden", mode !== "original" && mode !== "plushie" && mode !== "book");
     $("editPicker").classList.toggle("hidden", mode !== "edit");
 
@@ -878,6 +977,11 @@
       showSide({ card: "Settings", imageUrl: "" });
       $("sideMeta").textContent = "";
       loadSettings();
+      loadShopSettings();
+    } else if (mode === "shop") {
+      clearShopChoice();
+      $("shopSearch").value = "";
+      loadShop();
     }
     $("btnEvo").disabled = !current;
     $("btnOrig").disabled = !current;
@@ -897,6 +1001,7 @@
   $("btnBook").addEventListener("click", () => { if (current) setMode("book"); });
   $("btnStory").addEventListener("click", openPfPStory);
   $("btnSettings").addEventListener("click", () => setMode("settings"));
+  $("btnShop").addEventListener("click", () => setMode("shop"));
 
   // ── The picture panel on the left ──────────────────────────
   // Shows a card's name, details and picture. Only web links and
@@ -2230,6 +2335,341 @@
     }
     showSettings(data);
     toast("Silver price update turned " + (data.silverOn ? "on" : "off") + ".", true);
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // Shop: what is for sale, at what price, how many
+  // The cloud works out each listing's name and details from the
+  // item's own record; this page only sends the price, how many,
+  // and whether it shows.
+  // ══════════════════════════════════════════════════════════
+  let shopData   = null;   // listings, sellable add-ons and kinds, from the cloud
+  let shopKinds  = {};     // kind → { label, oneOfAKind }
+  let shopChoice = null;   // the item being listed or changed
+
+  function cad(cents) {
+    return (Number(cents || 0) / 100).toLocaleString("en-CA", { style: "currency", currency: "CAD" });
+  }
+  // 1250 → "12.50"; nothing → ""
+  function centsText(cents) {
+    return (cents === null || cents === undefined) ? "" : (Number(cents) / 100).toFixed(2);
+  }
+
+  function listingFor(kind, itemId) {
+    const list = (shopData && shopData.listings) || [];
+    return list.find((l) => l.kind === kind && l.itemId === itemId) || null;
+  }
+
+  // Everything of one kind that could be listed. Cards come from the
+  // form's own card list; prints, originals, plushies and books from the cloud.
+  function shopItemsOf(kind) {
+    if (kind === "card") {
+      return cards.map((c) => ({
+        kind: "card", itemId: c.id, cardId: c.id, cardName: c.card,
+        title: c.card, details: c.rarity || "", imageUrl: c.imageUrl
+      }));
+    }
+    return ((shopData && shopData.items) || []).filter((i) => i.kind === kind);
+  }
+
+  function shopItemLabel(i) {
+    const bits = i.kind === "card"
+      ? [i.title, i.itemId]
+      : [i.cardName || "(card not found)", i.title, i.details, i.itemId];
+    const l = listingFor(i.kind, i.itemId);
+    if (l) bits.push(l.listed ? "IN SHOP " + cad(l.priceCents) : "listed, hidden");
+    return bits.filter(Boolean).join("  ·  ");
+  }
+
+  async function loadShop() {
+    $("shopError").textContent = "";
+    $("shopListError").textContent = "";
+    $("shopListings").textContent = "Loading…";
+    const data = await call("loadShop");
+    if (!data.success) {
+      $("shopListings").textContent = "";
+      $("shopListError").textContent = data.error;
+      return;
+    }
+    shopData = data;
+    shopKinds = {};
+    (data.kinds || []).forEach((k) => { shopKinds[k.key] = k; });
+
+    const sel = $("shopKind");
+    const keep = sel.value;
+    sel.textContent = "";
+    (data.kinds || []).forEach((k) => sel.appendChild(new Option(k.label, k.key)));
+    sel.value = shopKinds[keep] ? keep : "card";
+
+    renderShopItems();
+    renderListings();
+    if (shopChoice) chooseShopItem(shopChoice.kind, shopChoice.itemId);
+  }
+
+  function renderShopItems() {
+    const kind = $("shopKind").value;
+    const q = $("shopSearch").value.trim().toLowerCase();
+    const sel = $("shopItem");
+    sel.textContent = "";
+    const list = shopItemsOf(kind).filter((i) => !q || shopItemLabel(i).toLowerCase().includes(q));
+    if (!list.length) {
+      const o = new Option(q ? "Nothing matches." : "Nothing of this kind yet.", "");
+      o.disabled = true;
+      sel.appendChild(o);
+      return;
+    }
+    list.forEach((i) => sel.appendChild(new Option(shopItemLabel(i), i.itemId)));
+    if (shopChoice && shopChoice.kind === kind) sel.value = shopChoice.itemId;
+  }
+
+  function clearShopChoice() {
+    shopChoice = null;
+    $("shopEditor").classList.add("hidden");
+    $("shopItem").value = "";
+    $("shopError").textContent = "";
+    showSide({ card: "Shop", imageUrl: "" });
+    $("sideMeta").textContent = "";
+  }
+
+  function chooseShopItem(kind, itemId) {
+    const item = shopItemsOf(kind).find((i) => i.itemId === itemId);
+    if (!item) {
+      clearShopChoice();
+      $("shopError").textContent = "That item no longer exists.";
+      return;
+    }
+    shopChoice = item;
+    const k = shopKinds[kind] || { label: kind, oneOfAKind: kind !== "card" };
+
+    $("shopChosenName").textContent = kind === "card" ? item.title : item.title + " — " + (item.cardName || "");
+    $("shopChosenMeta").textContent = [k.label, item.itemId, kind === "card" ? "" : item.details].filter(Boolean).join("  ·  ");
+
+    const l = listingFor(kind, itemId);
+    $("shopPrice").value = l && l.priceCents ? centsText(l.priceCents) : "";
+    $("shopQty").max = k.oneOfAKind ? "1" : "9999";
+    $("shopQty").value = l ? String(l.quantity) : "1";
+    $("shopListed").checked = l ? l.listed : false;
+    $("shopEditor").classList.remove("hidden");
+    $("shopError").textContent = "";
+
+    showSide({ card: item.cardName || item.title, imageUrl: item.imageUrl });
+    $("sideMeta").textContent = [k.label, item.itemId].join("  ·  ");
+  }
+
+  function renderListings() {
+    const box = $("shopListings");
+    box.textContent = "";
+    const list = ((shopData && shopData.listings) || []).slice().sort((a, b) =>
+      (Number(b.listed) - Number(a.listed)) || a.cardName.localeCompare(b.cardName) || a.kind.localeCompare(b.kind));
+    if (!list.length) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "No listings yet.";
+      box.appendChild(p);
+      return;
+    }
+    list.forEach((l) => {
+      const label = (shopKinds[l.kind] && shopKinds[l.kind].label) || l.kind;
+
+      const row = document.createElement("div");
+      row.className = "shop-row";
+      row.tabIndex = 0;
+      row.setAttribute("role", "button");
+
+      const left = document.createElement("div");
+      const name = document.createElement("div");
+      name.className = "coll-name";
+      name.textContent = l.kind === "card" ? l.title : l.title + " — " + l.cardName;
+      const meta = document.createElement("div");
+      meta.className = "coll-meta";
+      meta.textContent = [label, l.itemId, l.kind === "card" ? "" : l.details].filter(Boolean).join("  ·  ");
+      left.append(name, meta);
+
+      const right = document.createElement("div");
+      right.className = "shop-right";
+      const state = document.createElement("div");
+      state.className = "shop-state " + (l.listed ? "on" : "off");
+      state.textContent = l.listed ? "In shop" : "Hidden";
+      const nums = document.createElement("div");
+      nums.className = "coll-meta";
+      nums.textContent = cad(l.priceCents) + "  ·  " + l.quantity + " for sale";
+      right.append(state, nums);
+
+      row.append(left, right);
+      const open = () => {
+        $("shopKind").value = l.kind;
+        $("shopSearch").value = "";
+        renderShopItems();
+        chooseShopItem(l.kind, l.itemId);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+      row.addEventListener("click", open);
+      row.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+      box.appendChild(row);
+    });
+  }
+
+  $("shopKind").addEventListener("change", () => {
+    clearShopChoice();
+    $("shopSearch").value = "";
+    renderShopItems();
+  });
+  $("shopSearch").addEventListener("input", renderShopItems);
+  $("shopItem").addEventListener("change", () => {
+    const v = $("shopItem").value;
+    if (v) chooseShopItem($("shopKind").value, v);
+  });
+  $("shopCancelBtn").addEventListener("click", () => { clearShopChoice(); renderShopItems(); });
+
+  $("shopSaveBtn").addEventListener("click", async () => {
+    if (!shopChoice) return;
+    $("shopError").textContent = "";
+    const kind   = shopChoice.kind;
+    const itemId = shopChoice.itemId;
+    const price  = $("shopPrice").value.trim();
+    const listed = $("shopListed").checked;
+    const before = listingFor(kind, itemId);
+
+    // Putting something in the shop for the first time makes its
+    // name, details and price readable by the public, so ask first.
+    if (listed && !(before && before.listed)) {
+      const ok = confirm("Show this in the shop?\n\n" + $("shopChosenName").textContent + "\nPrice: $" + price + " CAD" +
+        "\n\nOnce shown, anyone can read its name, details and price through your public card data link.");
+      if (!ok) return;
+    }
+
+    const btn = $("shopSaveBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const data = await call("saveListing", {
+      listing: { kind: kind, itemId: itemId, price: price, quantity: $("shopQty").value.trim(), listed: listed }
+    });
+    btn.disabled = false;
+    btn.textContent = "🛒 Save Listing";
+    if (!data.success) { $("shopError").textContent = data.error; return; }
+
+    toast("Listing saved: " + data.listing.title + (data.listing.listed ? " (in shop)" : " (hidden)"), true);
+    await loadShop();
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // Settings: shop shipping rates and sales tax
+  // ══════════════════════════════════════════════════════════
+  let taxOn = null;
+
+  function renderShipping(data) {
+    const table = $("shipTable");
+    table.textContent = "";
+    const zones = data.zones || {};
+    const zoneKeys = Object.keys(zones);
+
+    const head = table.createTHead().insertRow();
+    const corner = document.createElement("th");
+    corner.textContent = "Kind";
+    head.appendChild(corner);
+    zoneKeys.forEach((z) => {
+      const th = document.createElement("th");
+      th.textContent = zones[z];
+      head.appendChild(th);
+    });
+
+    const body = table.createTBody();
+    (data.kinds || []).forEach((k) => {
+      const row = body.insertRow();
+      const th = document.createElement("th");
+      th.textContent = k.label;
+      row.appendChild(th);
+      zoneKeys.forEach((z) => {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.inputMode = "decimal";
+        input.maxLength = 9;
+        input.placeholder = "not shipped";
+        input.dataset.kind = k.key;
+        input.dataset.zone = z;
+        input.setAttribute("aria-label", k.label + " to " + zones[z]);
+        const v = data.shipping && data.shipping[k.key] ? data.shipping[k.key][z] : null;
+        input.value = centsText(v);
+        row.insertCell().appendChild(input);
+      });
+    });
+  }
+
+  function showShopSettings(data) {
+
+    renderShipping(data);
+    $("shipSaveBtn").disabled = false;
+
+    taxOn = !!data.taxRegistered;
+    const state = $("taxState");
+    state.textContent = taxOn ? "On" : "Off";
+    state.className = "setting-state " + (taxOn ? "on" : "off");
+    const btn = $("taxToggleBtn");
+    btn.disabled = false;
+    btn.className = taxOn ? "btn-danger" : "btn-gold";
+    btn.textContent = taxOn ? "Turn off" : "Turn on";
+    $("hstNumber").value = data.hstNumber || "";
+    $("taxSaveNumberBtn").disabled = false;
+
+    $("shopSettingsMeta").textContent = whenText(data.updatedAt)
+      ? "Shop settings last changed " + whenText(data.updatedAt) + (data.updatedBy ? " by " + data.updatedBy : "")
+      : "";
+  }
+
+  async function loadShopSettings() {
+    $("shipError").textContent = "";
+    $("taxError").textContent = "";
+    $("shipSaveBtn").disabled = true;
+    $("taxToggleBtn").disabled = true;
+    $("taxSaveNumberBtn").disabled = true;
+    $("taxState").textContent = "…";
+    $("taxState").className = "setting-state";
+    const data = await call("loadShopSettings");
+    if (!data.success) { $("shipError").textContent = data.error; return; }
+    showShopSettings(data);
+  }
+
+  $("shipSaveBtn").addEventListener("click", async () => {
+    $("shipError").textContent = "";
+    const shipping = {};
+    $("shipTable").querySelectorAll("input").forEach((input) => {
+      const k = input.dataset.kind, z = input.dataset.zone;
+      if (!shipping[k]) shipping[k] = {};
+      shipping[k][z] = input.value.trim();
+    });
+    const btn = $("shipSaveBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    const data = await call("saveShipping", { shipping: shipping });
+    btn.disabled = false;
+    btn.textContent = "🚚 Save Shipping";
+    if (!data.success) { $("shipError").textContent = data.error; return; }
+    showShopSettings(data);
+    toast("Shipping rates saved.", true);
+  });
+
+  async function saveTax(registered, question) {
+    if (!confirm(question)) return;
+    $("taxError").textContent = "";
+    $("taxToggleBtn").disabled = true;
+    $("taxSaveNumberBtn").disabled = true;
+    const data = await call("saveSalesTax", { registered: registered, hstNumber: $("hstNumber").value.trim(), confirm: true });
+    $("taxToggleBtn").disabled = false;
+    $("taxSaveNumberBtn").disabled = false;
+    if (!data.success) { $("taxError").textContent = data.error; return; }
+    showShopSettings(data);
+    toast("Sales tax setting saved: " + (data.taxRegistered ? "On" : "Off") + ".", true);
+  }
+
+  $("taxToggleBtn").addEventListener("click", () => {
+    if (taxOn === null) return;
+    saveTax(!taxOn, taxOn
+      ? "Turn sales tax OFF?\n\nThe shop will not add HST to sales."
+      : "Turn sales tax ON?\n\nOnly do this once you are registered for GST/HST. The HST number below will be saved with it.");
+  });
+  $("taxSaveNumberBtn").addEventListener("click", () => {
+    if (taxOn === null) return;
+    saveTax(taxOn, "Save this HST number?\n\n" + ($("hstNumber").value.trim() || "(blank)"));
   });
 </script>
 </body>
