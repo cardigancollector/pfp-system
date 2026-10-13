@@ -54,6 +54,8 @@
   .bottom { margin-top: auto; padding-top: 0.75rem; }
   .price { font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--text); font-weight: 700; }
   .ship { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 0.6rem; }
+  .ship .tax { display: block; }
+  .toolbar .pickers { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
   button { width: 100%; font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 1.5px; border-radius: 4px; cursor: pointer;
            padding: 0.7rem 1rem; border: 2px solid var(--gold); background: linear-gradient(135deg, #854d0e, var(--gold)); color: var(--bg); font-weight: 700; }
   button:disabled { opacity: 0.45; cursor: not-allowed; background: transparent; color: var(--text-dim); border-color: var(--text-dim); }
@@ -87,11 +89,17 @@
 
   <div id="open" class="hidden">
     <div class="toolbar">
-      <div>
-        <label for="zone">Shipping to</label>
-        <select id="zone"></select>
+      <div class="pickers">
+        <div>
+          <label for="zone">Shipping to</label>
+          <select id="zone"></select>
+        </div>
+        <div id="provinceBox" class="hidden">
+          <label for="province">Province</label>
+          <select id="province"></select>
+        </div>
       </div>
-      <div class="note">Prices in Canadian dollars. One item per checkout.</div>
+      <div class="note" id="toolbarNote">Prices in Canadian dollars. One item per checkout.</div>
     </div>
     <div id="grid" class="grid"></div>
     <div id="empty" class="center-box hidden">
@@ -168,6 +176,39 @@
     sel.value = "CA";
   }
 
+  // ── Sales tax (only while the shop charges it) ─────────────
+  // Buyers shipping within Canada pick their province; the tax shown
+  // here is only a preview. The shop works it out again at checkout.
+  function taxOn() {
+    return shop.taxOn === true;
+  }
+
+  function renderProvinces() {
+    const sel = $("province");
+    sel.textContent = "";
+    sel.appendChild(new Option("Choose…", ""));
+    const provinces = shop.provinces || {};
+    Object.keys(provinces).forEach((code) => sel.appendChild(new Option(provinces[code], code)));
+    if (taxOn()) $("toolbarNote").textContent = "Prices in Canadian dollars. Sales tax is added for orders shipped within Canada. One item per checkout.";
+  }
+
+  function showProvince() {
+    $("provinceBox").classList.toggle("hidden", !(taxOn() && $("zone").value === "CA"));
+  }
+
+  // Rate in percent for the chosen province, or null.
+  function chosenRate() {
+    if (!taxOn() || $("zone").value !== "CA") return null;
+    const code = $("province").value;
+    const rate = shop.taxRates ? shop.taxRates[code] : undefined;
+    return (code && typeof rate === "number") ? rate : null;
+  }
+
+  // Same rounding as the shop: on item + shipping, to the nearest cent.
+  function taxCents(priceCents, shipCents, ratePercent) {
+    return Math.round((priceCents + shipCents) * Math.round(ratePercent * 1000) / 100000);
+  }
+
   function renderItems() {
     const grid = $("grid");
     grid.textContent = "";
@@ -222,6 +263,18 @@
       const WHERE = { CA: "to Canada", US: "to the United States", INTL: "outside Canada and the United States" };
       ship.textContent = shipCents === null ? "Doesn't ship " + (WHERE[zone] || "there")
                        : shipCents === 0 ? "Free shipping" : "+ " + cad(shipCents) + " shipping";
+      const rate = chosenRate();
+      if (shipCents !== null && rate !== null) {
+        const tax = document.createElement("span");
+        tax.className = "tax";
+        tax.textContent = "+ " + cad(taxCents(item.priceCents, shipCents, rate)) + " sales tax (" + rate + "%)";
+        ship.appendChild(tax);
+      } else if (shipCents !== null && taxOn() && zone === "CA") {
+        const tax = document.createElement("span");
+        tax.className = "tax";
+        tax.textContent = "+ sales tax (choose your province)";
+        ship.appendChild(tax);
+      }
 
       const btn = document.createElement("button");
       btn.type = "button";
@@ -250,6 +303,11 @@
   // only says which item and where it ships.
   async function buy(item, zone, btn, err) {
     if (busy) return;
+    const province = zone === "CA" ? $("province").value : "";
+    if (taxOn() && zone === "CA" && !province) {
+      err.textContent = "Choose your province first, so the right sales tax can be added.";
+      return;
+    }
     busy = true;
     err.textContent = "";
     btn.disabled = true;
@@ -259,7 +317,7 @@
       const res = await fetch(CHECKOUT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listingId: item.listingId, zone: zone })
+        body: JSON.stringify({ listingId: item.listingId, zone: zone, province: province })
       });
       try { data = await res.json(); }
       catch (e) { data = { success: false, error: "Unexpected reply from the shop. Please try again." }; }
@@ -292,11 +350,14 @@
     // While the shop is closed, nothing about what's for sale is shown.
     if (shop.checkoutOpen !== true) { show("closed"); return; }
     renderZones();
+    renderProvinces();
+    showProvince();
     renderItems();
     show("open");
   }
 
-  $("zone").addEventListener("change", renderItems);
+  $("zone").addEventListener("change", () => { showProvince(); renderItems(); });
+  $("province").addEventListener("change", renderItems);
   load();
 })();
 </script>

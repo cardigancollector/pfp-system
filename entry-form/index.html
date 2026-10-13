@@ -660,7 +660,7 @@
 
       <section class="panel">
         <h2>🧾 Shop Sales Tax (HST)</h2>
-        <p class="hint">Leave this Off until you are registered for GST/HST. Checkout isn't built yet, so nothing is charged either way for now.</p>
+        <p class="hint">Leave this Off until you are registered for GST/HST. While it's On, a buyer shipping within Canada picks their province, and the rate you set for it below is added to the item and the shipping. Buyers in the United States and everywhere else pay no tax. Every province needs a rate before tax can be turned on.</p>
         <div class="setting-row">
           <div>Charging sales tax: <span id="taxState" class="setting-state">…</span></div>
           <button id="taxToggleBtn" class="btn-gold" type="button" disabled>…</button>
@@ -669,8 +669,10 @@
           <label for="hstNumber">HST number</label>
           <input id="hstNumber" type="text" placeholder="123456789 RT0001" maxlength="20" autocomplete="off">
         </div>
-        <div class="row-end">
-          <button id="taxSaveNumberBtn" class="btn-ghost" type="button" disabled>Save number</button>
+        <p class="hint" style="margin-top:1rem;">Tax rate for each province and territory, in percent (for example 13 or 14.975). Leave blank if not set yet.</p>
+        <div class="ship-wrap"><table class="ship-table" id="taxRateTable" style="min-width:0;max-width:420px;"></table></div>
+        <div class="row-end" style="margin-top:1rem;">
+          <button id="taxSaveNumberBtn" class="btn-ghost" type="button" disabled>Save number and rates</button>
         </div>
         <div class="setting-meta" id="shopSettingsMeta"></div>
         <p id="taxError" class="error"></p>
@@ -794,6 +796,24 @@
               <option value="CA">Canada</option>
               <option value="US">United States</option>
               <option value="INTL">Everywhere else</option>
+            </select>
+          </div>
+          <div class="group" id="testProvinceGroup">
+            <label for="testProvince">Province (for sales tax)</label>
+            <select id="testProvince">
+              <option value="AB">Alberta</option>
+              <option value="BC">British Columbia</option>
+              <option value="MB">Manitoba</option>
+              <option value="NB">New Brunswick</option>
+              <option value="NL">Newfoundland and Labrador</option>
+              <option value="NS">Nova Scotia</option>
+              <option value="NT">Northwest Territories</option>
+              <option value="NU">Nunavut</option>
+              <option value="ON" selected>Ontario</option>
+              <option value="PE">Prince Edward Island</option>
+              <option value="QC">Quebec</option>
+              <option value="SK">Saskatchewan</option>
+              <option value="YT">Yukon</option>
             </select>
           </div>
         </div>
@@ -2719,6 +2739,13 @@
     if (keep && list.some((l) => l.listingId === keep)) sel.value = keep;
   }
 
+  // The province only matters for Canada (sales tax).
+  function showTestProvince() {
+    $("testProvinceGroup").classList.toggle("hidden", $("testZone").value !== "CA");
+  }
+  $("testZone").addEventListener("change", showTestProvince);
+  showTestProvince();
+
   $("testCheckoutBtn").addEventListener("click", async () => {
     $("testCheckoutError").textContent = "";
     const listingId = $("testListing").value;
@@ -2735,7 +2762,11 @@
       const res = await fetch(CHECKOUT_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-        body: JSON.stringify({ listingId: listingId, zone: $("testZone").value })
+        body: JSON.stringify({
+          listingId: listingId,
+          zone: $("testZone").value,
+          province: $("testZone").value === "CA" ? $("testProvince").value : ""
+        })
       });
       try { data = await res.json(); }
       catch (e) { data = { success: false, error: "Unexpected reply from the server (" + res.status + ")." }; }
@@ -2815,8 +2846,15 @@
     paid.textContent = cad(o.amountPaidCents !== null ? o.amountPaidCents : o.totalCents);
     const split = document.createElement("div");
     split.className = "coll-meta";
-    split.textContent = cad(o.priceCents) + " + " + cad(o.shippingCents) + " shipping";
+    split.textContent = cad(o.priceCents) + " + " + cad(o.shippingCents) + " shipping" +
+      (o.taxCharged ? " + " + cad(o.taxCents) + " tax" : "");
     right.append(paid, split);
+    if (o.taxCharged) {
+      const taxLine = document.createElement("div");
+      taxLine.className = "coll-meta";
+      taxLine.textContent = "Tax: " + (o.taxProvince || "?") + " " + o.taxRate + "%";
+      right.appendChild(taxLine);
+    }
 
     if (o.shipped) {
       const done = document.createElement("div");
@@ -3138,6 +3176,7 @@
     btn.className = taxOn ? "btn-danger" : "btn-gold";
     btn.textContent = taxOn ? "Turn off" : "Turn on";
     $("hstNumber").value = data.hstNumber || "";
+    renderTaxRates(data);
     $("taxSaveNumberBtn").disabled = false;
 
     $("shopSettingsMeta").textContent = whenText(data.updatedAt)
@@ -3183,12 +3222,54 @@
     toast("Shipping rates saved.", true);
   });
 
+  // One row per province or territory, with the rate as typed.
+  function renderTaxRates(data) {
+    const table = $("taxRateTable");
+    table.textContent = "";
+    const head = table.createTHead().insertRow();
+    ["Province or territory", "Rate (%)"].forEach((t) => {
+      const th = document.createElement("th");
+      th.textContent = t;
+      head.appendChild(th);
+    });
+    const body = table.createTBody();
+    const provinces = data.provinces || {};
+    Object.keys(provinces).forEach((code) => {
+      const row = body.insertRow();
+      const th = document.createElement("th");
+      th.textContent = provinces[code];
+      row.appendChild(th);
+      const input = document.createElement("input");
+      input.type = "text";
+      input.inputMode = "decimal";
+      input.maxLength = 7;
+      input.placeholder = "not set";
+      input.dataset.province = code;
+      input.setAttribute("aria-label", "Tax rate for " + provinces[code]);
+      input.value = (data.taxRates && data.taxRates[code]) || "";
+      row.insertCell().appendChild(input);
+    });
+  }
+
+  function typedTaxRates() {
+    const rates = {};
+    $("taxRateTable").querySelectorAll("input").forEach((input) => {
+      rates[input.dataset.province] = input.value.trim();
+    });
+    return rates;
+  }
+
   async function saveTax(registered, question) {
     if (!confirm(question)) return;
     $("taxError").textContent = "";
     $("taxToggleBtn").disabled = true;
     $("taxSaveNumberBtn").disabled = true;
-    const data = await call("saveSalesTax", { registered: registered, hstNumber: $("hstNumber").value.trim(), confirm: true });
+    const data = await call("saveSalesTax", {
+      registered: registered,
+      hstNumber: $("hstNumber").value.trim(),
+      taxRates: typedTaxRates(),
+      confirm: true
+    });
     $("taxToggleBtn").disabled = false;
     $("taxSaveNumberBtn").disabled = false;
     if (!data.success) { $("taxError").textContent = data.error; return; }
@@ -3199,8 +3280,8 @@
   $("taxToggleBtn").addEventListener("click", () => {
     if (taxOn === null) return;
     saveTax(!taxOn, taxOn
-      ? "Turn sales tax OFF?\n\nThe shop will not add HST to sales."
-      : "Turn sales tax ON?\n\nOnly do this once you are registered for GST/HST. The HST number below will be saved with it.");
+      ? "Turn sales tax OFF?\n\nThe shop will not add tax to sales. Your rates stay saved."
+      : "Turn sales tax ON?\n\nOnly do this once you are registered for GST/HST. The HST number and the rates below will be saved with it.");
   });
   // ── Product types ──────────────────────────────────────────
   function renderTypeList(data) {
@@ -3302,7 +3383,7 @@
 
   $("taxSaveNumberBtn").addEventListener("click", () => {
     if (taxOn === null) return;
-    saveTax(taxOn, "Save this HST number?\n\n" + ($("hstNumber").value.trim() || "(blank)"));
+    saveTax(taxOn, "Save this HST number and the tax rates?\n\nHST number: " + ($("hstNumber").value.trim() || "(blank)"));
   });
 </script>
 </body>
