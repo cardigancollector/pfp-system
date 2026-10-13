@@ -1024,6 +1024,22 @@
       return;
     }
 
+    // The cloud only accepts a Google sign-in. Other pages on this
+    // website (the marketplace sign-in) can leave behind an email-and-
+    // password sign-in for the same address, which the cloud refuses.
+    // When that happens, sign it out and ask for Google instead.
+    let provider = "";
+    try {
+      const info = await user.getIdTokenResult();
+      provider = info && info.signInProvider ? info.signInProvider : "";
+    } catch (e) { provider = ""; }
+    if (provider !== "google.com") {
+      await signOut(auth);
+      showGate("signInScreen");
+      $("signInError").textContent = "Please sign in with Google. The entry form only accepts a Google sign-in.";
+      return;
+    }
+
     $("loadingText").textContent = "Loading cards…";
     showGate("loadingScreen");
     const ok = await loadForm();
