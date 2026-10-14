@@ -753,6 +753,11 @@
               <input id="shopQty" type="number" min="0" step="1" value="1">
             </div>
           </div>
+          <div class="group" id="shopDescGroup" style="margin-top:1rem;">
+            <label for="shopDescription">Description (buyers read this)</label>
+            <textarea id="shopDescription" maxlength="1000" placeholder="Anything a buyer should know…"></textarea>
+          </div>
+          <p class="hint hidden" id="shopDescProductHint" style="margin-top:1rem;">A product's description is set on the Products screen.</p>
           <div class="check-row">
             <input id="shopListed" type="checkbox">
             <label for="shopListed" style="font-family:'Crimson Pro',serif;font-size:1rem;letter-spacing:0;text-transform:none;color:var(--text);">Show in the shop</label>
@@ -2631,6 +2636,10 @@
     $("shopQty").max = k.oneOfAKind ? "1" : "9999";
     $("shopQty").value = l ? String(l.quantity) : "1";
     $("shopListed").checked = l ? l.listed : false;
+    // Products keep the description from the Products screen.
+    $("shopDescription").value = l && kind !== "product" ? (l.description || "") : "";
+    $("shopDescGroup").classList.toggle("hidden", kind === "product");
+    $("shopDescProductHint").classList.toggle("hidden", kind !== "product");
     $("shopEditor").classList.remove("hidden");
     $("shopError").textContent = "";
 
@@ -2714,19 +2723,21 @@
     const before = listingFor(kind, itemId);
 
     // Putting something in the shop for the first time makes its
-    // name, details and price readable by the public, so ask first.
+    // name, details, description and price readable by the public,
+    // so ask first.
     if (listed && !(before && before.listed)) {
       const ok = confirm("Show this in the shop?\n\n" + $("shopChosenName").textContent + "\nPrice: $" + price + " CAD" +
-        "\n\nOnce shown, anyone can read its name, details and price through your public card data link.");
+        "\n\nOnce shown, anyone can read its name, details, description and price through your public card data link.");
       if (!ok) return;
     }
+
+    const listing = { kind: kind, itemId: itemId, price: price, quantity: $("shopQty").value.trim(), listed: listed };
+    if (kind !== "product") listing.description = $("shopDescription").value;
 
     const btn = $("shopSaveBtn");
     btn.disabled = true;
     btn.textContent = "Saving…";
-    const data = await call("saveListing", {
-      listing: { kind: kind, itemId: itemId, price: price, quantity: $("shopQty").value.trim(), listed: listed }
-    });
+    const data = await call("saveListing", { listing: listing });
     btn.disabled = false;
     btn.textContent = "🛒 Save Listing";
     if (!data.success) { $("shopError").textContent = data.error; return; }

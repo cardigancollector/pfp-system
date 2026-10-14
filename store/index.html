@@ -79,6 +79,7 @@
   .kind { font-family: 'Cinzel', serif; font-size: 0.62rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--text-dim); }
   .name { font-family: 'Cinzel', serif; color: var(--text); font-size: 1.05rem; }
   .details { color: var(--text-dim); font-size: 0.95rem; white-space: pre-line; }
+  .desc { color: var(--text); font-size: 0.98rem; line-height: 1.5; white-space: pre-line; margin-top: 0.35rem; overflow-wrap: anywhere; }
   .bottom { margin-top: auto; padding-top: 0.75rem; }
   .price { font-family: 'Cinzel', serif; font-size: 1.35rem; color: var(--green); font-weight: 700; }
   .ship { color: var(--text-dim); font-size: 0.92rem; margin-bottom: 0.6rem; }
@@ -282,6 +283,12 @@
       details.className = "details";
       details.textContent = item.details || "";
 
+      // What the seller wrote for buyers (products already show
+      // theirs as the details line).
+      const desc = document.createElement("div");
+      desc.className = "desc";
+      desc.textContent = typeof item.description === "string" ? item.description : "";
+
       const bottom = document.createElement("div");
       bottom.className = "bottom";
       const price = document.createElement("div");
@@ -323,7 +330,9 @@
       }
 
       bottom.append(price, ship, btn, err);
-      body.append(kind, name, details, bottom);
+      body.append(kind, name, details);
+      if (desc.textContent) body.append(desc);
+      body.append(bottom);
       box.append(pic, body);
       grid.appendChild(box);
     });
