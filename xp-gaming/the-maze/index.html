@@ -178,7 +178,7 @@ const params      = new URLSearchParams(window.location.search);
 const CARD_ID     = params.get('card_id')     || params.get('cardId')     || localStorage.getItem('pfp_gaming_card')  || '';
 if (CARD_ID)      localStorage.setItem('pfp_gaming_card',  CARD_ID);
 
-const LOGIN_URL = 'https://cardigancollector.github.io/pfp-system/login.html';
+const LOGIN_URL = 'https://cardigancollector.github.io/pfp-system/Marketplace/login.html';
 
 document.getElementById('back-btn').onclick    = goHub;
 document.getElementById('btn-win-hub').onclick  = goHub;
