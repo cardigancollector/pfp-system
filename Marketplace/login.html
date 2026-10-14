@@ -571,6 +571,25 @@
   let registeredCards  = [];
   let isNewUser        = false;
 
+  // ── WHERE TO GO AFTER SIGN-IN ──
+  // A page that sends someone here to sign in can add ?return=<its own
+  // address>, so they come back to the same card or item afterwards.
+  // Only pages on this site are accepted, so a link can't use this page
+  // to send people somewhere else.
+  const returnUrl = (function () {
+    try {
+      const raw = new URLSearchParams(window.location.search).get('return');
+      if (!raw) return null;
+      const u = new URL(raw, window.location.href);
+      if (u.origin !== window.location.origin) return null;
+      if (!u.pathname.startsWith('/pfp-system/')) return null;
+      if (u.pathname.endsWith('/login.html')) return null;
+      return u.href;
+    } catch (e) {
+      return null;
+    }
+  })();
+
   // ── LOADING ──
   function showLoading(label) {
     document.getElementById('loading-label').textContent = label || 'Loading…';
@@ -618,9 +637,10 @@
           hideLoading();
           showRegisterPanel([]);
         } else {
-          // Returning user with cards — go straight to the dashboard,
-          // opened on their first registered card.
+          // Returning user with cards — back to the page that sent them
+          // here, or else the dashboard on their first registered card.
           hideLoading();
+          if (returnUrl) { window.location.href = returnUrl; return; }
           goToDashboard();
         }
       }

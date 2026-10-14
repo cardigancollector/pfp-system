@@ -366,7 +366,7 @@ function screen(title, text, spinning) {
 
 async function loadView() {
   const token = await idToken();
-  if (!token) { window.location.href = LOGIN_URL; return null; }
+  if (!token) { window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href); return null; }
 
   const res = await fetch(VIEW_URL + '?card_id=' + encodeURIComponent(cardId), {
     headers: { 'Authorization': 'Bearer ' + token }
@@ -739,7 +739,7 @@ window.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('pfp-auth-ready', whenSignedIn, { once: true });
         return;
       }
-      if (!window._pfpUser) { window.location.href = LOGIN_URL; return; }
+      if (!window._pfpUser) { window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href); return; }
       start();
     }
     whenSignedIn();

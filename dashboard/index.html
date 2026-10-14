@@ -854,7 +854,7 @@ window.addEventListener('DOMContentLoaded', () => {
           return;
         }
         if (!window._pfpUser) {
-          window.location.href = LOGIN_URL;
+          window.location.href = LOGIN_URL + '?return=' + encodeURIComponent(window.location.href);
           return;
         }
         boot(urlCardId);
