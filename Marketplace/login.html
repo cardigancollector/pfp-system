@@ -549,14 +549,7 @@
   import {
     getFirestore,
     doc,
-    getDoc,
-    getDocs,
-    setDoc,
-    updateDoc,
-    arrayUnion,
-    collection,
-    query,
-    where
+    getDoc
   } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   // ── FIREBASE CONFIG ── Replace with your actual config
@@ -611,13 +604,9 @@
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        // Brand new user — create Firestore document
-        await setDoc(userRef, {
-          email:      user.email,
-          createdAt:  new Date().toISOString(),
-          cards:      [],
-          xpTotal:    0
-        });
+        // Brand new user — no account record yet. Pages can't write to the
+        // database, so nothing is written here: the cloud creates the
+        // account record when they claim their first card.
         hideLoading();
         showRegisterPanel([]);
       } else {
@@ -723,38 +712,10 @@
     showMsg(msgEl, 'Verifying claim code…', 'info');
 
     try {
-      // Claim codes now live in their own collection, one document per code,
-      // keyed by the code itself — this replaces the old approach of
-      // querying the cards collection for a matching claimCode field.
-      const codeSnap = await getDoc(doc(db, 'claimCodes', code));
-
-      if (!codeSnap.exists()) {
-        showMsg(msgEl, 'Invalid claim code. Please check and try again.', 'error');
-        btn.disabled = false;
-        return;
-      }
-
-      const codeData = codeSnap.data();
-
-      if (registeredCards.some(c => c.cardId === codeData.cardId)) {
-        showMsg(msgEl, 'This card is already registered to your account.', 'error');
-        btn.disabled = false;
-        return;
-      }
-
-      if (codeData.status !== 'unused') {
-        showMsg(msgEl, 'This claim code has already been used.', 'error');
-        btn.disabled = false;
-        return;
-      }
-
-      const cardSnap = await getDoc(doc(db, 'cards', codeData.cardId));
-      const cardName = cardSnap.exists() ? (cardSnap.data().cardName || codeData.cardId) : codeData.cardId;
-
-      // The actual claim — checking the code, checking the card, and
-      // attaching it to this account — all happens inside the Cloud
-      // Function's own transaction. This page just asks for it and shows
-      // the result; it doesn't perform the claim itself.
+      // The whole claim happens in the cloud: it finds the card that goes
+      // with this code, checks it, and attaches it to this account in one
+      // step. Pages aren't allowed to read claim codes, so this page only
+      // sends the code and shows the answer.
       const idToken = await currentUser.getIdToken();
       const res = await fetch('https://us-central1-pfp-system.cloudfunctions.net/claimCardSecure', {
         method:  'POST',
@@ -762,7 +723,7 @@
           'Content-Type':  'application/json',
           'Authorization': 'Bearer ' + idToken,
         },
-        body: JSON.stringify({ cardId: codeData.cardId, claimCode: code }),
+        body: JSON.stringify({ claimCode: code }),
       });
       const result = await res.json();
 
@@ -772,7 +733,8 @@
         return;
       }
 
-      registeredCards.push({ cardId: codeData.cardId, cardName: cardName });
+      const cardName = result.cardName || result.cardId;
+      registeredCards.push({ cardId: result.cardId, cardName: cardName });
       input.value = '';
       renderRegisteredCards();
       showMsg(msgEl, `✓ ${cardName} registered successfully.`, 'success');
